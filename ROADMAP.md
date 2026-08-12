@@ -42,9 +42,10 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 借鉴：noko / godot-AI-Dialog / OpenGameAgent（Godot）、StardewLivingNPCs / ValleyTalk / SentientValley（Mod）、Thrall / Sigrid（BepInEx）、Convai Modding
 - **gate**：Godot 单 NPC demo 可玩；Mod POC 不破坏原游戏（回归检查）
 
-## Part 4 —— P2 过场 AIGC（暂缓）
-- 目标：用 P1 资产做程序化过场（Dialogic/时间轴+表情+运镜），进阶参考 Cutscene Agent（MCP+director）
-- **gate**：脚本→可播放过场 demo
+## Part 4 —— P2 过场 AIGC（暂缓，方案已细化见 spec/p2-cutscene）
+- 范式：A AIGC 视频过场（播片）/ B 引擎内程序化过场（实机）/ C 混合 → MVP 走 B 为主 + A 做展示
+- 管线：Ink 剧本 → Director Agent 拆镜头 → GPT Image 2（角色/关键帧）+ Nano Banana Pro（场景/分镜）→ 动画化（B: Godot 时间轴 / A: Veo/Kling/Wan 图生视频）→ TTS 配音
+- **gate**：M2-1→M2-3（引擎内过场 demo）+ M2-4（AIGC 视频 POC）
 
 ## Part 5 —— P5 评测（⏸️ 后置，暂不实现）
 - 目标：内容×行为×集成 三维评分卡 + 跨层归因 + 元评测（详见 `研究计划.md` §4）

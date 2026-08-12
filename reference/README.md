@@ -34,6 +34,12 @@
 - 2D 动画（主流）：Live2D Cubism / Spine
 
 ## P2 过场
+- 范式 A 视频生成（2026）：Veo 3/3.1（Google，4K/原生音频/API）、Kling 3.0（快手，动作真实性第一）、Wan 2.1/2.7（阿里开源，音画同步）、Runway Gen-4.5、Seedance 2.0、Sora 2
+  - 对比：wavespeed.ai/blog/zh-CN/posts/ai-video-generation-models-2026、elser.ai 2026 评测（Kling 3.0 与 Wan 2.1 动作真实性并列第一）
+- 范式 A 关键帧→图生视频（2026 主流）：GPT Image 2 生成首尾关键帧 → Veo/Kling 动画化（dev.to savielyamani_videoai）
+- Director Agent / 分镜：CineGen（HF MCP-1st-Birthday/CineGen）、open-director（GitHub seme-org）、storyboard-director（GitHub kevinchin12）、ComfyUI-Novel-Director（GitHub Work-Fisher）
+- 工业实践：腾讯 VISVISE（GDC2026 全栈 AI 动画/绑骨/蒙皮/MIB）、腾讯《异人之下》实时 AI 过渡动画（UE）、Tripo+Topview+Seedance 2 过场流程、MJ 静态资产+引擎 Sequencer 实机过场
+
 - 叙事脚本（shipped games，主流）：Ink（Disco Elysium/80 Days）、Yarn Spinner（Night in the Woods/A Short Hike）
 - Cutscene Agent（论文 2604.25318 + CutsceneBench）：https://huggingface.co/papers/2604.25318
 - studiomi300：https://github.com/bladedevoff/studiomi300

@@ -15,11 +15,12 @@
 | P3 | AI NPC Agent（记忆/行为/对话，引擎无关 HTTP/WS/MCP） | 规划中 |
 | P4 | 引擎接入（Godot 新建场景 / 接入现有游戏 Mod） | 规划中 |
 | P5 | 评测（内容×行为×集成 + 跨层归因） | **后置，暂不实现** |
+| P6 | DCC 资产加工层（Agent 控制 Blender 等，横切能力） | 规划中（随 P1-3D/P4 启用） |
 
 ## 目录地图
 ```
 rules/        # 规则层：课题原则 + 仓库规则
-spec/         # 规范层：每个 part 一份 spec（含开源借鉴清单）
+spec/         # 规范层：每个 part 一份 spec（含开源借鉴清单）+ TECH-STACK 选型基线
 harness/      # AI 执行规则层：mode/inform/constrain/verify/memory/metrics + skills
 tasks/        # 任务拆解：backlog + 每 part 可执行任务（含验收）
 audit/        # 审计：清单 + 日志
@@ -43,3 +44,4 @@ tools/        # 本地工具脚本（校验、导入、编排）
 - **复用优于自研**：每 part 都先列开源/论文/产品借鉴清单，再决定自研范围
 - **一个 part 一个 part 来**：不并行铺开，做透一个再进下一个；评测后置
 - **每层产物可见**：工作台形态，阶段状态机 + 预览/下载/单步重试
+

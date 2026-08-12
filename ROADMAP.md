@@ -16,6 +16,11 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 仓库骨架、rule、spec 占位、harness、task 拆解、审计机制
 - **gate**：README 目录地图与实际一致；每个 part 有 spec 占位；P1 有可执行任务拆解
 
+## DCC 加工层（P6，横切）
+- AIGC 资产进引擎前需 DCC 加工（清理/UV/绑定/表情 morph/导出）→ Agent 通过 **DCC-MCP** 控制 Blender 等自动完成
+- 复用：dcc-mcp-creator（intern-learn 664011）+ layout-forge dccBridge 经验；见 spec/p6
+- 进入时机：P1 3D 扩展（S1）→ P4（S3/S5）→ P2（S4）
+
 ## 执行环境（全 Part 通用）
 - 管线在**隔离环境**执行（env/README.md：Docker Compose / WSL2 / 云机三选一），本机只做浏览器入口 + git
 - 本机 8GB 显存 → 隔离机按需选型（SDXL 8GB 够；FLUX/PuLID/3D 需 24GB+ 或云 API）
@@ -49,4 +54,5 @@ P2 / P3 / P4 ──► P5 评测（后置）
 ```
 spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开发（逐 task）→ verify → audit → 归档
 ```
+
 

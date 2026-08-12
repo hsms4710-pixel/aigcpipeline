@@ -22,6 +22,7 @@
 | Agent 记忆 | Letta / Mem0 / Zep / Cognee（开源主流）+ 自研分层 | MindFox（本地轻量） | — | 主流记忆框架对比（2026） |
 | NPC 运行时参考 | Inworld / Convai / NVIDIA ACE（商业，米哈游/网易/腾讯/育碧采用） | 自研（研究用途） | — | NVIDIA ACE 采用列表；网易《逆水寒》AI NPC 落地；腾讯《元梦之星》AI 伴玩 |
 | 任务队列（服务化） | Celery/Redis、Temporal | 轻量（SQLite+状态机，仅 MVP） | — | 生产 AIGC 服务标准做法；轻量仅作占位，接口需可替换 |
+| DCC 资产加工 | **DCC-MCP（dcc-mcp-core，自研适配器）** 控制 Blender/Maya/Houdini/UE | Blender 官方 MCP / 社区 MCP | 人工 DCC 操作（不可自动化） | 已有 dcc-mcp-creator skill（intern-learn 664011）+ layout-forge dccBridge 经验 |
 | Web 后端 | FastAPI（主流） | Streamlit（仅原型） | — | — |
 | 引擎 | Godot（主实现，indie 2D 增长最快） | Unity / Unreal（作为导入目标） | 绑定单一引擎 | GMTK 2025：Unity 64% / Godot 20% / Unreal 11%；工业主导 Unity/Unreal，Godot 增长快且开源 |
 
@@ -32,4 +33,5 @@
 - 3D 报告：3D 生成技术演进（生产级网格/水密/PBR）
 - Live2D/Spine：2D 骨骼动画 2026 对比、二次元手游标配（bilibili 图形引擎实战）
 - 引擎采用：GMTK 2025 / JetBrains State of Game Dev / Outlook Respawn
+
 

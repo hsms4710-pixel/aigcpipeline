@@ -34,9 +34,22 @@ workbench   # FastAPI 工作台 + Job 队列 + 阶段状态机
 - 需 WSL2 backend + NVIDIA Container Toolkit（winget 装）
 - Linux 云机：`nvidia-container-toolkit` 一行安装
 
+## 租开发机建议（2026-08 调研）
+| 平台 | 4090 24GB 时租 | 特点 | 适合 |
+|---|---|---|---|
+| **AutoDL（首选）** | ¥1.2-2.7/时 | 国内最主流、按秒计费、Docker 容器、镜像丰富、停机保留数据约 1 个月、新用户赠额度 | 本课题（国内访问 HF 走 hf-mirror） |
+| 恒源云 | ¥1.3-1.8/时 | 稳定、免费存储 | 备选 |
+| 矩池云 | ¥2.0-5/时 | 镜像丰富、省心 | 快速复现 |
+| RunPod（国外） | ~\.34-0.69/时 | 均衡默认、ComfyUI 模板、秒级计费 | 访问 HF/GitHub 顺畅时 |
+| Vast.ai（国外） | ~\.1-0.6/时 | 最便宜但 P2P 无 SLA | 预算极致、能折腾 |
+- 推荐配置：**RTX 4090 24GB**（ComfyUI FLUX/SDXL + CosyVoice 足够；PuLID-Flux 需 48GB L40S/A6000）
+- 选型：短期调试 AutoDL 按秒计费；长期跑租月卡更划算
+- 我们编排（env/docker-compose.yml）可直接部署到租的 Linux 机
+
 ## 部署步骤（选定形态后执行）
 1. 复制 `.env.example` → `.env`，填 key
 2. `docker compose up -d comfyui` → 装节点（InstantID/IP-Adapter）→ 验证生图
 3. `docker compose up -d tts` → 验证 TTS
 4. `docker compose up -d workbench` → 浏览器走通上传→生成→下载
 5. 跑 `tools/validate-*` 校验资产包
+

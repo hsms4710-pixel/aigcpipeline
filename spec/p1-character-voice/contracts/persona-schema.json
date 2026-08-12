@@ -1,0 +1,61 @@
+﻿{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "persona-schema-v0",
+  "title": "Persona Card v0",
+  "description": "角色人设卡：驱动形象/语音/Agent 的单一数据源。与 prompt-templates.md 对齐（visual->主体/装备/服饰/细节；style->风格锚点；assets->按场景要生成的资产类型）",
+  "type": "object",
+  "required": ["name", "visual", "style"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "race": { "type": "string" },
+    "class": { "type": "string" },
+    "personality_tags": { "type": "array", "items": { "type": "string" } },
+    "background": { "type": "string" },
+    "visual": {
+      "type": "object",
+      "required": ["subject"],
+      "properties": {
+        "subject": { "type": "string", "description": "性别/年龄/种族/体型" },
+        "equipment": { "type": "string", "description": "主武器/副手" },
+        "outfit": { "type": "string", "description": "服饰/盔甲材质" },
+        "detail": { "type": "string", "description": "发型/发色/瞳色/面部特征/配饰" },
+        "ref_image": { "type": "string", "description": "参考图路径（可选，作锚点）" }
+      }
+    },
+    "style": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["pixel", "splash"] },
+        "anchor": { "type": "string", "description": "风格锚点 prompt 片段（覆盖默认）" },
+        "palette": { "type": "string", "description": "调色板（像素用）" },
+        "resolution": { "type": "string", "description": "如 64x64 / 1024x1024" }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "properties": {
+        "pixel": { "type": "array", "items": { "enum": ["three_view", "actions", "sprite_sheet", "directional"] } },
+        "splash": { "type": "array", "items": { "enum": ["portrait", "expressions", "turnaround", "action"] } }
+      }
+    },
+    "voice": {
+      "type": "object",
+      "properties": {
+        "ref_audio": { "type": "string" },
+        "timbre_desc": { "type": "string" },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "text": { "type": "string" },
+              "emotion": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

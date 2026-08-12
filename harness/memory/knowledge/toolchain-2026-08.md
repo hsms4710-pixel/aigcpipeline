@@ -33,3 +33,9 @@
 - ⚠️ 中转站状态：gpt-image 曾成功；后续 503 "No available compatible accounts"；responses-image（参考图锚点）也 503 → **外部服务不稳定，待恢复或换 fal/官方 key**
 - 参考图锚点：openai 3.0 images.generate 无参考图参数；需 responses API（中转站暂 503）→ 锚点机制实现待定，纯 prompt + 风格锚点先兜底
 - 待办：中转站恢复后跑完场景 A（side/back/行为帧）与场景 B；或用户提供更稳生图渠道
+## 参考图机制确认（2026-08-13）
+- **gpt-image-1 是 responses-only 模型**：chat.completions 返回 400 "not supported on Chat Completions endpoint"；images.generate 无参考图参数
+- **参考图正确调用 = responses API**：
+  client.responses.create(model="gpt-image-1", input=[{"type":"image","image_url":"data:image/png;base64,..."},{"type":"text","text":"..."}])
+- 中转站状态：gpt-image 后端整体 503（images.generate 与 responses 都 "No available compatible accounts"）→ **待恢复**；gpt-4o/gpt-5.5 在中转站 LLM 组 404（模型名可能不同）
+- 一旦恢复：用 test-ref.py（responses 带图）验证参考图锚点；与用户 CLI 传参考图方式一致

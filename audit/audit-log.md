@@ -83,3 +83,8 @@
 - 样例：test_gpt-image-1.png + pixel_front_anchor.png（中转站 gpt-image）
 - ⚠️ 外部依赖：中转站 gpt-image 503（responses-image 亦 503）→ 参考图锚点机制待中转站恢复/换渠道；纯 prompt 兜底
 - 声音：用户决定暂缓；可选直接下载现成二次元角色 GPT-SoVITS 模型
+
+## 2026-08-13 —— t2 完成 + 参考图机制确认
+- t2 ✅：persona-schema.json v0（visual/style/assets/voice 对齐 prompt-templates）+ asset-package-spec.md + validate-persona.py + validate-asset-package.py（utf-8-sig 兼容 BOM）+ 示例 persona 通过校验
+- 参考图：gpt-image-1 = responses-only；正确调用 = responses.create(input=[image, text])；中转站 gpt-image 后端 503 待恢复；gpt-4o/gpt-5.5 中转站 404
+- 下一步：中转站恢复后跑场景 A/B（含参考图锚点）

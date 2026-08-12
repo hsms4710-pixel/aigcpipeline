@@ -24,6 +24,12 @@
 - CharForge（社区，仅研究参考）：https://github.com/RishiDesai/CharForge
 - 3D 候选（后置，主流）：Hunyuan3D 2.1（腾讯）/ TRELLIS（微软）/ Tripo API / Meshy；~~TripoSR~~（过时）
 
+## 声音集训练 TTS（V1）
+- GPT-SoVITS（微调 1-5min，中文最强，RVC-Boss/GPT-SoVITS）+ SLFork 分支（1min few-shot）
+- CosyVoice 2（阿里，零样本+微调+情绪）、Spark-TTS（有 genshin 角色微调先例）、Qwen3-TTS（2026，neural codec 12Hz）、XTTS-v2（Coqui）
+- 数据集工具：zh-tts-mini-corpus（预选文本+录音 → GPT-SoVITS/CosyVoice 结构）
+- 教程：从视觉小说游戏提取配音微调角色 TTS（developer.baidu.com）；RVC-Project WebUI（2.3.260718）
+
 ## P1 语音
 - 云 API（生产后端，主流）：火山引擎 TTS / Azure TTS / ElevenLabs / MiniMax
 - 开源（本地）：CosyVoice（阿里，工业级）/ F5-TTS（MIT）；GPT-SoVITS（社区，仅研究）

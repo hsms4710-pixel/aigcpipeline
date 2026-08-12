@@ -94,3 +94,10 @@
 - tools/gen-portrait.py：云生图 CLI（文生图 images.generate / 参考图锚点 responses；任务自动派生：pixel→front/side/back+行为帧，splash→立绘+表情；落盘资产包+metadata；dry-run 验证）
 - 真实生成待中转站 gpt-image 恢复（503）
 - 下一步：中转站恢复 → gen-portrait 实跑场景 A/B；或 t8 模板文件细化
+
+## 2026-08-13 —— t5 工作台实现（后端+前端+无限画布）
+- 后端：tools/workbench/app.py（FastAPI：角色创建/生成 job/SQLite 队列/静态资产）+ gen-portrait 子进程执行（中转站 503 时 job 记录失败可重试）
+- 前端：web/（Vite + React + @tldraw/tldraw 无限画布）构建成功；侧栏上传/角色列表/资产树，画布区展示资产节点（+画布）
+- 启动：start-workbench.cmd（uvicorn :8000）；浏览器 localhost:8000
+- 验证：TestClient API 全通过 + GET / 返回前端
+- 中转站仍 503（gpt-image 后端）；恢复后：工作台内生成自动跑通 + monitor 脚本可跑场景 A/B

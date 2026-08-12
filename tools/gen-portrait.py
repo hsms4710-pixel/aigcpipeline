@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--ref", default=None, help="锚点图（参考图）")
     ap.add_argument("--model", default="gpt-image-2")
     ap.add_argument("--backend", choices=["openai", "gemini", "fal"], default="openai", help="生图后端")
+    ap.add_argument("--no-ref", action="store_true", help="不用参考图锚点（纯 prompt 逐任务生成）")
     ap.add_argument("--scene", choices=["pixel", "splash"], default=None, help="overwrite persona.style.type")
     a = ap.parse_args()
 
@@ -76,8 +77,8 @@ def main():
         assets_meta.append({"type": f"{style_type}/{name}", "file": f"portrait/{name}.png",
                             "engine": a.model, "prompt": prompt, "size_bytes": n, "elapsed_s": round(dt, 1)})
         print(f"  ok {name}.png ({n}B, {dt:.1f}s)")
-        if ref is None:
-            ref = outfile  # 之后的任务带锚点
+        if ref is None and not a.no_ref:
+            ref = outfile  # 之后的任务带锚点（参考图作为后续补充能力）
     meta = {"character_id": char_id, "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
             "assets": assets_meta}
     with open(os.path.join(outdir, "metadata.json"), "w", encoding="utf-8") as f:

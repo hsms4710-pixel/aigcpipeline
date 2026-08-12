@@ -61,3 +61,7 @@ env/runtime/tools/GPT-SoVITS/
 tools/workbench/workbench.db
 assets/characters/
 
+
+# 生成的演示角色资产（不入库）
+assets/demo/char_*/
+

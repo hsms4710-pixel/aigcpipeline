@@ -1,6 +1,6 @@
-﻿# t1：生图工具链验证（按资产场景测试）
+# t1：生图工具链验证（按资产场景测试）
 
-状态：in_progress（基础生图链路 ✅，GPT-SoVITS 零样本 ✅；按场景测试进行中）
+状态：in_progress（基础链路 ✅；场景 A/B 纯 prompt 生成 ✅，待一致性审阅；参考图锚点后置）
 依赖：runtime venv + key（已就绪）｜ 预估：2-3 天
 选型基线：spec/TECH-STACK.md ｜ 提示词模板：spec/p1/contracts/prompt-templates.md
 

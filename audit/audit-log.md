@@ -107,3 +107,9 @@
 - t5 ✅：角色资产改挂 /char-assets，前端 dist 由 mount / 兜底托管 → JS/CSS 200，页面完整可用
 - 中转站模型：curl /v1/models = 唯一 gpt-image-2（生图后端确定；gpt-5.5 LLM 该 key 404）
 - 待办：中转站 gpt-image 后端恢复 → 工作台/CLI 实跑场景 A/B
+
+## 2026-08-13 —— 场景 A/B 纯 prompt 生成跑通（中转站恢复）
+- 场景 A 像素：front/side/back + idle/walk/attack/hurt（7 张，assets/demo/char_ailin）校验通过
+- 场景 B 立绘：主立绘 + 4 表情（5 张，assets/demo/char_ailin_splash）
+- 纯 prompt（--no-ref）；参考图锚点后置为补充能力
+- 生成资产不入库（.gitignore assets/demo/char_*/）；待用户审阅一致性后定 t9/t10 结论

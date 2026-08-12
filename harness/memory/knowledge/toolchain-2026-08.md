@@ -44,3 +44,9 @@
 - 无 Nano Banana / 其他生图模型（需 Gemini/fal key，用户暂缓）
 - gpt-5.5（用户 config 里的 LLM）在中转站 404 → 该 key 是生图专用组，LLM 需另配
 - 参考图锚点 = responses API（gpt-image-1/2 responses-only）
+## 场景 A/B 生成成功（2026-08-13，中转站恢复）
+- 中转站恢复（gpt-image-2，1024x1024；256 尺寸 400 不支持）
+- 场景 A（像素，纯 prompt 无参考图）：front/side/back + idle/walk/attack/hurt 共 7 张，每张 50-100s，资产包校验通过（assets/demo/char_ailin）
+- 场景 B（立绘）：主立绘 + happy/sad/angry/neutral 表情 5 张（assets/demo/char_ailin_splash）
+- 纯 prompt 无参考图流程跑通（--no-ref）；参考图锚点（responses）作为后续补充能力
+- 一致性观察：纯 prompt 三视图/行为帧需要肉眼确认（待用户看效果）

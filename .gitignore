@@ -41,3 +41,9 @@ tmp/
 env/config.toml
 env/.env
 
+
+# 隔离运行时产物（不入库）
+env/runtime/logs/
+env/runtime/models/
+env/runtime/tools/*.png
+

@@ -1,9 +1,10 @@
 ﻿# P1 Spec：角色形象 + 语音生成工作台（MVP）
 
 > 状态：**规划中（即将进入开发）** ｜ 对应 ROADMAP Part 1
+> 选型基线见 `spec/TECH-STACK.md`（工业主流优先，非主流方案已修正）
 
 ## 1. 目标
-本地 Web 工作台：用户输入**人设卡（JSON）+ 可选参考图/参考音** → 生成**角色立绘（2-4 表情差分）+ 3 句台词克隆语音** → 产出**标准资产包**（PNG 图集 / WAV+字幕 / 人设 JSON / metadata）可下载、可被 Godot 等引擎导入。
+本地 Web 工作台：用户输入**人设卡（JSON）+ 可选参考图/参考音** → 生成**角色立绘（2D 分层，可进 Live2D/Spine 管线）+ 语音（多后端 TTS）** → 产出**标准资产包**（PNG 分层 / WAV+字幕 / 人设 JSON / metadata）可下载、可被 Godot 等引擎导入。
 
 ## 2. 非目标（第一版不做）
 - 不做 3D 生成（glTF 作为 P1 扩展，后置）
@@ -20,66 +21,78 @@
 ```
 <character_id>/
 ├── persona.json            # 输入的人设卡（校验后副本）
-├── metadata.json           # 生成记录：模型/参数/耗时/显存/成本/seed
+├── metadata.json           # 生成记录：引擎/模型/参数/耗时/显存/成本/seed
 ├── portrait/
 │   ├── full.png            # 全身/半身立绘
-│   ├── expressions/        # 表情差分（neutral/happy/sad/angry…）
+│   ├── layered/            # 分层输出（工业主流：Live2D/Spine 需要分图层）
+│   │   ├── body/           #   body 分部件（头发/脸/身体/服饰…）
+│   │   └── ...             #   由 ComfyUI workflow 或后处理拆分
+│   ├── expressions/        # 表情差分（引擎友好图集；Live2D 阶段替代为绑定）
 │   │   ├── neutral.png
 │   │   └── ...
-│   └── sheet.png           # 表情图集（引擎友好）
+│   └── sheet.png           # 表情图集
 ├── voice/
 │   ├── line_1.wav + line_1.txt（字幕）
 │   ├── ...
 └── preview.html            # 本地预览页（看图/听音）
 ```
+> 说明：MVP 仍产出表情差分图集（快速可玩），但**契约预留 layered/ 分层**，Live2D 绑定是工业主流路径（见 §6）。
 
 ## 4. 子模块
-| 模块 | 职责 | 技术候选 |
+| 模块 | 职责 | 技术（工业主流） |
 |---|---|---|
-| 形象生成 | 人设→prompt→生图→表情差分→落盘 | Flux LoRA / SDXL LoRA（首选 Flux，理由见下） |
-| 语音克隆 | 参考音→克隆→台词 TTS→WAV+字幕 | GPT-SoVITS（首选）/ CosyVoice / F5-TTS |
-| 任务编排 | Job 队列 + 阶段状态机 + 单步重试 | 自研轻量（参考 3dModelGenerator job 轮询） |
-| 工作台 Web | 上传→预览→确认→下载 | 本地 Web（FastAPI/Flask + 前端），可选 Streamlit 起步 |
+| 形象生成 | 人设→ComfyUI workflow→立绘/分层/表情→落盘 | **ComfyUI** + **InstantID/PuLID**（一致性）+ LoRA（风格） |
+| 语音克隆 | 参考音→克隆→台词 TTS→WAV+字幕 | **TTS 多后端抽象**：云 API（火山/Azure/ElevenLabs）+ CosyVoice（本地） |
+| 任务编排 | Job 队列 + 阶段状态机 + 单步重试 | 轻量占位（SQLite+状态机），**接口抽象可换 Celery/Temporal** |
+| 工作台 Web | 上传→预览→确认→下载 | FastAPI + 前端 |
 
-## 5. 开源/论文/产品借鉴清单（已调研）
-### 形象一致性
-- **CharForge**（GitHub RishiDesai/CharForge）：单参考图训练角色 LoRA + 跨场景一致性生成，人物表生成借鉴 Mickmumpitz Flux character consistency workflow → **工作台"从参考图训 LoRA"直接借鉴**
-- **Flux Kontext / RefControl**（HF）：参考图+pose 控制，跨生成保持身份 → 表情差分方案候选
-- **PaCo-FLUX.1-dev LoRA**（HF X-GenGroup）：RL 训练的一致性生成框架 → 后续质量提升路线
-- pixel_art_characters_lora（HF）：像素风角色 LoRA → 风格化资产候选
+## 5. 开源/论文/产品借鉴清单（已调研，按主流性排序）
+### 形象一致性（工业主流）
+- **ComfyUI**：业界 AIGC 生产管线事实标准。Ubisoft 开源 CHORD 模型 + ComfyUI 节点（端到端 PBR 材质）；Series Entertainment 用 ComfyUI 生产 10 万+ 游戏/视频资产（180× 提速）；游戏道具设计实证研究（节点式生成工作流）。→ **执行引擎首选**
+- **InstantID**：零样本身份保持，2025-12 社区共识"大多数应用的最佳平衡"（相似度高/效果好/速度合理/复杂度可控）→ **人脸一致性首选**
+- **PuLID**：身份保持更稳（对比学习抗污染），但慢 30-45% → 高质量备选
+- **IP-Adapter FaceID**：快、低显存（6GB+），基线方案 → 轻量备选
+- **LoRA（角色/风格）**：按需训练锁定角色/风格 → 配合 InstantID 使用（不是默认必训）
+- CharForge（社区项目）：仅研究参考（单参考图训 LoRA 流程），不默认进主线
 
-### 语音克隆
-- **GPT-SoVITS**：5s 零样本克隆 + 少样本微调，WebUI 生态成熟 → 首选
-- **CosyVoice**（阿里）：流式低延迟、高音色一致性、方言/情感控制 → 备选
-- **F5-TTS**：推理快、MIT 商用友好 → 备选（延迟敏感场景）
-- **Fish-Speech**：多语言泛化强 → 备选
-- 选型依据：GPT-SoVITS 中文质量+克隆易用性最优，先跑通；保留抽象接口可换后端
+### 2D 角色动画管线（工业主流，P1 预留）
+- **Live2D Cubism**：二次元手游互动/表情/卡面标配（Live2D+Spine 为动态 2D 主流；Live2D 强在表情与立体感、不损原画风格）→ 目标管线：立绘分层 PSD → Live2D 绑定
+- **Spine**：2D 骨骼动画行业标准，运行时性能好 → 大幅动作/战斗场景备选
 
-### 虚拟人/工作台形态
-- **handcrafted-persona-engine / aituber-kit / AITuberKit / prometheus-avatar / aituber-onair**：Live2D/3D 虚拟人 + LLM + ASR + TTS + RVC 栈 → 工作台 UI 与"角色卡"交互可借鉴
-- **3dModelGenerator**：job 状态轮询 → 编排层参照
-- **studiomi300**：Director Agent + 分镜 streaming 输出 → 后续 P2 参照
+### 语音（工业主流）
+- **云 API（生产后端）**：火山引擎 TTS（国内综合首选，中文自然度/定价合理）、Azure TTS（延迟最低/免费层大，游戏解说场景推荐）、ElevenLabs（情感/音质天花板，海外）—— 2026 TTS 选型评测
+- **开源（本地/离线）**：**CosyVoice（阿里开源，流式低延迟/高音色一致性/情感控制，工业级）**、F5-TTS（快/MIT）
+- GPT-SoVITS：社区热门，**仅作克隆研究候选**，不作为生产默认
+- 设计：TTS 后端抽象，云/本地可切换（成本与质量权衡）
 
-## 6. 技术选型（MVP）
-| 项 | 首选 | 备选 | 理由 |
+### 工作台/编排形态
+- 3dModelGenerator：job 状态轮询 → 编排参照
+- studiomi300：Director Agent + streaming 阶段输出 → 后续 P2 参照
+- handcrafted-persona-engine / AITuberKit：角色卡交互参考（非主流，仅 UI 参考）
+
+## 6. 技术选型（MVP，依据 TECH-STACK.md）
+| 项 | 首选 | 备选 | 理由（工业主流） |
 |---|---|---|---|
-| 生图 base | FLUX.1-dev + LoRA | SDXL + LoRA | 一致性/画质更好；SDXL 显存低 |
-| LoRA 来源 | 参考图训（CharForge 流程） | 现成风格 LoRA | 单参考图即可锁定角色 |
-| 表情差分 | 同人设 prompt + 表情模板 + seed 控制 | Flux Kontext pose/ref | 先简单后可控 |
-| TTS | GPT-SoVITS | CosyVoice / F5-TTS | 中文克隆质量 + 生态 |
-| 编排 | 自研轻量队列（SQLite + 状态机） | Temporal（过重） | MVP 不引入重框架 |
-| Web | FastAPI + 简单前端 | Streamlit | 阶段预览/单步重试交互更自由 |
-| 3D | —（后置） | TripoSR / TRELLIS / Hunyuan3D | P1 扩展，不进 MVP |
+| 生图编排 | **ComfyUI**（节点 workflow，可复用社区节点） | 自研封装 | Ubisoft/Series 生产管线验证；社区节点生态（InstantID/PuLID/ControlNet 现成） |
+| 身份一致性 | **InstantID** | PuLID / IP-Adapter FaceID | 2025-12 共识最佳平衡；PuLID 更稳但慢 |
+| 风格/角色锁定 | LoRA（按需训练） | 现成风格 LoRA | 工作室通用做法 |
+| 表情/动画 | 表情差分图集（MVP 快速）+ **layered/ 分层预留** | Live2D 绑定（后续） | 工业主流=Live2D/Spine；MVP 先可玩，契约已预留 |
+| TTS | **多后端抽象**：云 API（火山/Azure）为主 + CosyVoice 本地 | F5-TTS / ElevenLabs | 工业=云 API+大厂开源；GPT-SoVITS 降为研究 |
+| 3D（后置） | **Hunyuan3D 2.1 / TRELLIS / Tripo API / Meshy** | — | 生产级网格/PBR/UV；TripoSR 已过时 |
+| 编排 | 轻量队列（接口抽象） | Celery/Temporal（生产） | MVP 占位可换主流 |
+| Web | FastAPI + 前端 | Streamlit（原型） | 主流 |
+| 引擎（P4） | Godot（主实现） | Unity/Unreal（导入目标） | Godot indie 2D 增长最快；资产/Agent 引擎无关 |
 
 ## 7. MVP 验收标准（gate）
-- [ ] 从 1 张参考图/纯文本人设生成 1 个角色 4 个表情差分，肉眼身份一致
-- [ ] 3 句台词克隆语音可播放，音色与参考一致度可接受
-- [ ] 资产包结构与 metadata 完整，校验脚本通过
+- [ ] ComfyUI + InstantID 从参考图/人设生成角色：4 表情差分，肉眼身份一致
+- [ ] TTS 多后端：至少一条本地链路（CosyVoice）+ 一条云 API 链路跑通，3 句台词可播放
+- [ ] 资产包结构与 metadata 完整，校验脚本通过（含 layered/ 预留说明）
 - [ ] 工作台：上传→看到每阶段产物→选择→下载；单阶段失败可重试
 - [ ] Godot 最小工程能导入立绘 + 播放语音
 - [ ] P1 审计完成（audit/audit-log.md）
 
 ## 8. 开放问题
-- LoRA 训练 vs 纯 prompt 的一致性上限？（先用 CharForge 流程验证，量化身份一致性）
-- 无参考音时 TTS 音色如何选？（预设音色库）
-- 表情差分数量/情绪集合定多少？（先 neutral/happy/sad/angry 4 个）
+- InstantID vs PuLID 在当前显卡上的质量/速度实测（t1 验证）
+- Live2D 分层如何自动生成/拆分（先人工拆分 + 规范，工具化后置）
+- 无参考音时 TTS 音色如何选（预设音色库：云 API 音色 vs CosyVoice 克隆）
+- 表情差分数量/情绪集合定多少（先 neutral/happy/sad/angry 4 个）

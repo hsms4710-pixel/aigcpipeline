@@ -1,42 +1,44 @@
 ﻿# 调研引用（reference/）
 
-> 按 part 分组。完整调研结论见根目录《工作流设计.md》《研究计划.md》。此处只存链接速查。
+> 按 part 分组。完整调研结论见根目录《工作流设计.md》《研究计划.md》+ `spec/TECH-STACK.md`（选型基线）。
+> 此处存链接速查；标注【主流】的为工业证据。
+
+## 选型基线证据（TECH-STACK.md）
+- ComfyUI 生产：Ubisoft CHORD 开源（blog.comfy.org）、Series Entertainment 10万+资产（blog.comfy.org）
+- 一致性方案对比：【主流】apatero.com/blog/pulid-vs-instantid-vs-ipadapter-faceid-comparison-2025（InstantID 2025-12 首选）
+- TTS 选型：【主流】火山引擎开发者文章（2026-05）、msnao 开源 TTS 对比
+- 3D 生成：【主流】2026 3D 生成技术演进（生产级网格/水密/PBR/UV，Hunyuan3D/TRELLIS/Tripo 开源拐点）
+- 2D 动画：【主流】Spine（行业标准）+ Live2D（VTuber/二次元互动标配）对比
+- 引擎采用：【主流】GMTK 2025（Unity 64%/Godot 20%/UE 11%）、JetBrains State of Game Dev 2025
 
 ## P1 形象
-- CharForge（单参考图训角色 LoRA）：https://github.com/RishiDesai/CharForge
-- Flux Kontext / RefControl（参考图+pose，身份保持）：HF thedeoxen/refcontrol-flux-kontext-reference-pose-lora
-- PaCo-FLUX.1-dev LoRA（RL 一致性）：https://huggingface.co/X-GenGroup/PaCo-FLUX.1-dev-Lora
-- pixel_art_characters_lora：HF milliyin/pixel_art_characters_lora_flux_nf4
-- 3D 候选：TripoSR / TRELLIS（CVPR2025）/ Hunyuan3D / InstantMesh
+- ComfyUI（工业主流执行引擎）
+- InstantID / PuLID / IP-Adapter FaceID / PhotoMaker（身份保持，主流）
+- LoRA 训练（角色/风格锁定，按需）
+- CharForge（社区，仅研究参考）：https://github.com/RishiDesai/CharForge
+- 3D 候选（后置，主流）：Hunyuan3D 2.1（腾讯）/ TRELLIS（微软）/ Tripo API / Meshy；~~TripoSR~~（过时）
 
 ## P1 语音
-- GPT-SoVITS / CosyVoice（阿里）/ F5-TTS（MIT）/ Fish-Speech 对比
-  - 综述：https://www.msnao.com/2025/07/15/7843.html
+- 云 API（生产后端，主流）：火山引擎 TTS / Azure TTS / ElevenLabs / MiniMax
+- 开源（本地）：CosyVoice（阿里，工业级）/ F5-TTS（MIT）；GPT-SoVITS（社区，仅研究）
 - TTS 评测：MOS-N / S-MOS / UTMOS / SIM / WER-CER
 
-## P1 形态 / 虚拟人栈
-- handcrafted-persona-engine / aituber-kit / AITuberKit：https://docs.aituberkit.com/zh/
-- prometheus-avatar：https://github.com/myths-labs/prometheus-avatar
-- aituber-onair：https://github.com/shinshin86/aituber-onair
-- 3dModelGenerator（job 轮询参考）
+## P1 形态 / 虚拟人栈（UI 参考）
+- AITuberKit：https://docs.aituberkit.com/zh/ ｜ prometheus-avatar ｜ aituber-onair ｜ handcrafted-persona-engine
+- 2D 动画（主流）：Live2D Cubism / Spine
 
 ## P2 过场
+- 叙事脚本（shipped games，主流）：Ink（Disco Elysium/80 Days）、Yarn Spinner（Night in the Woods/A Short Hike）
 - Cutscene Agent（论文 2604.25318 + CutsceneBench）：https://huggingface.co/papers/2604.25318
 - studiomi300：https://github.com/bladedevoff/studiomi300
-- Dialogic / Yarn Spinner / Ink / Naninovel
 
 ## P3 Agent
-- AI-NPC（personality/memory/quest）：https://github.com/EchoSingh/AI-NPC
-- ai-character-engine（本地离线）：https://github.com/Luciferjimmy/ai-character-engine
-- MemoryRepository_for_AI_NPC：https://github.com/Formyselfonly/MemoryRepository_for_AI_NPC
-- MindFox（离线记忆中间件）：https://github.com/kikyujin/MindFox
-- 记忆框架：Letta(MemGPT) / Mem0 / Zep(时间知识图谱) / Cognee
-  - 综述：Agent_Memory_Techniques（https://github.com/NirDiamant/Agent_Memory_Techniques）
-- Gemma4NPC-it（HF）
-- Narra（引擎无关 server）：（GitHub）
+- 商业/工业实践（架构基准）：NVIDIA ACE（米哈游/网易/腾讯/育碧采用）、Inworld（Mecha Break/Second Me）、Convai、网易《逆水寒》AI NPC、腾讯《元梦之星》AI 伴玩
+- 记忆框架（主流）：Letta(MemGPT) / Mem0 / Zep / Cognee；综述 Agent_Memory_Techniques（https://github.com/NirDiamant/Agent_Memory_Techniques）
+- AI-NPC：https://github.com/EchoSingh/AI-NPC ｜ ai-character-engine：https://github.com/Luciferjimmy/ai-character-engine ｜ MindFox：https://github.com/kikyujin/MindFox ｜ Gemma4NPC-it（HF）｜ Narra
 
 ## P4 引擎
-- Godot：noko（https://github.com/nthnn/noko）、godot-AI-Dialog（https://github.com/krishsharma0413/godot-AI-Dialog）、OpenGameAgent、openagentic-sdk-gdscript、Player2 AI NPC
+- Godot：noko（https://github.com/nthnn/noko）、godot-AI-Dialog、OpenGameAgent、openagentic-sdk-gdscript、Player2 AI NPC
 - 现有游戏 Mod：StardewLivingNPCs（https://github.com/Nyx-Amanises/StardewLivingNPCs）、ValleyTalk（https://github.com/dandm1/ValleyTalk）、stardew-llm-dialog、SentientValley（NexusMods 41526）、Thrall（Valheim thunderstore）、Sigrid（BepInEx+HarmonyX）
 - 中间件/商业：Oxyde（https://github.com/oxyde-labs/oxyde）、Inworld、Charisma、ego AI、NVIDIA ACE、Convai Modding
 

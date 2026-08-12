@@ -23,3 +23,4 @@
 - `spec/p1-character-voice/contracts/persona-schema.json`（人设卡 v0）
 - `spec/p1-character-voice/contracts/asset-package-spec.md`（资产包规范）
 - `spec/p3-npc-agent/contracts/agent-protocol.md`（Agent 协议，Part 2 建）
+

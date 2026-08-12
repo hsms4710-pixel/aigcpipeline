@@ -7,7 +7,7 @@
 
 ## 产出
 - `tools/workbench/`：FastAPI 后端 + 前端页
-- Job 存储（SQLite），状态可查询、可重试单阶段
+- Job 存储（SQLite，接口抽象可换 Celery/Temporal）；形象阶段调 ComfyUI API
 
 ## 验收
 - [ ] 浏览器完整走通：上传 → 看到概念图 → 选图 → 听语音 → 下载资产包
@@ -16,4 +16,4 @@
 - [ ] ruff/black 通过
 
 ## 借鉴
-- 3dModelGenerator（job 轮询）、handcrafted-persona-engine（角色卡交互）
+- ComfyUI API（工业主流执行引擎）、3dModelGenerator（job 轮询）

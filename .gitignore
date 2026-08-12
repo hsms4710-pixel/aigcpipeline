@@ -56,3 +56,8 @@ env/runtime/tools/GPT-SoVITS/
 # 下载的压缩包
 *.zip
 
+
+# 工作台运行时数据
+tools/workbench/workbench.db
+assets/characters/
+

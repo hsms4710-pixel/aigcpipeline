@@ -30,6 +30,8 @@ _DEFAULT = {
             "bust": "head-and-shoulders chest-up portrait closeup, facing viewer, same character design",
             "expressions": "same character, head-and-shoulders closeup, {exp} expression",
             "turnaround": "same character, three-quarter / side / back views, same outfit and colors",
+            "side_view": "same character, full body, side view profile facing left, exact same outfit hair colors and design as the front view, consistent design",
+            "back_view": "same character, full body, back view seen from behind, exact same outfit hair colors and design as the front view, consistent design",
             "action": "same character, dynamic action pose, full body",
         },
         "output_constraint": "same character, consistent design, no text, no watermark",
@@ -106,7 +108,7 @@ if __name__ == "__main__":
 
 
 def build_style_prompt(persona, with_composition="full body, standing pose, facing viewer"):
-    """有参考图（风格参考）时的专用 prompt：模仿参考图画风，创建新角色，不复制参考角色。
+    """有参考图（风格参考）时的专用 prompt：把参考图的画风（线稿/上色/渲染）迁移到新角色上。
     与无参考的 build_prompt 结构完全不同（聚焦画风迁移，而非拼模板）。"""
     v = persona.get("visual", {})
     parts = [v.get("subject", persona.get("name", ""))]
@@ -116,8 +118,12 @@ def build_style_prompt(persona, with_composition="full body, standing pose, faci
     desc = ", ".join(p for p in parts if p)
     style = persona.get("style", {})
     anchor = style.get("anchor") or ""
-    return (f"Create a brand new original character artwork, NEVER copy the character from the reference image. "
-            f"Match the reference image's art style, line quality, coloring, shading and overall finish quality. "
-            f"New character: {desc}. {with_composition}. "
+    return (f"Study the reference artwork's ART STYLE very carefully: its lineart quality, coloring, "
+            f"shading, painterly texture, rendering and finish. Draw a NEW original character in EXACTLY "
+            f"this art style, using the same line weight, same coloring/shading technique, same level of detail "
+            f"and same overall finish quality as the reference. The new character is: {desc}. {with_composition}. "
+            f"Do NOT copy the reference character's face, pose or outfit, but DO match its art style exactly. "
             f"SINGLE standalone full-body illustration of ONE character only - NOT a character sheet, "
             f"NOT multiple views/poses, NOT a concept sheet. {anchor} transparent background, no text, no watermark")
+
+

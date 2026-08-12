@@ -11,7 +11,10 @@
     "detail": "银白长发、翠绿瞳色",
     "ref_image": "assets/demo/pixel_front_anchor.png"
   },
-  "style": { "type": "splash", "anchor": "high-quality game splash art, anime style, clean lineart, detailed rendering, vibrant colors, delicate silver hair and emerald eyes" },
-  "assets": { "pixel": ["three_view", "actions", "sprite_sheet"], "splash": ["portrait", "expressions"] },
+  "style": {
+    "type": "splash",
+    "anchor": "Arknights (明日方舟) official game art style, soft painterly cel-shading, elegant thin lineart, subtle gradients, muted warm palette, detailed fabric and armor rendering, high-quality splash art"
+  },
+  "assets": { "pixel": ["three_view", "actions", "sprite_sheet"], "splash": ["portrait", "expressions", "turnaround"] },
   "voice": { "timbre_desc": "清冷女声", "lines": [ {"text": "我会在这个世界留下我的传说。", "emotion": "determined"} ] }
 }

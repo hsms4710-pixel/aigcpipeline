@@ -108,8 +108,7 @@ def main():
         tasks = [("full", "portrait")]
         if "expressions" in asset_types:
             tasks.append(("bust", "bust"))
-        if "turnaround" in asset_types:
-            tasks.append(("turnaround", "turnaround"))
+
 
     print(f"角色: {char_id} | style: {style_type} | 任务: {[t[0] for t in tasks]}")
     if a.dry_run:
@@ -216,6 +215,46 @@ def main():
         else:
             print("[expressions] 跳过：缺 bust.png 基底")
 
+    # 转面/多视图：侧视 + 背视（逐视图编辑自 full，避免整图 sheet 不可靠），合成 3 视图审阅图
+    if style_type == "splash" and "turnaround" in asset_types:
+        full = os.path.join(portrait_dir, "full.png")
+        if os.path.exists(full):
+            for view, vname in (("side", "side_view"), ("back", "back_view")):
+                out = os.path.join(portrait_dir, f"turn_{view}.png")
+                prompt = build_prompt(persona, style_type, vname)
+                if os.path.exists(out) and not a.force:
+                    print(f"  skip turn_{view}.png（已存在，--force 重新生成）")
+                    assets_meta.append({"type": f"{style_type}/turn_{view}", "file": f"portrait/turn_{view}.png",
+                                        "engine": a.model, "prompt": prompt, "source": "edit-from-full"})
+                    continue
+                print(f"[turn_{view}] 生成中…")
+                try:
+                    n, dt = gen_image(client, prompt, out, ref=full, model=a.model, backend=a.backend,
+                                      transparent=True)
+                    assets_meta.append({"type": f"{style_type}/turn_{view}", "file": f"portrait/turn_{view}.png",
+                                        "engine": a.model, "prompt": prompt, "source": "edit-from-full",
+                                        "size_bytes": n, "elapsed_s": round(dt, 1)})
+                    print(f"  ok turn_{view}.png ({n}B, {dt:.1f}s)")
+                except Exception as e:
+                    print(f"  ERR turn_{view}: {e}")
+            # 3 视图审阅图（front | side | back）
+            from PIL import Image as _PIL3
+            parts = []
+            for name in ("full", "turn_side", "turn_back"):
+                fp = os.path.join(portrait_dir, f"{name}.png")
+                if os.path.exists(fp):
+                    parts.append(_PIL3.open(fp).convert("RGBA"))
+            if len(parts) == 3:
+                w = max(i.width for i in parts)
+                h = max(i.height for i in parts)
+                sheet = _PIL3.new("RGBA", (w * 3, h), (0, 0, 0, 0))
+                for idx, im in enumerate(parts):
+                    sheet.paste(im, (idx * w, 0))
+                sheet.save(os.path.join(portrait_dir, "turnaround_sheet.png"))
+                print("  3 视图审阅图: turnaround_sheet.png")
+        else:
+            print("[turnaround] 跳过：缺 full.png 基底")
+
     meta = {"character_id": char_id, "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
             "assets": assets_meta}
     with open(os.path.join(outdir, "metadata.json"), "w", encoding="utf-8") as f:
@@ -228,5 +267,6 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 

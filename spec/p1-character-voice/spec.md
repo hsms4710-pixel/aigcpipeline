@@ -48,6 +48,11 @@ expressions/ 图集仅作无绑定的快速可玩占位，非主产物。
 | 工作台 Web | 上传→预览→确认→下载 | FastAPI + 前端 |
 
 ## 5. 开源/论文/产品借鉴清单（已调研，按主流性排序）
+### 云生图 API（可选后端，质量/兜底）
+- **OpenAI gpt-image-1 / GPT Image 2**（Images API）：参考图多图编辑一致性、文字渲染精确、2K/4K；GPT Image 2 角色一致性显著提升（多视图同角色）→ 适合概念探索/编辑/文字精确；**但精确 ID 锁定不如本地 InstantID/PuLID 可控**，国内访问需中转，约 \.04/张
+- **fal.ai / Replicate**：聚合 FLUX/SD 等主流模型，作为 ComfyUI 之外的质量兜底
+- **Banana.dev**：serverless GPU 推理平台（可把 ComfyUI 工作流/模型部署成 API），非生图 API 主流，列为可选部署目标
+
 ### 形象一致性（工业主流）
 - **ComfyUI**：业界 AIGC 生产管线事实标准。Ubisoft 开源 CHORD 模型 + ComfyUI 节点（端到端 PBR 材质）；Series Entertainment 用 ComfyUI 生产 10 万+ 游戏/视频资产（180× 提速）；游戏道具设计实证研究（节点式生成工作流）。→ **执行引擎首选**
 - **InstantID**：零样本身份保持，2025-12 社区共识"大多数应用的最佳平衡"（相似度高/效果好/速度合理/复杂度可控）→ **人脸一致性首选**
@@ -104,4 +109,5 @@ expressions/ 图集仅作无绑定的快速可玩占位，非主产物。
 - Live2D 分层如何自动生成/拆分（先人工拆分 + 规范，工具化后置）
 - 无参考音时 TTS 音色如何选（预设音色库：云 API 音色 vs CosyVoice 克隆）
 - 表情差分数量/情绪集合定多少（先 neutral/happy/sad/angry 4 个）
+
 

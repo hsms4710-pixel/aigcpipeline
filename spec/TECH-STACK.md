@@ -12,6 +12,7 @@
 | 层 | 首选（工业主流） | 备选 | 明确不用 | 证据 |
 |---|---|---|---|---|
 | 生图编排 | **ComfyUI**（节点工作流） | 自研调用 | 纯自研 CLI | Ubisoft CHORD 开源 ComfyUI 节点；Series Entertainment 用 ComfyUI 生产 10 万+ 资产；游戏道具生成实证研究 |
+| 云生图 API（兜底/质量） | **fal.ai / Replicate / 火山引擎**（主流聚合） | **OpenAI gpt-image-1 / GPT Image 2**（文字渲染/参考图编辑/角色一致性） | Banana.dev（非主流生图 API，仅可选 serverless 部署） | fal 聚合 1000+ 模型；GPT Image 2（2026-04）角色一致性显著提升、2K 输出；OpenAI 国内需中转、约 \.04/张 |
 | 角色一致性 | **InstantID**（首选）/ PuLID / IP-Adapter FaceID | 按需训练角色 LoRA | CharForge 当默认 | 2025-12 社区共识 InstantID 最佳平衡；PuLID 高质量慢；IP-Adapter 快低显存 |
 | 风格锁定 | 角色 LoRA（按需训练） | 风格 LoRA | — | 大厂/工作室通用做法 |
 | 2D 角色动画 | **Live2D Cubism**（免费版个人/小规模<1000万日元可商用）+ **Umamo**（开源 rigging，Cubism 的 drop-in）+ **Spine** | DragonBones（开源） | 只出静态表情 PNG（不够） | Live2D 二次元标配；Umamo 开源替代（GPLv3）；Spine 2D 骨骼行业标准 |
@@ -33,5 +34,6 @@
 - 3D 报告：3D 生成技术演进（生产级网格/水密/PBR）
 - Live2D/Spine：2D 骨骼动画 2026 对比、二次元手游标配（bilibili 图形引擎实战）
 - 引擎采用：GMTK 2025 / JetBrains State of Game Dev / Outlook Respawn
+
 
 

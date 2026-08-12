@@ -50,3 +50,10 @@
 - 边界关键：P1 不做 3D/引擎/Live2D 绑定；P3 不做游戏逻辑；P4 不做完整游戏；P2/P5 后置；云生图优先；资产中立；评测后置；一个 Part 一个 Part
 - README/ROADMAP 已加引用
 - **下一步**：Part 1（P1）开发，从 t1 工具链验证开始
+
+## 2026-08-12 —— 执行环境定为本地隔离文件夹 + Key 申请清单（决策）
+- 形态：**本地隔离文件夹** env/runtime/（uv venv 3.11 + portable 工具 + 模型缓存全在目录内），不装系统
+- 生图云 API（GPT/Nano Banana）不占本地显存 → 本机 8GB 够 P1（工作台+TTS+音频）
+- Key 申请链接写入 env/README.md + .env.example：OpenAI / Gemini(AI Studio 或 Vertex) / fal / OpenRouter / 火山 / Azure
+- 更新：env/README、.env.example、env-report、t1、链路总览、ROADMAP
+- **下一步**：等 key 就绪后跑 t1

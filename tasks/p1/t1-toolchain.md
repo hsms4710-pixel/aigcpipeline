@@ -4,14 +4,14 @@
 环境方案：**env/README.md（隔离环境执行，本机只做入口）** ｜ 环境事实：reference/env-report-2026-08-12.md
 
 ## 目标
-在**隔离环境**（Docker Compose / WSL2 / 云机，三选一）里验证 P1 主链路可跑通。
-**生图后端首选：云 API = GPT Image 2 + Nano Banana**（用户决定）；本地 ComfyUI（SDXL+InstantID）作为可选离线后端，首期只做探测不默认验证。
+在**本地隔离文件夹**（env/runtime/，uv venv 3.11，见 env/README.md）验证 P1 主链路。
+**生图后端：云 API = GPT Image 2 + Nano Banana**（用户决定）；本地 ComfyUI（SDXL+InstantID）作为可选离线后端，首期只做探测不默认验证。
 
-## 前置（选定隔离形态后执行，见 env/README.md）
-1. 选定形态：A Docker Compose（推荐）/ B WSL2 / C 云机
-2. 部署 comfyui 服务（含 InstantID/IP-Adapter 节点）→ 验证生图
-3. 部署 tts 服务（CosyVoice 本地 / 云 API key 进 .env）→ 验证语音
-4. workbench 就位（本机浏览器访问）
+## 前置（本地隔离文件夹，见 env/README.md）
+1. 建 env/runtime/ + uv venv（Python 3.11）
+2. 复制 .env.example → env/.env，填 key（GPT/Gemini/TTS）
+3. 装依赖 + portable ffmpeg 到 runtime/tools/
+4. 装 CosyVoice（本地 TTS）→ 验证语音；生图直接调云 API（不需本地 ComfyUI）
 
 ## 验证内容
 - **生图（云 API 首选）**：GPT Image 2（gpt-image-1）vs **Nano Banana Pro**（Gemini API/fal）——4 表情（neutral/happy/sad/angry）身份一致性/质量/耗时/成本；角色设定图（三视图）一致性

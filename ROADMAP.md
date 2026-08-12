@@ -26,8 +26,8 @@ P2 / P3 / P4 ──► P5 评测（后置）
 > 用户决策 2026-08-12：**过场动画（P2）后置**，先考虑怎么把 NPC 生成出来。
 > 主链：**P1 形象+语音 → P3 Agent → P4 引擎接入（NPC 实体化+引擎内动画）** → 打通后再启动 P2 过场 / P5 评测。
 ## 执行环境（全 Part 通用）
-- 管线在**隔离环境**执行（env/README.md：Docker Compose / WSL2 / 云机三选一），本机只做浏览器入口 + git
-- 本机 8GB 显存 → 隔离机按需选型（SDXL 8GB 够；FLUX/PuLID/3D 需 24GB+ 或云 API）
+- 管线在**本地隔离文件夹**执行（env/runtime/，uv venv 3.11，见 env/README.md），不污染系统
+- 生图走云 API（GPT + Nano Banana），本地只跑工作台 + TTS + 音频 → 本机 8GB 够 P1；3D/PuLID 后置（需云机/API）
 
 ## Part 1 —— P1 角色形象+语音生成工作台 MVP（⏳ 下一个）
 - 目标：本地 Web 工作台：人设卡/参考图/参考音 → 立绘（分层，Live2D/3D blendshape 预留）+ 语音 → 资产包下载

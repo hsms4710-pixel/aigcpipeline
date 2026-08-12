@@ -57,8 +57,8 @@ def _fal_gen(prompt, out, ref, model):
     return _download(url, out)
 
 
-def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None, seed=None, transparent=False, mask=None):
-    """统一生图入口。client 可复用；返回 (bytes大小, 耗时秒)。"""
+def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None, seed=None, transparent=False, mask=None, style_ref=None):
+    """统一生图入口。client 可复用；style_ref=风格参考图（重绘为新角色，同画风）。返回 (bytes大小, 耗时秒)。"""
     t0 = time.time()
     if backend == "openai":
         if client is None:
@@ -67,6 +67,14 @@ def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size
             repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             load_dotenv(os.path.join(repo, "env", ".env"), override=True)
             client = OpenAI(api_key=os.environ.get("GPT_API_KEY", ""), base_url=os.environ.get("GPT_BASE_URL", ""))
+        # 风格参考：把参考图重绘为新角色（同画风）
+        if style_ref is not None and ref is None:
+            sp = ("Redraw this reference artwork into a NEW original character in the same art style, "
+                  "do not copy the character: " + prompt)
+            with open(style_ref, "rb") as f:
+                r = client.images.edit(model=model, image=f, prompt=sp, size=size,
+                                       **({"background": "transparent"} if transparent else {}))
+                return _download(r.data[0].url, out), time.time() - t0
         n = _openai_gen(client, prompt, out, ref, model, size, seed=seed, transparent=transparent, mask=mask)
     elif backend == "gemini":
         if client is None:

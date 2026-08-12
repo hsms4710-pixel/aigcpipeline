@@ -35,6 +35,7 @@ def main():
     ap.add_argument("--backend", choices=["openai", "gemini", "fal"], default="openai", help="生图后端")
     ap.add_argument("--scene", choices=["pixel", "splash"], default=None, help="覆盖 persona.style.type")
     ap.add_argument("--no-ref", action="store_true", help="不用参考图锚点（纯 prompt 逐任务生成）")
+    ap.add_argument("--style-ref", default=None, help="风格参考图（如坎公/明日方舟/原神立绘），重绘为新角色同画风")
     a = ap.parse_args()
 
     with open(a.persona, encoding="utf-8-sig") as f:
@@ -68,6 +69,8 @@ def main():
 
     client = load_client()
     ref = a.ref
+    style_ref = a.style_ref
+    size = "1536x1024" if style_type == "splash" else "1024x1024"  # 立绘用高分辨率（表情拼图切分后细节更好）
     assets_meta = []
     transparent = style_type == "splash"  # 立绘/表情：透明背景
     for name, view in tasks:
@@ -75,7 +78,7 @@ def main():
         outfile = os.path.join(portrait_dir, f"{name}.png")
         print(f"[{name}] 生成中...")
         n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend,
-                          transparent=transparent, mask=None, seed=None)
+                          transparent=transparent, mask=None, seed=None, style_ref=style_ref)
         if name == "exp_sheet":
             # 表情拼图切分：2x2 -> exp_happy/sad/angry/neutral（同一张图，天然同批一致）
             from PIL import Image as _PIL

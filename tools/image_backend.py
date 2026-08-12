@@ -12,26 +12,18 @@ def _download(url, out):
     return len(img)
 
 
-def _openai_gen(client, prompt, out, ref, model, size):
+def _openai_gen(client, prompt, out, ref, model, size, seed=None):
     if ref is None:
-        resp = client.images.generate(model=model, prompt=prompt, n=1, size=size)
+        kwargs = {"model": model, "prompt": prompt, "n": 1, "size": size}
+        if seed is not None:
+            kwargs["extra_body"] = {"seed": seed}
+        resp = client.images.generate(**kwargs)
         return _download(resp.data[0].url, out)
+    # 参考图锚点：用 images.edit（中转站已验证支持；responses 暂 503）
     with open(ref, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode()
-    resp = client.responses.create(model=model, input=[
-        {"type": "image", "image_url": "data:image/png;base64," + b64},
-        {"type": "text", "text": prompt},
-    ])
-    for it in resp.output:
-        for part in (getattr(it, "content", None) or []):
-            if getattr(part, "type", "") == "image":
-                url = getattr(part, "image_url", "")
-                if isinstance(url, str) and url.startswith("data:"):
-                    data = base64.b64decode(url.split(",", 1)[1])
-                    with open(out, "wb") as f:
-                        f.write(data)
-                    return len(data)
-    raise RuntimeError("responses 输出无图片（中转站可能不支持参考图）")
+        kwargs = {"model": model, "image": f, "prompt": prompt, "size": size}
+        resp = client.images.edit(**kwargs)
+        return _download(resp.data[0].url, out)
 
 
 def _gemini_gen(client, prompt, out, ref, model):
@@ -57,7 +49,7 @@ def _fal_gen(prompt, out, ref, model):
     return _download(url, out)
 
 
-def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None):
+def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None, seed=None):
     """统一生图入口。client 可复用；返回 (bytes大小, 耗时秒)。"""
     t0 = time.time()
     if backend == "openai":
@@ -67,7 +59,7 @@ def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size
             repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             load_dotenv(os.path.join(repo, "env", ".env"), override=True)
             client = OpenAI(api_key=os.environ.get("GPT_API_KEY", ""), base_url=os.environ.get("GPT_BASE_URL", ""))
-        n = _openai_gen(client, prompt, out, ref, model, size)
+        n = _openai_gen(client, prompt, out, ref, model, size, seed=seed)
     elif backend == "gemini":
         if client is None:
             from google import genai

@@ -78,7 +78,7 @@ def main():
                             "engine": a.model, "prompt": prompt, "size_bytes": n, "elapsed_s": round(dt, 1)})
         print(f"  ok {name}.png ({n}B, {dt:.1f}s)")
         if ref is None and not a.no_ref:
-            ref = outfile  # 之后的任务带锚点（参考图作为后续补充能力）
+            ref = outfile  # 参考图锚点（images.edit 保持角色）
     meta = {"character_id": char_id, "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
             "assets": assets_meta}
     with open(os.path.join(outdir, "metadata.json"), "w", encoding="utf-8") as f:

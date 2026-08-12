@@ -50,3 +50,8 @@
 - 场景 B（立绘）：主立绘 + happy/sad/angry/neutral 表情 5 张（assets/demo/char_ailin_splash）
 - 纯 prompt 无参考图流程跑通（--no-ref）；参考图锚点（responses）作为后续补充能力
 - 一致性观察：纯 prompt 三视图/行为帧需要肉眼确认（待用户看效果）
+## 参考图锚点方案：images.edit（2026-08-13 确认）
+- responses API 仍 503 → 改用 **images.edit**（中转站支持）：front/主立绘生成后，后续任务 image=锚点图 + prompt 编辑 → 保持角色
+- seed 参数也支持（extra_body）
+- v2 重跑：场景 A（char_ailin_v2）7 张 + 场景 B（char_ailin_splash_v2）5 张，全部带锚点
+- 待用户对比 v1（纯 prompt）vs v2（锚点）一致性

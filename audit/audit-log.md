@@ -113,3 +113,9 @@
 - 场景 B 立绘：主立绘 + 4 表情（5 张，assets/demo/char_ailin_splash）
 - 纯 prompt（--no-ref）；参考图锚点后置为补充能力
 - 生成资产不入库（.gitignore assets/demo/char_*/）；待用户审阅一致性后定 t9/t10 结论
+
+## 2026-08-13 —— 一致性修复：参考图锚点启用（images.edit）
+- 用户审阅 v1：hurt 画风不一致；场景 B 表情位置/画风漂移（纯 prompt 无锚点导致）
+- 方案：中转站 responses 503 → 改用 images.edit（图生图）做锚点；seed 支持
+- 重跑 v2：场景 A/B 全带锚点（assets/demo/char_ailin_v2、char_ailin_splash_v2）
+- 待用户对比 v1/v2

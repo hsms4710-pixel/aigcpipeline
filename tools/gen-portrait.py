@@ -19,10 +19,10 @@ def load_client():
 
 
 def gen_image(client, prompt, out, ref=None, model="gpt-image-2", size="1024x1024", backend="openai",
-             transparent=False, mask=None, seed=None):
+             transparent=False, mask=None, seed=None, style_ref=None):
     from image_backend import gen_image as _gen
     return _gen(prompt, out, ref=ref, backend=backend, model=model, size=size, client=client,
-                transparent=transparent, mask=mask, seed=seed)
+                transparent=transparent, mask=mask, seed=seed, style_ref=style_ref)
 
 
 def main():

@@ -29,11 +29,15 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 管线在**本地隔离文件夹**执行（env/runtime/，uv venv 3.11，见 env/README.md），不污染系统
 - 生图走云 API（GPT + Nano Banana），本地只跑工作台 + TTS + 音频 → 本机 8GB 够 P1；3D/PuLID 后置（需云机/API）
 
-## Part 1 —— P1 角色形象+语音生成工作台 MVP（⏳ 下一个）
-- 目标：本地 Web 工作台：人设卡/参考图/参考音 → 立绘（分层，Live2D/3D blendshape 预留）+ 语音 → 资产包下载
-- 生图后端：**云 API 首选 GPT Image 2 + Nano Banana**；本地 ComfyUI 为可选离线后端
-- 借鉴：CharForge / Flux Kontext（形象一致性）、GPT-SoVITS / CosyVoice / F5-TTS（语音）、handcrafted-persona-engine / AITuberKit（虚拟人栈）、3dModelGenerator（job 状态机）
-- **gate**：P1 验收全部通过（见 `spec/p1-character-voice/spec.md` + `tasks/p1/`）；Godot 最小工程能导入立绘+播放语音；P1 审计记录入 `audit/audit-log.md`
+## Part 1 —— P1 角色形象 + V1 语音管线（⏳ 下一个，可并行）
+- **P1 形象**：工作台：人设卡/参考图 → 立绘（分层，Live2D/3D blendshape 预留）→ 资产包
+  - 生图后端：**云 API 首选 GPT Image 2 + Nano Banana**；本地 ComfyUI 为可选离线后端
+  - 借鉴：ComfyUI 生产管线 / InstantID / GPT Image 2 / Nano Banana；handcrafted-persona-engine（UI）、3dModelGenerator（job 状态机）
+  - **gate**：验收全过（见 `spec/p1-character-voice/spec.md` + `tasks/p1/`）；Godot 最小工程能导入立绘；P1 审计
+- **V1 语音管线**（独立实践，见 `spec/voice/spec.md`）：
+  - 路线 A 零样本克隆（CosyVoice 2，3-10s）｜ 路线 B **声音集训练定制 TTS**（GPT-SoVITS 微调 / CosyVoice2 / Spark-TTS / Qwen3-TTS，5-10min+ 声音集）｜ 增强 RVC 音色转换
+  - 数据工具：zh-tts-mini-corpus + 自研清洗（人声分离/切分/标注）；版权仅用自有/授权声音集
+  - **gate**：三条验证（零样本/微调/RVC）全过 + 版权声明
 
 ## Part 2 —— P3 AI NPC Agent 服务（规划中）
 - 目标：引擎无关 Agent 服务（Memory-RAG + 对话 + 白名单动作），先做"无游戏也能对话"沙盒

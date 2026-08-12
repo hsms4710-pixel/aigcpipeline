@@ -57,3 +57,9 @@
 - Key 申请链接写入 env/README.md + .env.example：OpenAI / Gemini(AI Studio 或 Vertex) / fal / OpenRouter / 火山 / Azure
 - 更新：env/README、.env.example、env-report、t1、链路总览、ROADMAP
 - **下一步**：等 key 就绪后跑 t1
+
+## 2026-08-12 —— V1 语音管线独立（拆分实践）+ 声音集训练（专项）
+- 决策：TTS 从 P1 拆为独立实践 **V1 语音管线**（零样本克隆 + 声音集训练定制 TTS + RVC 增强）
+- 声音集训练主流：GPT-SoVITS 微调（1-5min，98%+ 相似度）/ CosyVoice2 / Spark-TTS / Qwen3-TTS / XTTS-v2；数据工具 zh-tts-mini-corpus；VN 提取配音微调教程
+- 更新：链路总览（P1 拆形象 + V1 语音）、ROADMAP（Part 1 可并行）、spec/voice 新建、TECH-STACK、tasks/voice、reference
+- 版权约束：仅用自有/授权声音集

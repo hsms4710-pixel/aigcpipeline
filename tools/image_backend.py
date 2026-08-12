@@ -28,6 +28,8 @@ def _openai_gen(client, prompt, out, ref, model, size, seed=None, transparent=Fa
             kwargs["background"] = "transparent"
         if mask is not None:
             kwargs["mask"] = open(mask, "rb")
+        if seed is not None:
+            kwargs["extra_body"] = {"seed": seed}
         resp = client.images.edit(**kwargs)
         return _download(resp.data[0].url, out)
 

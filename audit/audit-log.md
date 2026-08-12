@@ -125,3 +125,8 @@
 - v3 验证：全 RGBA 透明背景（full 68万+ 透明像素）；待用户审阅表情连贯性
 - 人设卡编辑器：工作台前端 PersonaForm（名字/种族/职业/性格/视觉/装备/服饰/细节/风格类型/资产勾选）→ 生成 persona.json → 创建角色；build 成功
 - 参考图锚点确认：images.edit（responses 仍 503）
+
+## 2026-08-13 —— 表情拼图切分方案（v6）+ start-workbench.cmd 修复
+- 表情：mask 忽略 + seed 不稳定 → 2x2 拼图切分（同一张图天然一致），v6 达标（透明背景+同批）
+- start-workbench.cmd：修复 cd 层级 + 错误捕获 + 已验证 uvicorn health OK
+- 待办：t6 Godot 导入验证（需装 Godot）、t7 审计

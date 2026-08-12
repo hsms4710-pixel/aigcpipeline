@@ -55,3 +55,8 @@
 - seed 参数也支持（extra_body）
 - v2 重跑：场景 A（char_ailin_v2）7 张 + 场景 B（char_ailin_splash_v2）5 张，全部带锚点
 - 待用户对比 v1（纯 prompt）vs v2（锚点）一致性
+## 表情连贯最终方案：2x2 拼图切分（2026-08-13）
+- 中转站 mask 忽略（整图重绘，diff 76-100）；seed 不稳定（单测 10.8 但整批漂移）
+- **最终方案：一次生成 2x2 表情拼图（同一角色 4 表情，透明背景）→ PIL 切分 4 张** → 同一张图切分，构图/画风天然一致
+- v6 验证：full(1024, RGBA 72万透明) + exp_*(512, RGBA 8-11万透明)，资产包校验通过
+- 模板：splash.json expressions_sheet；gen-portrait exp_sheet 任务切分

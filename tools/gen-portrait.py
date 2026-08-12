@@ -19,10 +19,10 @@ def load_client():
 
 
 def gen_image(client, prompt, out, ref=None, model="gpt-image-2", size="1024x1024", backend="openai",
-             transparent=False, mask=None):
+             transparent=False, mask=None, seed=None):
     from image_backend import gen_image as _gen
     return _gen(prompt, out, ref=ref, backend=backend, model=model, size=size, client=client,
-                transparent=transparent, mask=mask)
+                transparent=transparent, mask=mask, seed=seed)
 
 
 def main():
@@ -33,8 +33,8 @@ def main():
     ap.add_argument("--ref", default=None, help="锚点图（参考图）")
     ap.add_argument("--model", default="gpt-image-2")
     ap.add_argument("--backend", choices=["openai", "gemini", "fal"], default="openai", help="生图后端")
+    ap.add_argument("--scene", choices=["pixel", "splash"], default=None, help="覆盖 persona.style.type")
     ap.add_argument("--no-ref", action="store_true", help="不用参考图锚点（纯 prompt 逐任务生成）")
-    ap.add_argument("--scene", choices=["pixel", "splash"], default=None, help="overwrite persona.style.type")
     a = ap.parse_args()
 
     with open(a.persona, encoding="utf-8-sig") as f:
@@ -46,7 +46,6 @@ def main():
 
     style_type = a.scene or persona.get("style", {}).get("type", "splash")
     asset_types = persona.get("assets", {}).get(style_type, [])
-    # 默认任务：立绘 + 表情（splash）或 front 锚点 + 三视图（pixel）
     if style_type == "pixel":
         tasks = [("full", "front"), ("side", "side"), ("back", "back")]
         if "actions" in asset_types:
@@ -55,15 +54,14 @@ def main():
     else:
         tasks = [("full", "portrait")]
         if "expressions" in asset_types:
-            for e in ("happy", "sad", "angry", "neutral"):
-                tasks.append((f"exp_{e}", "expressions"))
+            tasks.append(("exp_sheet", "expressions_sheet"))  # 2x2 拼图 -> 切分
         if "turnaround" in asset_types:
             tasks.append(("turnaround", "turnaround"))
 
     print(f"角色: {char_id} | style: {style_type} | 任务: {[t[0] for t in tasks]}")
     if a.dry_run:
         for name, view in tasks:
-            p = build_prompt(persona, style_type, view, exp=name.split("_")[-1] if name.startswith("exp_") else "neutral")
+            p = build_prompt(persona, style_type, view, exp="neutral")
             print(f"\n--- {name} ({view}) ---\n{p}\n")
         print("DRY-RUN: 未调用 API")
         return 0
@@ -73,29 +71,36 @@ def main():
     assets_meta = []
     transparent = style_type == "splash"  # 立绘/表情：透明背景
     for name, view in tasks:
-        exp = name.split("_")[-1] if name.startswith("exp_") else "neutral"
-        prompt = build_prompt(persona, style_type, view, exp=exp)
+        prompt = build_prompt(persona, style_type, view, exp="neutral")
         outfile = os.path.join(portrait_dir, f"{name}.png")
-        mask = None
-        if name.startswith("exp_") and ref:
-            # 表情连贯：基于锚点立绘生成脸部 mask，只编辑表情区域
-            mask = os.path.join(portrait_dir, f"{name}_mask.png")
-            face_mask(ref, mask)
         print(f"[{name}] 生成中...")
         n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend,
-                          transparent=transparent, mask=mask)
-        if mask and os.path.exists(mask):
-            os.remove(mask)
+                          transparent=transparent, mask=None, seed=None)
+        if name == "exp_sheet":
+            # 表情拼图切分：2x2 -> exp_happy/sad/angry/neutral（同一张图，天然同批一致）
+            from PIL import Image as _PIL
+            sheet = _PIL.open(outfile)
+            w, h = sheet.size
+            for i, emo in enumerate(["happy", "sad", "angry", "neutral"]):
+                box = ((i % 2) * w // 2, (i // 2) * h // 2, (i % 2 + 1) * w // 2, (i // 2 + 1) * h // 2)
+                panel = sheet.crop(box)
+                pout = os.path.join(portrait_dir, f"exp_{emo}.png")
+                panel.save(pout)
+                assets_meta.append({"type": f"{style_type}/exp_{emo}", "file": f"portrait/exp_{emo}.png",
+                                    "engine": a.model, "prompt": prompt, "source": "exp_sheet"})
+            os.remove(outfile)
+            print("  ok exp_sheet -> 4 panels")
+            continue
         assets_meta.append({"type": f"{style_type}/{name}", "file": f"portrait/{name}.png",
                             "engine": a.model, "prompt": prompt, "size_bytes": n, "elapsed_s": round(dt, 1)})
         print(f"  ok {name}.png ({n}B, {dt:.1f}s)")
         if ref is None and not a.no_ref:
             ref = outfile  # 参考图锚点（images.edit 保持角色）
+
     meta = {"character_id": char_id, "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
             "assets": assets_meta}
     with open(os.path.join(outdir, "metadata.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
-    # 拷贝 persona
     import shutil
     shutil.copy(a.persona, os.path.join(outdir, "persona.json"))
     print("资产包已写入:", outdir)

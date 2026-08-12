@@ -12,7 +12,7 @@
 | 层 | 首选（工业主流） | 备选 | 明确不用 | 证据 |
 |---|---|---|---|---|
 | 生图编排 | **ComfyUI**（节点工作流） | 自研调用 | 纯自研 CLI | Ubisoft CHORD 开源 ComfyUI 节点；Series Entertainment 用 ComfyUI 生产 10 万+ 资产；游戏道具生成实证研究 |
-| 云生图 API（兜底/质量） | **fal.ai / Replicate / 火山引擎**（主流聚合） | **OpenAI gpt-image-1 / GPT Image 2**（文字渲染/参考图编辑/角色一致性） | Banana.dev（非主流生图 API，仅可选 serverless 部署） | fal 聚合 1000+ 模型；GPT Image 2（2026-04）角色一致性显著提升、2K 输出；OpenAI 国内需中转、约 \.04/张 |
+| 云生图 API（质量/兜底） | **Google Nano Banana 系**（Gemini 2.5 Flash Image GA / Pro / 2；$0.039-0.24/张；**ComfyUI 原生节点**，工业常用于游戏买量/原画/概念） | **OpenAI gpt-image-1 / GPT Image 2**（角色一致性榜断层第一、2K/4K）；**Qwen-Image**（阿里开源 Apache2.0，可本地部署、中文强） | Banana.dev（非主流生图 API，仅可选 serverless 部署） | fal/OpenRouter/Vertex 聚合；GPT Image 2 角色一致性 2026 榜第一；Nano Banana Pro 4K 文字精确；Qwen-Image 国内可本地 |
 | 角色一致性 | **InstantID**（首选）/ PuLID / IP-Adapter FaceID | 按需训练角色 LoRA | CharForge 当默认 | 2025-12 社区共识 InstantID 最佳平衡；PuLID 高质量慢；IP-Adapter 快低显存 |
 | 风格锁定 | 角色 LoRA（按需训练） | 风格 LoRA | — | 大厂/工作室通用做法 |
 | 2D 角色动画 | **Live2D Cubism**（免费版个人/小规模<1000万日元可商用）+ **Umamo**（开源 rigging，Cubism 的 drop-in）+ **Spine** | DragonBones（开源） | 只出静态表情 PNG（不够） | Live2D 二次元标配；Umamo 开源替代（GPLv3）；Spine 2D 骨骼行业标准 |

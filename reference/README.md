@@ -11,6 +11,12 @@
 - 2D 动画：【主流】Spine（行业标准）+ Live2D（VTuber/二次元互动标配）对比
 - 引擎采用：【主流】GMTK 2025（Unity 64%/Godot 20%/UE 11%）、JetBrains State of Game Dev 2025
 
+## P1 形象（云生图，2026 格局）
+- **Nano Banana 系**：Gemini 2.5 Flash Image（GA）/ Pro（Gemini 3 Pro Image，4K）/ 2（3.1 Flash Image）；ComfyUI 节点（ComfyUI_Gemini / comfyui-nano-banana）；$0.039-0.24/张
+- **GPT Image 2**：角色一致性 2026 榜断层第一；2K/4K；~$0.04/张
+- **Qwen-Image**（阿里，Apache 2.0，可本地、中文强）
+- 实测对比：chatimg.ai 7 模型对比、xsctbench、CSDN IP 漫剧实测
+
 ## P1 形象
 - ComfyUI（工业主流执行引擎）
 - InstantID / PuLID / IP-Adapter FaceID / PhotoMaker（身份保持，主流）

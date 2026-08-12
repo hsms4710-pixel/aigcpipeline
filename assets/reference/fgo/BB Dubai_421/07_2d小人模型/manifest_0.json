@@ -1,0 +1,18 @@
+[
+    {
+        "path": "2300600",
+        "type": "Modified Unity3D"
+    },
+    {
+        "path": "textures/2300600_01.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/2300600_02.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/ef_2300600_01.png",
+        "type": "Texture2D"
+    }
+]

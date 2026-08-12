@@ -1,0 +1,30 @@
+[
+    {
+        "path": "2300610",
+        "type": "Modified Unity3D"
+    },
+    {
+        "path": "textures/2300610_01.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/2300610_02.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/ef_2300610_01.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/ef_2300610_02.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/ef_2300610_03.png",
+        "type": "Texture2D"
+    },
+    {
+        "path": "textures/ef_2300610_04.png",
+        "type": "Texture2D"
+    }
+]

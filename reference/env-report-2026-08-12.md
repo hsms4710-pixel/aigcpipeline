@@ -1,6 +1,6 @@
 ﻿# 本机环境检查报告（2026-08-12）
 
-> 结论：**本机可作 P1 开发机（8GB 显存路线），3D 生成与 FLUX 高质量生图建议租机/API**。
+> 结论：**管线在隔离环境执行（见 env/README.md），本机只做入口**。隔离机按需选 8GB（SDXL 路线）/ 24GB+（FLUX/PuLID/3D）。本报告记录本机硬件事实与能力矩阵，供隔离机选型参考。
 
 ## 硬件
 | 项 | 值 | 对方案影响 |
@@ -44,3 +44,4 @@
 2. uv 建 Python 3.11 venv → 装 CUDA torch
 3. winget/choco 装 ffmpeg
 4. 装 ComfyUI（+ InstantID/IP-Adapter 节点）→ 跑 SDXL+InstantID 验证
+

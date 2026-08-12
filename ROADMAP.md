@@ -16,6 +16,10 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 仓库骨架、rule、spec 占位、harness、task 拆解、审计机制
 - **gate**：README 目录地图与实际一致；每个 part 有 spec 占位；P1 有可执行任务拆解
 
+## 执行环境（全 Part 通用）
+- 管线在**隔离环境**执行（env/README.md：Docker Compose / WSL2 / 云机三选一），本机只做浏览器入口 + git
+- 本机 8GB 显存 → 隔离机按需选型（SDXL 8GB 够；FLUX/PuLID/3D 需 24GB+ 或云 API）
+
 ## Part 1 —— P1 角色形象+语音生成工作台 MVP（⏳ 下一个）
 - 目标：本地 Web 工作台：人设卡/参考图/参考音 → 立绘（2-4 表情差分）+ 3 句克隆语音 → 资产包下载
 - 借鉴：CharForge / Flux Kontext（形象一致性）、GPT-SoVITS / CosyVoice / F5-TTS（语音）、handcrafted-persona-engine / AITuberKit（虚拟人栈）、3dModelGenerator（job 状态机）
@@ -45,3 +49,4 @@ P2 / P3 / P4 ──► P5 评测（后置）
 ```
 spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开发（逐 task）→ verify → audit → 归档
 ```
+

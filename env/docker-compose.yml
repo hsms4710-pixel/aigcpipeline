@@ -1,0 +1,58 @@
+﻿# 隔离环境编排骨架（env/docker-compose.yml）
+# 说明：镜像/版本在选定隔离形态后确认；GPU 需 nvidia-container-toolkit。
+version: "3.9"
+
+services:
+  comfyui:
+    # 镜像待定（官方 comfyui 或自建，含 InstantID/IP-Adapter 节点）
+    build: ./images/comfyui          # 或 image: <comfyui镜像>
+    ports:
+      - "8188:8188"
+    volumes:
+      - ../assets:/workspace/assets          # 产物挂载到宿主机
+      - comfy-models:/workspace/models        # 模型持久化
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+
+  tts:
+    build: ./images/tts
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../assets:/workspace/assets
+      - tts-models:/workspace/models
+    # 本地 TTS 建议也开 GPU；纯云 API 场景可不开
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  workbench:
+    build: ./images/workbench
+    ports:
+      - "8000:8000"
+    environment:
+      - COMFYUI_URL=http://comfyui:8188
+      - TTS_URL=http://tts:5000
+      - TTS_PROVIDER=${TTS_PROVIDER:-cosyvoice}   # cosyvoice | volcengine | azure | elevenlabs
+      - TTS_API_KEY=${TTS_API_KEY:-}
+    volumes:
+      - ../assets:/workspace/assets
+      - ../spec/p1-character-voice/contracts:/workspace/contracts:ro
+    depends_on:
+      - comfyui
+      - tts
+
+volumes:
+  comfy-models:
+  tts-models:

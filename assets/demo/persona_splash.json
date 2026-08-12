@@ -1,0 +1,17 @@
+﻿{
+  "name": "艾琳",
+  "race": "精灵",
+  "class": "游侠",
+  "personality_tags": ["冷静", "敏锐"],
+  "background": "来自北方森林的游侠，独自旅行。",
+  "visual": {
+    "subject": "年轻女性精灵，纤细体型",
+    "equipment": "复合弓",
+    "outfit": "绿色皮甲",
+    "detail": "银白长发、翠绿瞳色",
+    "ref_image": "assets/demo/pixel_front_anchor.png"
+  },
+  "style": { "type": "splash", "anchor": "high-quality game splash art, anime style, clean lineart, detailed rendering, vibrant colors, delicate silver hair and emerald eyes" },
+  "assets": { "pixel": ["three_view", "actions", "sprite_sheet"], "splash": ["portrait", "expressions"] },
+  "voice": { "timbre_desc": "清冷女声", "lines": [ {"text": "我会在这个世界留下我的传说。", "emotion": "determined"} ] }
+}

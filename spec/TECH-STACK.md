@@ -1,4 +1,4 @@
-# 技术选型基线（spec/TECH-STACK.md）—— 工业主流优先
+﻿# 技术选型基线（spec/TECH-STACK.md）—— 工业主流优先
 
 > 目的：防止"为了省事/MVP 采用非主流"。本表是选型唯一依据，改动需记录 decision。
 > 证据截至 2026-08（调研日期），每条标注来源类型：商业产品 / 大厂开源 / 主流开源 / 社区项目。
@@ -14,6 +14,7 @@
 | 生图编排 | **ComfyUI**（节点工作流） | 自研调用 | 纯自研 CLI | Ubisoft CHORD 开源 ComfyUI 节点；Series Entertainment 用 ComfyUI 生产 10 万+ 资产；游戏道具生成实证研究 |
 | 生图（P1 首选，云 API） | **OpenAI GPT Image 2 / gpt-image-1**（角色一致性 2026 榜断层第一、2K/4K、文字精确）+ **Google Nano Banana 系**（Nano Banana GA / Pro 4K / 2；工业常用于游戏原画/概念/买量；ComfyUI 节点） | 本地 ComfyUI（SDXL+InstantID+LoRA，离线/开源用户可自托管，降为可选） | Banana.dev（非主流，仅可选 serverless 部署） | 2026 实测：GPT Image 2 角色一致性第一（+150 分）、复杂姿态 89.0；Nano Banana Pro 82.8；国内可走 fal/OpenRouter/中转；本地 ComfyUI 保留为开源离线后端 |
 | 角色一致性 | **InstantID**（首选）/ PuLID / IP-Adapter FaceID | 按需训练角色 LoRA | CharForge 当默认 | 2025-12 社区共识 InstantID 最佳平衡；PuLID 高质量慢；IP-Adapter 快低显存 |
+| 表情差分（2D 立绘） | **人脸层合成**（逐表情 images.edit + mask → 抠人脸区合成回基底，身体 100% 一致）+ **ComfyUI VNCCS Emotion Studio**（表情工作室，参考） | 单图 2×2 拼图（模型不可靠：画成"一张大图切 4 份"） | 只出静态整图表情（不够） | 二次元游戏立绘表情切换 = 同构图换表情层；v7 实测：mask 编辑中转站会整体重绘，必须合成回基底（body 像素一致率 1.5%→100%） |
 | 风格锁定 | 角色 LoRA（按需训练） | 风格 LoRA | — | 大厂/工作室通用做法 |
 | 2D 角色动画 | **Live2D Cubism**（免费版个人/小规模<1000万日元可商用）+ **Umamo**（开源 rigging，Cubism 的 drop-in）+ **Spine** | DragonBones（开源） | 只出静态表情 PNG（不够） | Live2D 二次元标配；Umamo 开源替代（GPLv3）；Spine 2D 骨骼行业标准 |
 | TTS + 音色 | **云 API：火山（国内综合）/ Azure / ElevenLabs（情感）**；**声音集微调（生产级角色 TTS）：GPT-SoVITS（1-5min 微调，中文最强）/ CosyVoice2 / Spark-TTS / Qwen3-TTS（2026 新）**；零样本：CosyVoice 2（本地）；**RVC 音色后处理（增强）** | XTTS-v2 / Fish-Speech / MiniMax / F5-TTS | — | 2026：GPT-SoVITS 微调 98%+ 相似度（数据需求 1-5min vs 传统 10h+）；VN 游戏提取配音微调教程存在；RVC 音色相似度 9.5 最高；「TTS 情感+RVC 音色」组合自然度 90%+；数据集工具 zh-tts-mini-corpus |
@@ -39,5 +40,20 @@
 - Live2D/Spine：2D 骨骼动画 2026 对比、二次元手游标配（bilibili 图形引擎实战）
 - 引擎采用：GMTK 2025 / JetBrains State of Game Dev / Outlook Respawn
 
+## ComfyUI 生产管线参考（2026-08-13 调研，用户强调不闭门造车）
+> 工业上"角色资产"（表情差分/三视图/立绘/精灵）的成熟做法是 ComfyUI 管线，与云 API（GPT/Nano Banana）双轨：
+1. **ComfyUI VNCCS 3.0**（github AHEKOT/ComfyUI_VNCCS）：端到端角色生产管线——Character Creator/Cloner、Clothes Designer、**Emotion Studio（表情工作室）**、Pose Studio；参考图克隆角色→姿势→表情→精灵切分→导出带 alpha PNG → **表情差分的直接参照（逐表情生成，不拼图）**
+2. **mor-o/comfyui-2d-character-pipeline**：2D 角色管线——cosmetic layers（RGBA 精灵表：头发/眼睛/服装分层，像素级对齐）+ **BiRefNet 去背景**（语义分割 alpha，比 prompt 可靠）→ 分层精灵/去背景参照
+3. **AI Character Turnaround**（apatero 2026）：三视图 ComfyUI 工作流——OpenPose conditioning + 角色 LoRA + 并行采样器 view-specific conditioning → 三视图专业做法
+4. **三视图→LoRA 精修流程**：InstantID 初版三视图 → 筛选 → LoRA 训练集（7-7）→ LoRA 精修（circler 教程）
+5. **角色一致性 LoRA 配方**：先骨架（多视角）→ 脸（半身中性表情）→ 环境/表情泛化（33 图配方）
+> 落地规划：本地管线轨道 = ComfyUI（SDXL+InstantID/LoRA+BiRefNet）做表情差分/三视图/去背景；云 API 轨道 = GPT Image（风格参考/快速概念）。本机 8GB 可跑 SDXL 系；后续隔离机/云机扩展。
 
-
+## 表情差分管线（2026-08-13 v7 实测落地）
+> 云 API（中转站 gpt-image-2）实现"同构图换表情"的可靠步骤（已在 char_ailin_splash_v7 验证）：
+1. 主立绘 full.png（文生图，透明背景）
+2. 半身基底 bust.png（images.edit 保持角色）
+3. 逐表情 `images.edit(bust, mask=人脸椭圆)` → 得到带新表情的整图（⚠️ 实测中转站即使带 mask 也会**整体重绘**）
+4. **关键步骤：抠人脸区域合成回 bust 基底**（羽毛边融合）→ 身体/发型/服装与基底像素级一致（一致率 1.5% → 100%），只替换表情
+5. 产出 4 张独立透明 PNG + 2×2 审阅拼图（审阅用，不是生成方式）
+> 等价 ComfyUI 做法：VNCCS Emotion Studio 逐表情生成 + 图层合成；本方案是其在云 API 上的等价实现。

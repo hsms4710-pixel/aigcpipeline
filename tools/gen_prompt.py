@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿# -*- coding: utf-8 -*-
 """gen_prompt.py：persona.json + 场景 + 视图 → 分层提示词
 模板从 contracts/prompt-templates/{pixel,splash}.json 读取（可 --templates 覆盖），缺失时回退内置默认。
 用法：python gen_prompt.py <persona.json> --scene pixel|splash --view <视图> [--exp happy] [--templates <目录>]
@@ -27,7 +27,8 @@ _DEFAULT = {
         "style_anchor": "high-quality game splash art, anime style, clean lineart, detailed rendering, vibrant colors",
         "views": {
             "portrait": "full-body splash art, standing pose, facing viewer",
-            "expressions": "same character, {exp} expression, head-and-shoulders closeup",
+            "bust": "head-and-shoulders chest-up portrait closeup, facing viewer, same character design",
+            "expressions": "same character, head-and-shoulders closeup, {exp} expression",
             "turnaround": "same character, three-quarter / side / back views, same outfit and colors",
             "action": "same character, dynamic action pose, full body",
         },
@@ -36,7 +37,6 @@ _DEFAULT = {
 }
 
 def _load_templates(tpl_dir=None):
-    """从模板目录加载 {pixel,splash}.json；无则用内置默认。返回 {scene: {...}}"""
     merged = json.loads(json.dumps(_DEFAULT))
     if tpl_dir and os.path.isdir(tpl_dir):
         for scene in ("pixel", "splash"):
@@ -66,11 +66,27 @@ def build_prompt(persona, scene, view, exp="neutral", templates=None):
     anchor = style.get("anchor") or t.get("style_anchor", "")
     if style.get("palette"):
         anchor += f", palette: {style['palette']}"
-    if style.get("resolution"):
+    # 分辨率只对像素场景生效（splash 不需要 64x64 这类约束）
+    if style_type == "pixel" and style.get("resolution"):
         anchor += f", resolution {style['resolution']}"
     vt = t.get("views", {}).get(view, view).replace("{exp}", exp)
     constraint = t.get("output_constraint", "")
     return f"{body}, {anchor}, {vt}, {constraint}"
+
+EXP_EDIT_PROMPTS = {
+    "happy": "warm bright happy smile, eyes slightly closed and cheerful, relaxed brows",
+    "sad": "sad expression, downturned mouth, slightly teary eyes, worried brows",
+    "angry": "angry expression, furrowed brows, glaring eyes, tightened mouth",
+    "neutral": "calm neutral expression, relaxed eyes and mouth, composed face",
+}
+
+def build_exp_edit_prompt(persona, emotion="happy"):
+    """表情差分专用（人脸区域编辑）：保持整张图完全不变，只改表情。
+    参考二次元游戏立绘表情切换（同构图同画风，只换面部表情）。"""
+    e = EXP_EDIT_PROMPTS.get(emotion, EXP_EDIT_PROMPTS["neutral"])
+    return (f"Keep this exact character, pose, outfit, hair, colors, lighting and composition 100% identical. "
+            f"ONLY change her facial expression to: {e}. "
+            f"Anime game portrait expression swap, single face, transparent background, no text, no watermark")
 
 def main():
     ap = argparse.ArgumentParser()
@@ -78,7 +94,7 @@ def main():
     ap.add_argument("--scene", choices=["pixel", "splash"], required=True)
     ap.add_argument("--view", required=True)
     ap.add_argument("--exp", default="neutral")
-    ap.add_argument("--templates", default=None, help="模板目录（pixel.json/splash.json）")
+    ap.add_argument("--templates", default=None)
     a = ap.parse_args()
     tpls = _load_templates(a.templates)
     with open(a.persona, encoding="utf-8-sig") as f:

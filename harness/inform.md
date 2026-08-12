@@ -3,12 +3,13 @@
 ## 我是什么
 「角色 AIGC → AI NPC → 引擎接入 → 评测」研究课题仓库。当前主线：**Part 1 = P1 形象+语音工作台 MVP**。
 
-## 先读什么
+## 先读什么（按顺序）
 1. `README.md` —— 总览与状态
 2. `ROADMAP.md` —— 当前 Part 与 gate
-3. `rules/PRINCIPLES.md` —— 8 条原则（必须遵守）
-4. `rules/REPO.md` —— 目录/命名/提交/审计规则
-5. 当前 part 的 `spec/<part>/spec.md` 与 `tasks/<part>/`
+3. `rules/PRINCIPLES.md` —— 9 条原则（必须遵守，含 P9 工业主流优先）
+4. `spec/TECH-STACK.md` —— 技术选型基线（工业主流；改选型先看这里）
+5. `rules/REPO.md` —— 目录/命名/提交/审计规则
+6. 当前 part 的 `spec/<part>/spec.md` 与 `tasks/<part>/`
 
 ## 模块索引
 - 生成管线：P1（形象/语音）→ 见 spec/p1
@@ -23,4 +24,3 @@
 - `spec/p1-character-voice/contracts/persona-schema.json`（人设卡 v0）
 - `spec/p1-character-voice/contracts/asset-package-spec.md`（资产包规范）
 - `spec/p3-npc-agent/contracts/agent-protocol.md`（Agent 协议，Part 2 建）
-

@@ -9,7 +9,7 @@
 | **立绘 / tachi-e**（正面全身，透明背景，面向镜头） | 对话/剧情/界面展示 | ✅ full.png |
 | **半身立绘**（胸部以上） | 对话小窗/表情展示 | ✅ bust.png |
 | **表情差分**（同构图只换脸） | 对话情绪变化 | ✅ exp_happy/sad/angry/neutral.png |
-| **SD 小人 / 战斗精灵**（Q 版或像素，多帧：idle/walk/attack/hurt） | 战斗/地图上的"角色模型" | ⚠️ 像素场景(t9)已有；splash/Q 版风格待补 |
+| **SD 小人 / 战斗精灵**（Q 版或像素，多帧：idle/walk/attack/hurt） | 战斗/地图上的"角色模型" | ✅ Q版 chibi（char_ailin_chibi：front/side/back + idle/walk/attack/hurt，方舟chibi多参考画风迁移）+ 像素版(t9) |
 | **Live2D 分层 PSD**（瞳孔/眼白/眉毛/前发/后发分图层） | Live2D 动画（呼吸/眨眼/口型） | ❌ P6 后置（DCC 加工） |
 | **Spine 骨骼**（或引擎内骨骼） | 2D 骨骼动画 | ❌ P4 后置 |
 | **三视图/转面**（front/side/back） | 概念设计、确认角色设计一致性；**不是游戏内直接资产** | ✅ turnaround_sheet（概念用途） |
@@ -25,10 +25,11 @@ persona → full(立绘) → bust(半身) → 表情差分×4（同构图换脸�
         → [待补] SD 小人/Q 版战斗精灵（多帧）                 ← 下一个实践点（t9 像素已覆盖像素版）
         → [后置] Live2D 分层 PSD / Spine（P6 DCC 加工）
 ```
-- 下一步建议：给 艾琳 生成 **Q 版 SD 小人**（正面/侧面/背面 + idle/walk/attack 帧），与立绘共用 persona，让"立绘→小人"成为资产包标准件。
+- ✅ 已补：艾琳 Q 版 SD 小人（char_ailin_chibi：front/side/back + idle/walk/attack/hurt），用方舟 chibi×2 多参考画风迁移；与立绘共用 persona（persona_chibi.json）。
 - 资产包规范（spec/p1/contracts/asset-package-spec.md）应明确：portrait/（full+bust+表情）、sprite/（SD 小人帧）、live2d/（分层 PSD，后置）。
 
 ## 4. 与画风调研的联动
 - 画风确定后（见 spec/style-research.md），立绘/表情/小人全部统一该画风。
 - 若最终走 HD-2D 或像素：SD 小人就是核心游戏资产（t9 已验证像素小人链路）。
 - 若走高画质 2D：立绘+表情差分为主，SD 小人做 Q 版。
+

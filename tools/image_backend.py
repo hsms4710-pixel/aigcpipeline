@@ -67,14 +67,21 @@ def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size
             repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             load_dotenv(os.path.join(repo, "env", ".env"), override=True)
             client = OpenAI(api_key=os.environ.get("GPT_API_KEY", ""), base_url=os.environ.get("GPT_BASE_URL", ""))
-        # 风格参考：把参考图重绘为新角色（同画风）
+        # 风格参考：用一张或多张参考图做"画风迁移"（官方 images.edit 支持 image 数组）
         if style_ref is not None and ref is None:
-            sp = ("Redraw this reference artwork into a NEW original character in the same art style, "
-                  "do not copy the character: " + prompt)
-            with open(style_ref, "rb") as f:
-                r = client.images.edit(model=model, image=f, prompt=sp, size=size,
+            refs = style_ref if isinstance(style_ref, (list, tuple)) else [style_ref]
+            sp = ("Use the reference image(s) ONLY as art-style references (their lineart, coloring, shading, "
+                  "painterly rendering and finish quality). Draw a NEW original character in exactly this art style. "
+                  "Do NOT copy the reference character(s), face, pose or outfit: " + prompt)
+            files = [open(rf, "rb") for rf in refs]
+            try:
+                img_arg = files[0] if len(files) == 1 else files
+                r = client.images.edit(model=model, image=img_arg, prompt=sp, size=size,
                                        **({"background": "transparent"} if transparent else {}))
-                return _download(r.data[0].url, out), time.time() - t0
+            finally:
+                for f in files:
+                    f.close()
+            return _download(r.data[0].url, out), time.time() - t0
         n = _openai_gen(client, prompt, out, ref, model, size, seed=seed, transparent=transparent, mask=mask)
     elif backend == "gemini":
         if client is None:
@@ -100,3 +107,4 @@ def face_mask(ref_img, out_mask, cy=0.40, rx=0.20, ry=0.24):
     d.ellipse([cx - w*rx, h*cy - h*ry, cx + w*rx, h*cy + h*ry], fill=(0, 0, 0, 0))
     m.save(out_mask)
     return out_mask
+

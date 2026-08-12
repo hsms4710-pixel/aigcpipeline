@@ -23,6 +23,22 @@ _DEFAULT = {
         },
         "output_constraint": "same character, consistent design, no text, no watermark",
     },
+    "chibi": {
+        "style_anchor": "chibi anime style, cute small character with big head and small body (about 2-3 heads tall), clean lineart, soft cel coloring, cute expressive face, transparent background",
+        "views": {
+            "front": "front view, chibi full body, standing facing viewer, big head small body proportions",
+            "side": "side view, chibi full body, profile facing left, same character design as front view",
+            "back": "back view, chibi full body, seen from behind, same character design",
+            "three_view": "character sheet, front / side / back three views, same chibi character, consistent design",
+            "idle": "animation frame, idle pose, chibi, single frame, consistent with reference",
+            "walk": "animation frame, walk cycle pose, chibi, single frame, consistent with reference",
+            "attack": "animation frame, attacking pose, chibi, single frame, consistent with reference",
+            "hurt": "animation frame, hurt pose, chibi, single frame, consistent with reference",
+            "sprite_sheet": "sprite sheet, evenly spaced grid of animation frames, same chibi character",
+            "directional": "directional sprite sheet, 4 directions (down/up/left/right), same chibi character",
+        },
+        "output_constraint": "same chibi character, consistent design, no text, no watermark",
+    },
     "splash": {
         "style_anchor": "high-quality game splash art, anime style, clean lineart, detailed rendering, vibrant colors",
         "views": {
@@ -125,5 +141,6 @@ def build_style_prompt(persona, with_composition="full body, standing pose, faci
             f"Do NOT copy the reference character's face, pose or outfit, but DO match its art style exactly. "
             f"SINGLE standalone full-body illustration of ONE character only - NOT a character sheet, "
             f"NOT multiple views/poses, NOT a concept sheet. {anchor} transparent background, no text, no watermark")
+
 
 

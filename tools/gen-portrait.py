@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """gen-portrait.py：persona.json → 提示词 → 云生图 API → 立绘/表情 → 资产包落盘 + metadata
 用法：
@@ -83,7 +83,7 @@ def main():
     ap.add_argument("--ref", default=None)
     ap.add_argument("--model", default="gpt-image-2")
     ap.add_argument("--backend", choices=["openai", "gemini", "fal"], default="openai")
-    ap.add_argument("--scene", choices=["pixel", "splash"], default=None)
+    ap.add_argument("--scene", choices=["pixel", "chibi", "splash"], default=None)
     ap.add_argument("--no-ref", action="store_true")
     ap.add_argument("--style-ref", default=None)
     ap.add_argument("--force", action="store_true", help="强制重新生成已存在的 full/bust")
@@ -99,7 +99,7 @@ def main():
 
     style_type = a.scene or persona.get("style", {}).get("type", "splash")
     asset_types = persona.get("assets", {}).get(style_type, [])
-    if style_type == "pixel":
+    if style_type in ("pixel", "chibi"):
         tasks = [("full", "front"), ("side", "side"), ("back", "back")]
         if "actions" in asset_types:
             for act in ("idle", "walk", "attack", "hurt"):
@@ -120,10 +120,13 @@ def main():
 
     client = load_client()
     ref = a.ref
-    style_ref = a.style_ref
+    style_ref = None
+    if a.style_ref:
+        style_ref = [s.strip() for s in a.style_ref.split(",") if s.strip()]
+        style_ref = style_ref[0] if len(style_ref) == 1 else style_ref
     size = "1536x1024" if style_type == "splash" else "1024x1024"
     assets_meta = []
-    transparent = style_type == "splash"
+    transparent = style_type in ("splash", "chibi")
 
     for name, view in tasks:
         outfile = os.path.join(portrait_dir, f"{name}.png")
@@ -137,8 +140,19 @@ def main():
         else:
             prompt = build_prompt(persona, style_type, view, exp="neutral")
         print(f"[{name}] 生成中…")
-        n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend,
-                          transparent=transparent, mask=None, seed=None, style_ref=style_ref)
+        # 中转站偶发断连：自动重试（最多 3 次）
+        n = dt = None
+        for _attempt in range(3):
+            try:
+                n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend,
+                                  transparent=transparent, mask=None, seed=None, style_ref=style_ref)
+                break
+            except Exception as _e:
+                if _attempt < 2:
+                    print(f"    连接异常({_e.__class__.__name__})，重试 {_attempt+2}/3…")
+                    import time as _t; _t.sleep(8)
+                else:
+                    raise
         if name == "bust":
             ref = outfile
             print(f"  ok bust.png ({n}B, {dt:.1f}s) [表情基底]")
@@ -267,6 +281,10 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+
+
 
 
 

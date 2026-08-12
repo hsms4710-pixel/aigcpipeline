@@ -1,0 +1,26 @@
+{
+  "character": "艾琳",
+  "generated_at": "2026-08-13T06:46:32",
+  "styles": {
+    "hd2d": {
+      "prompt": "年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色, HD-2D style (Octopath Traveler / Triangle Strategy aesthetic), pixel-art characters with modern 3D lighting, depth-of-field, painterly rendering, rich gradients, 2D game splash, head-and-shoulders chest-up portrait closeup, facing viewer, transparent background, no text, no watermark",
+      "size_bytes": 1881166,
+      "elapsed_s": 69.7
+    },
+    "anime2d": {
+      "prompt": "年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色, high-quality 2D anime game art, Arknights (明日方舟) official style, soft painterly cel-shading, elegant thin lineart, subtle gradients, muted warm palette, detailed rendering, head-and-shoulders chest-up portrait closeup, facing viewer, transparent background, no text, no watermark",
+      "size_bytes": 1830289,
+      "elapsed_s": 71.0
+    },
+    "pixel": {
+      "prompt": "年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色, detailed pixel art portrait, 16-bit RPG style, limited color palette with dithering, clean crisp pixel edges, retro game dialogue portrait, expressive character design, head-and-shoulders chest-up portrait closeup, facing viewer, transparent background, no text, no watermark",
+      "size_bytes": 1699153,
+      "elapsed_s": 66.5
+    },
+    "gacha2d": {
+      "prompt": "年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色, high-quality 2D gacha game art style (Genshin Impact / Arknights level), polished cel-shading with rim light, refined lineart, vibrant saturated palette, premium splash art, head-and-shoulders chest-up portrait closeup, facing viewer, transparent background, no text, no watermark",
+      "size_bytes": 1897846,
+      "elapsed_s": 53.2
+    }
+  }
+}

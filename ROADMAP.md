@@ -1,4 +1,4 @@
-# ROADMAP：实现路线（一个 part 一个 part）
+﻿# ROADMAP：实现路线（一个 part 一个 part）
 
 > 总原则：**顺序推进，做透一个再进下一个**；评测（P5）后置，不在前期实现。
 > 范围边界与分 Part 验证：见 链路总览.md（权威视图）。
@@ -29,7 +29,7 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 管线在**本地隔离文件夹**执行（env/runtime/，uv venv 3.11，见 env/README.md），不污染系统
 - 生图走云 API（GPT + Nano Banana），本地只跑工作台 + TTS + 音频 → 本机 8GB 够 P1；3D/PuLID 后置（需云机/API）
 
-## Part 1 —— P1 角色形象 + V1 语音管线（⏳ 下一个，可并行）
+## Part 1 —— P1 角色形象 + V1 语音管线（✅ 已交付 2026-08-13；t4 语音暂缓）
 - **P1 形象**：工作台：人设卡/参考图 → 立绘（分层，Live2D/3D blendshape 预留）→ 资产包
   - 生图后端：**云 API 首选 GPT Image 2 + Nano Banana**；本地 ComfyUI 为可选离线后端
   - 借鉴：ComfyUI 生产管线 / InstantID / GPT Image 2 / Nano Banana；handcrafted-persona-engine（UI）、3dModelGenerator（job 状态机）
@@ -64,5 +64,6 @@ P2 / P3 / P4 ──► P5 评测（后置）
 ```
 spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开发（逐 task）→ verify → audit → 归档
 ```
+
 
 

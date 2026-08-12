@@ -181,3 +181,18 @@
 - 参考图：prts 阿米娅 2048 立绘 4 张（arknights_amiya_prts）+ 半身像/小人；FGO（fgo_artoria 512x724 无背景 + mooncell 1 张窄图）；坎公未获取（fandom 抓取失败）
 - style_ref 单图修复重测：char_ailin_ak3（prts 阿米娅 art_5 参考），待用户查看是否单张可用资产
 - 待办：坎公参考图（换源）、FGO 高清多阶段/表情差分、工作台 v2 前端重做（skills）
+
+## 2026-08-13 —— Part 1（P1）交付审计 + 归档
+- **范围**：P1 形象生成全量 task（t1-t3/t5-t10）+ 资产包 + 参考图 + 画风调研
+- **结果**：✅ 通过（附待办：t4 语音暂缓、画风锁死待 ComfyUI）
+- **A. rule 合规** ✅：无 P5 提前实现；演示资产不入库（.gitignore assets/demo/char_*/）；选型基线 TECH-STACK 落实；原则变更有记录
+- **B. spec 一致性** ✅：P1 spec/契约（persona-schema、prompt-templates pixel/splash、asset-package）与实现一致；新增 spec/style-research.md（画风模仿调研）、spec/2d-in-game-assets.md（2D 游戏内资产形态）
+- **C. harness 可用** ✅：verify 门禁实际执行（validate-persona/asset-package、Godot headless 导入、表情质量自检+重试）；skills 与流程一致
+- **D. task 完成度** ✅：t1/t2/t3/t5/t6/t8/t9/t10 done；t7 本次归档；t4 语音暂缓（用户决定：声音后置，声音集下载训练模型即可）→ backlog 同步
+- **E. 仓库健康** ✅：git 干净、提交规范、memory 沉淀（decisions 表情/画风；knowledge 工具链/风格模仿；errors neutral 失真/参数错位）
+- **fixes/待办**：
+  1. t10 v9 画风未真正锁死 → 用户选定主画风后上本地 ComfyUI + 风格 LoRA / IP-Adapter（spec/style-research.md §3/§5）
+  2. 2D 游戏内资产：补 SD 小人（Q版战斗精灵）→ 与立绘共用 persona（spec/2d-in-game-assets.md）
+  3. t4 语音：用户恢复后再启动（GPT-SoVITS/CosyVoice 声音集）
+  4. 工作台 v2 前端重做（用户指定核心前端 skills）列为后续阶段
+- **下一步**：用户目检 style_compare（hd2d/anime2d/pixel/gacha2d）定主画风 → P3 Agent 服务（Part 2）规划

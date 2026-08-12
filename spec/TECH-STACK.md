@@ -1,4 +1,4 @@
-﻿# 技术选型基线（spec/TECH-STACK.md）—— 工业主流优先
+# 技术选型基线（spec/TECH-STACK.md）—— 工业主流优先
 
 > 目的：防止"为了省事/MVP 采用非主流"。本表是选型唯一依据，改动需记录 decision。
 > 证据截至 2026-08（调研日期），每条标注来源类型：商业产品 / 大厂开源 / 主流开源 / 社区项目。
@@ -12,11 +12,13 @@
 | 层 | 首选（工业主流） | 备选 | 明确不用 | 证据 |
 |---|---|---|---|---|
 | 生图编排 | **ComfyUI**（节点工作流） | 自研调用 | 纯自研 CLI | Ubisoft CHORD 开源 ComfyUI 节点；Series Entertainment 用 ComfyUI 生产 10 万+ 资产；游戏道具生成实证研究 |
-| 云生图 API（质量/兜底） | **Google Nano Banana 系**（Gemini 2.5 Flash Image GA / Pro / 2；$0.039-0.24/张；**ComfyUI 原生节点**，工业常用于游戏买量/原画/概念） | **OpenAI gpt-image-1 / GPT Image 2**（角色一致性榜断层第一、2K/4K）；**Qwen-Image**（阿里开源 Apache2.0，可本地部署、中文强） | Banana.dev（非主流生图 API，仅可选 serverless 部署） | fal/OpenRouter/Vertex 聚合；GPT Image 2 角色一致性 2026 榜第一；Nano Banana Pro 4K 文字精确；Qwen-Image 国内可本地 |
+| 生图（P1 首选，云 API） | **OpenAI GPT Image 2 / gpt-image-1**（角色一致性 2026 榜断层第一、2K/4K、文字精确）+ **Google Nano Banana 系**（Nano Banana GA / Pro 4K / 2；工业常用于游戏原画/概念/买量；ComfyUI 节点） | 本地 ComfyUI（SDXL+InstantID+LoRA，离线/开源用户可自托管，降为可选） | Banana.dev（非主流，仅可选 serverless 部署） | 2026 实测：GPT Image 2 角色一致性第一（+150 分）、复杂姿态 89.0；Nano Banana Pro 82.8；国内可走 fal/OpenRouter/中转；本地 ComfyUI 保留为开源离线后端 |
 | 角色一致性 | **InstantID**（首选）/ PuLID / IP-Adapter FaceID | 按需训练角色 LoRA | CharForge 当默认 | 2025-12 社区共识 InstantID 最佳平衡；PuLID 高质量慢；IP-Adapter 快低显存 |
 | 风格锁定 | 角色 LoRA（按需训练） | 风格 LoRA | — | 大厂/工作室通用做法 |
 | 2D 角色动画 | **Live2D Cubism**（免费版个人/小规模<1000万日元可商用）+ **Umamo**（开源 rigging，Cubism 的 drop-in）+ **Spine** | DragonBones（开源） | 只出静态表情 PNG（不够） | Live2D 二次元标配；Umamo 开源替代（GPLv3）；Spine 2D 骨骼行业标准 |
 | TTS | **云 API：火山引擎（国内综合）/ Azure（延迟/免费）/ ElevenLabs（情感）**；**开源：CosyVoice（阿里，本地/离线）** | F5-TTS（快/MIT）、MiniMax、Fish-Speech | GPT-SoVITS 当生产默认 | 2026 TTS 选型评测：火山综合首选、Azure 低延迟、ElevenLabs 音质天花板；CosyVoice 大厂开源工业级 |
+| 视频生成（P2 过场） | **Veo 3/3.1**（Google，4K/原生音频/指令保真，API）+ **Kling 3.0**（快手，动作真实性第一）+ **Wan 2.1/2.7**（阿里开源，音画同步） | Runway Gen-4.5 / Seedance 2.0 / Hailuo / Sora 2 | — | 2026 评测：Kling 3.0 与 Wan 2.1 动作真实性并列第一；Veo 3 指令复现精度高 |
+| 过场编排（P2） | **Director Agent**（LLM 拆镜头：分镜/景别/运镜/台词/情绪）+ **关键帧→图生视频**工作流 | CineGen / open-director / storyboard-director / ComfyUI-Novel-Director / Cutscene Agent(论文) | 纯手工分镜 | 2026 主流：静态关键帧 + 独立运动模型；游戏工业：腾讯 VISVISE/异人之下实时过渡动画 |
 | 3D 表情 | **引擎原生 Blend Shapes / Morph Target**（Godot/Unity/UE 内调权重） | ARKit 46 blendshape 标准 | AIGC 生成表情图（不需要） | Unity SkinnedMeshRenderer.SetBlendShapeWeight；UE Morph Targets；Godot 支持 blend shapes |
 | 3D 生成（后置） | **Hunyuan3D 2.1（腾讯开源）/ TRELLIS（微软）/ Tripo API / Meshy** | — | TripoSR（2024 旧模型） | 2025-2026 3D 生成报告：开源拐点=腾讯 Hunyuan3D + 微软 TRELLIS；生产级要求水密网格/PBR/UV |
 | 对话/叙事脚本 | **Ink（Disco Elysium/80 Days）/ Yarn Spinner（Night in the Woods/A Short Hike）** | Dialogic（Godot 插件） | — | 均被 shipped games 使用；Ink 适合大规模分支，Yarn Spinner 适合中小 |

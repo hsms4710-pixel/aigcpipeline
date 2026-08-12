@@ -1,4 +1,4 @@
-﻿# ROADMAP：实现路线（一个 part 一个 part）
+# ROADMAP：实现路线（一个 part 一个 part）
 
 > 总原则：**顺序推进，做透一个再进下一个**；评测（P5）后置，不在前期实现。
 > 每个 Part 完成后必须过 gate（完成标准）+ 审计，才能进入下一个 Part。
@@ -26,7 +26,8 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 本机 8GB 显存 → 隔离机按需选型（SDXL 8GB 够；FLUX/PuLID/3D 需 24GB+ 或云 API）
 
 ## Part 1 —— P1 角色形象+语音生成工作台 MVP（⏳ 下一个）
-- 目标：本地 Web 工作台：人设卡/参考图/参考音 → 立绘（2-4 表情差分）+ 3 句克隆语音 → 资产包下载
+- 目标：本地 Web 工作台：人设卡/参考图/参考音 → 立绘（分层，Live2D/3D blendshape 预留）+ 语音 → 资产包下载
+- 生图后端：**云 API 首选 GPT Image 2 + Nano Banana**；本地 ComfyUI 为可选离线后端
 - 借鉴：CharForge / Flux Kontext（形象一致性）、GPT-SoVITS / CosyVoice / F5-TTS（语音）、handcrafted-persona-engine / AITuberKit（虚拟人栈）、3dModelGenerator（job 状态机）
 - **gate**：P1 验收全部通过（见 `spec/p1-character-voice/spec.md` + `tasks/p1/`）；Godot 最小工程能导入立绘+播放语音；P1 审计记录入 `audit/audit-log.md`
 

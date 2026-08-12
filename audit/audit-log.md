@@ -32,3 +32,9 @@
 - **产物**：`reference/env-report-2026-08-12.md`；t1 按 8GB 约束重写（含本机/API/租机决策清单）
 - **fixes**：TECH-STACK / P1 spec / SKILL_character-gen 同步更新
 - **下一步**：t1 前置（启动 Clash → uv 3.11 venv → CUDA torch → ffmpeg → ComfyUI+InstantID）
+
+## 2026-08-12 —— 生图选型调整 + P2 过场方案细化（专项）
+- **生图**：用户决定 P1 生图先用 GPT Image 2 + Nano Banana（云 API），本地 ComfyUI（SDXL+InstantID）降为可选离线后端（开源自托管场景）
+- **P2 过场**：重写 spec —— 三范式（A AIGC 视频 / B 引擎内 / C 混合），MVP 走 B 为主 + A 展示；管线：Ink → Director Agent 拆镜头 → GPT/Nano Banana 视觉资产 → Veo/Kling/Wan 动画化或 Godot 时间轴 → TTS 配音
+- **更新**：TECH-STACK（生图行 + 视频生成行 + 过场编排行）、P1 spec、t1、ROADMAP、reference、tasks/p2
+- **下一步**：P1 开发（t1 验证 GPT/Nano Banana + TTS 多后端）

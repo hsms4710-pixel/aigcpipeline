@@ -1,4 +1,4 @@
-﻿# P1 Spec：角色形象 + 语音生成工作台（MVP）
+# P1 Spec：角色形象 + 语音生成工作台（MVP）
 
 > 状态：**规划中（即将进入开发）** ｜ 对应 ROADMAP Part 1
 > 选型基线见 `spec/TECH-STACK.md`（工业主流优先，非主流方案已修正）
@@ -48,15 +48,12 @@ expressions/ 图集仅作无绑定的快速可玩占位，非主产物。
 | 工作台 Web | 上传→预览→确认→下载 | FastAPI + 前端 |
 
 ## 5. 开源/论文/产品借鉴清单（已调研，按主流性排序）
-### 云生图 API（高质量/兜底，ComfyUI 节点接入，不改编排）
-- **Google Nano Banana 系**（工业常用）：
-  - **Nano Banana** = Gemini 2.5 Flash Image（GA，$0.039/张@1K）：编辑/改背景/快速草稿
-  - **Nano Banana Pro** = Gemini 3 Pro Image（4K，$0.13-0.24/张）：指令遵循/构图精度/多对象关系 → 游戏原画、概念设计、买量创意
-  - **Nano Banana 2** = Gemini 3.1 Flash Image：快速高量迭代
-  - **ComfyUI 原生节点**（ComfyUI_Gemini / comfyui-nano-banana 等）→ 直接嵌进 ComfyUI 编排，API key 走 Gemini/fal/中转
-- **OpenAI gpt-image-1 / GPT Image 2**：角色一致性 2026 榜**断层第一**（比 Nano Banana 2 高 ~150 分）、2K/4K、文字精确 → 角色系列素材/故事板首选；约 $0.04/张
-- **Qwen-Image（阿里开源 Apache 2.0）**：可本地部署、中文强、2511 版改善角色一致性 → 国内高质量生图的本地化选项
-- 定位：以上都用于**概念/编辑/买量/文字精确/快速迭代**；游戏资产的**精确 ID 锁定仍是本地 InstantID/PuLID + LoRA**
+### 生图后端（P1 首选：云 API = GPT + Nano Banana；本地 ComfyUI 为可选离线后端）
+- **OpenAI GPT Image 2 / gpt-image-1**：角色一致性 2026 榜**断层第一**（比 Nano Banana 2 高 ~150 分）、2K/4K、文字精确 → 角色系列素材/分镜/关键帧首选；约 .04/张
+- **Google Nano Banana 系**（工业常用）：Nano Banana（GA .039/张@1K）/ **Nano Banana Pro**（4K .13-0.24/张，游戏原画/概念/场景图/空间透视）/ Nano Banana 2（快速迭代）；**ComfyUI 原生节点**，API key 走 Gemini/fal/中转
+- **本地 ComfyUI（可选离线后端）**：SDXL + InstantID/PuLID + LoRA → 开源发布时给无 key 用户自托管；精确 ID 锁定仍强于云模型，但首期不作为默认验证项
+- **Qwen-Image（阿里开源 Apache 2.0）**：国内高质量生图本地化候选
+- 决策记录：2026-08-12 用户决定 P1 生图先用 GPT + Nano Banana（云 API），本地 ComfyUI 降为可选
 
 ### 形象一致性（工业主流）
 - **ComfyUI**：业界 AIGC 生产管线事实标准。Ubisoft 开源 CHORD 模型 + ComfyUI 节点（端到端 PBR 材质）；Series Entertainment 用 ComfyUI 生产 10 万+ 游戏/视频资产（180× 提速）；游戏道具设计实证研究（节点式生成工作流）。→ **执行引擎首选**

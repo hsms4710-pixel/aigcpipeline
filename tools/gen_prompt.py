@@ -102,4 +102,6 @@ def build_style_prompt(persona, with_composition="full body, standing pose, faci
     anchor = style.get("anchor") or ""
     return (f"Create a brand new original character artwork, NEVER copy the character from the reference image. "
             f"Match the reference image's art style, line quality, coloring, shading and overall finish quality. "
-            f"New character: {desc}. {with_composition}. {anchor} transparent background, no text, no watermark")
+            f"New character: {desc}. {with_composition}. "
+            f"SINGLE standalone full-body illustration of ONE character only - NOT a character sheet, "
+            f"NOT multiple views/poses, NOT a concept sheet. {anchor} transparent background, no text, no watermark")

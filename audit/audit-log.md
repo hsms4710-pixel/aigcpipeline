@@ -166,3 +166,12 @@
 - 意图区分：splash.json 加 three_view/dialogue（对话用无边框立绘）；pixel.json 加 chibi_three_view（像素小人三视图）
 - 参考图：prts.wiki 立绘差分 33 张（400x400，Playwright 绕过 403）；FGO 阿尔托莉雅立绘（512x724 RGBA 无背景，atlasacademy）
 - 待办：FGO 高清立绘 API、坎公（像素风）参考图、对话用立绘测试
+
+## 2026-08-13 —— 工作台 v2（AIGC 流水线入口）+ 风格单图修复
+- 规划：spec/workbench-v2.md（暗色 UI + 左侧面板：人设导入/在线创建/LLM 填充、资产创建（意图模板+参考图+后端）、参考图库、配置 API keys；主区无限画布；列为重要开发阶段）
+- 前端 v2：App.jsx 暗色主题 + 4 tab 面板 + PersonaForm 暗色/prefill + 资产树/画布
+- 后端新 API：/api/refs、/api/templates、/api/config（GET/POST）、/api/persona/llm（LLM 生成人设，需 LLM key）
+- style_ref：build_style_prompt 明确"单张独立立绘，非设定集/多视图"
+- 修复：mount / 覆盖 API 路由（移到末尾）
+- 验证：GET / 资源 200 + refs/templates/config 200
+- 待办：FGO 完整立绘（多阶段/face/差分）、明日方舟具体干员差分、坎公参考图

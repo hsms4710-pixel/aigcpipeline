@@ -136,6 +136,95 @@ def retry(job_id: str):
 # 静态资产
 app.mount("/char-assets", StaticFiles(directory=CHAR_DIR), name="char-assets")
 
+# ---- v2 API：参考图 / 模板 / 配置 / persona-llm ----
+@app.get("/api/refs")
+def list_refs():
+    ref_dir = os.path.join(repo, "assets", "reference")
+    out = []
+    if os.path.isdir(ref_dir):
+        for grp in sorted(os.listdir(ref_dir)):
+            gd = os.path.join(ref_dir, grp)
+            if os.path.isdir(gd):
+                files = [f for f in sorted(os.listdir(gd)) if f.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))]
+                out.append({"group": grp, "files": files})
+    return out
+
+@app.get("/api/templates")
+def list_templates():
+    import json as _json
+    tdir = os.path.join(repo, "spec", "p1-character-voice", "contracts", "prompt-templates")
+    out = {}
+    for f in ("pixel.json", "splash.json"):
+        p_ = os.path.join(tdir, f)
+        if os.path.exists(p_):
+            with open(p_, encoding="utf-8-sig") as fh:
+                out[f.replace(".json", "")] = _json.load(fh)
+    return out
+
+@app.post("/api/config")
+async def save_config(payload: dict):
+    """保存 API key 到 env/.env（掩码显示；不覆盖已有未知键）。payload: {"GPT_API_KEY": "...", ...}"""
+    env_file = os.path.join(repo, "env", ".env")
+    lines = []
+    if os.path.exists(env_file):
+        with open(env_file, encoding="utf-8") as f:
+            lines = f.readlines()
+    keys = {l.split("=", 1)[0].strip(): l for l in lines if "=" in l and not l.strip().startswith("#")}
+    for k, v in payload.items():
+        if v and not v.startswith("***"):
+            keys[k] = f"{k}={v}\n"
+    with open(env_file, "w", encoding="utf-8") as f:
+        f.writelines(keys.values())
+    return {"ok": True, "saved": list(payload.keys())}
+
+@app.get("/api/config")
+def get_config():
+    env_file = os.path.join(repo, "env", ".env")
+    keys = ("GPT_API_KEY", "GPT_BASE_URL", "GEMINI_API_KEY", "FAL_KEY", "VOLC_API_KEY", "LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL")
+    out = {}
+    if os.path.exists(env_file):
+        with open(env_file, encoding="utf-8") as f:
+            for line in f:
+                if "=" in line and not line.strip().startswith("#"):
+                    k, v = line.strip().split("=", 1)
+                    if k in keys:
+                        out[k] = ("***" + v[-4:]) if v else ""
+    return out
+
+@app.post("/api/persona/llm")
+async def persona_llm(payload: dict):
+    """一句话人设 → LLM 生成完整 persona（需配置 LLM key）。"""
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(400, "缺少人设描述")
+    env_file = os.path.join(repo, "env", ".env")
+    lk = lb = lm = None
+    if os.path.exists(env_file):
+        with open(env_file, encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("LLM_API_KEY="): lk = line.split("=",1)[1].strip()
+                elif line.startswith("LLM_BASE_URL="): lb = line.split("=",1)[1].strip()
+                elif line.startswith("LLM_MODEL="): lm = line.split("=",1)[1].strip()
+    if not lk:
+        raise HTTPException(400, "未配置 LLM key（配置 → LLM）")
+    from openai import OpenAI
+    client = OpenAI(api_key=lk, base_url=lb or "https://api.sisct2.xyz/v1")
+    sys_prompt = (
+        "你是一个游戏角色设定师。根据用户的一句话人设，生成严格的 JSON（不要 markdown），字段："
+        '{"name","race","class","personality_tags":[],"background","visual":{"subject","equipment","outfit","detail"},'
+        '"style":{"type":"pixel 或 splash","palette","resolution"},"assets":{"pixel":["three_view","actions"],"splash":["portrait","expressions","dialogue"]}}'
+    )
+    r = client.chat.completions.create(model=lm or "gpt-4o-mini",
+        messages=[{"role":"system","content":sys_prompt},{"role":"user","content":text}], temperature=0.7)
+    import json as _json
+    content = r.choices[0].message.content
+    # 提取 JSON
+    start = content.find("{"); end = content.rfind("}") + 1
+    try:
+        persona = _json.loads(content[start:end])
+    except Exception:
+        raise HTTPException(500, "LLM 返回非 JSON: " + content[:200])
+    return persona
 # 前端构建产物（web/dist）兜底托管 —— 放在所有 API 之后
 _web_dist = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "dist")
 if os.path.exists(os.path.join(_web_dist, "index.html")):

@@ -1,6 +1,7 @@
-﻿# 工作台 v2 规划（spec/workbench-v2.md）—— AIGC 流水线统一入口
+# 工作台 v2 规划（spec/workbench-v2.md）—— AIGC 流水线统一入口
 
-> 状态：**重要开发阶段（用户 2026-08-13 确认）** ｜ 目标：本页面是后续所有 AIGC 流水线（形象/语音/过场/Agent/评测）的入口，需可扩展、可规划、可运营。
+> 状态：**重要开发阶段（2026-08-13 确认，前端 v2.0 骨架已建但质量不达标，重做列为后续计划）**
+> 前端重做将使用**核心前端 skills**：build-web-apps:frontend-app-builder（新 UI 概念设计+实现）、shadcn（组件库）、react-best-practices（性能/规范）——不手工堆内联样式 ｜ 目标：本页面是后续所有 AIGC 流水线（形象/语音/过场/Agent/评测）的入口，需可扩展、可规划、可运营。
 
 ## 1. 定位
 工作台 = **流水线指挥台 + 创作空间**：
@@ -58,3 +59,12 @@
 - v2 聚焦"形象资产创建入口"（P1 全流程），语音/过场/Agent 作为后续面板扩展（不一次做完）
 - 不引入重型状态管理（先 React hooks + 轻量）
 - API key 只在本地 env/.env，前端掩码显示不回显
+
+## 8. 前端重做 skills 清单（用户提供，2026-08-13）
+> 前端重做不手工堆样式，按以下 skills 执行：
+1. **Anthropic Frontend Design Skills**（官方维护）：解决 AI 界面同质化，提升美感/多样性；生成登录页/仪表盘时自动应用设计规范
+2. **Vercel React/Next.js 性能优化指南**：45 条规则（组件性能/包体积/渲染优化），自动重构 React 代码
+3. **Impeccable & Taste Skill**：Impeccable=前端反模式词典（明确"不要做什么"，排版/色彩/动效/UX 写作）；Taste=可调风格参数，拦截 AI 默认廉价设计
+4. **Tailwind CSS & UI/UX 工具链**：响应式布局/卡片/导航/表单/按钮/排版，暗色模式 + 移动优先
+5. **AI Skills for Vue/React**：前端最佳实践技能包（代码生成/审查/优化规则）
+> 实施顺序：设计（Anthropic + Taste 定风格）→ 组件（Tailwind + shadcn）→ 实现（React 规范 + Vercel 性能）→ 审查（Impeccable 反模式）

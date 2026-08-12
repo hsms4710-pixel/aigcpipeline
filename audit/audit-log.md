@@ -175,3 +175,9 @@
 - 修复：mount / 覆盖 API 路由（移到末尾）
 - 验证：GET / 资源 200 + refs/templates/config 200
 - 待办：FGO 完整立绘（多阶段/face/差分）、明日方舟具体干员差分、坎公参考图
+
+## 2026-08-13 —— 前端 skills 列入规划 + 参考图完善 + style_ref 单图重测
+- 前端：workbench-v2 规划加入用户提供 skills 清单（Anthropic Frontend Design / Vercel React 性能 / Impeccable&Taste / Tailwind UI 工具链 / AI Skills for Vue-React），前端重做列为后续
+- 参考图：prts 阿米娅 2048 立绘 4 张（arknights_amiya_prts）+ 半身像/小人；FGO（fgo_artoria 512x724 无背景 + mooncell 1 张窄图）；坎公未获取（fandom 抓取失败）
+- style_ref 单图修复重测：char_ailin_ak3（prts 阿米娅 art_5 参考），待用户查看是否单张可用资产
+- 待办：坎公参考图（换源）、FGO 高清多阶段/表情差分、工作台 v2 前端重做（skills）

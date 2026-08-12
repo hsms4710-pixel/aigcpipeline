@@ -140,3 +140,11 @@
 - headless：--import 成功（full.png + voice.wav 导入）+ --path --quit 无资源加载/解析错误（仅退出清理警告，正常）
 - 证明 P1 资产（透明 PNG + WAV）可被 Godot 直接导入 → 资产中立成立
 - .gitignore 加 .godot/ + *.import
+
+## 2026-08-13 —— Part 1 中间审计（t7 前置，未标完成）
+- **A. rule 合规** ✅：无 P5 提前实现；大文件/产物未入库（voice.wav/*.wav 忽略，full.png 演示资产例外）；选型基线 TECH-STACK 已落实（生图 gpt-image-2、表情拼图、透明背景）
+- **B. spec 一致性** ✅：P1 spec 与实现一致（资产场景/提示词模板/表情方案）；persona-schema v0 校验通过
+- **C. harness 可用** ✅：verify 门禁执行（validate-persona/asset-package + Godot headless）；skills 与流程一致
+- **D. task 完成度** ⚠️：t1/t2/t3/t5/t6/t8 done；t9 三视图达标（行为帧待确认）；t10 表情 v6 待用户确认
+- **E. 仓库健康** ✅：git 干净（-c safe.directory）；knowledge 沉淀（toolchain/表情方案）
+- **待确认**：① t10 v6 表情一致性 ② t9 行为帧 ③ 确认后 t7 正式归档

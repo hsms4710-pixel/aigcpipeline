@@ -130,3 +130,7 @@
 - 表情：mask 忽略 + seed 不稳定 → 2x2 拼图切分（同一张图天然一致），v6 达标（透明背景+同批）
 - start-workbench.cmd：修复 cd 层级 + 错误捕获 + 已验证 uvicorn health OK
 - 待办：t6 Godot 导入验证（需装 Godot）、t7 审计
+
+## 2026-08-13 —— t6：Godot 导入验证工程骨架
+- Godot 下载受阻（GitHub/TuxFamily/gh-proxy 均失败，网络限制）→ 降级：建 assets/demo/godot-import-demo（project.godot + demo.tscn + 立绘/语音资产 + README 验证步骤）
+- headless 验证待 Godot 可用；用户可从 godotengine.org 装或稍后重试

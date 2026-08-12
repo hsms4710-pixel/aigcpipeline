@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/full.png" id="1"]
+[ext_resource type="AudioStreamWAV" path="res://assets/voice.wav" id="2"]
+
+[node name="Demo" type="Node2D"]
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("1")
+centered = false
+position = Vector2(40, 40)
+
+[node name="Voice" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2")
+autoplay = true

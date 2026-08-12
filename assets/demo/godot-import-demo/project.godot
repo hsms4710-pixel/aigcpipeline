@@ -1,0 +1,10 @@
+config_version=5
+
+[application]
+config/name="角色导入演示"
+config/features=PackedStringArray("4.4")
+run/main_scene="res://demo.tscn"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720

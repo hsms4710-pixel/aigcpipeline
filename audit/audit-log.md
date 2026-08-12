@@ -44,3 +44,9 @@
 - **动画化工业实现**：两类——①游戏内角色动画=引擎内动画系统（UE5 AnimBP/Motion Matching/Control Rig，intern-learn Lyra 实践；本项目 Godot AnimationTree + Live2D/3D blendshape；AI 生成动画=腾讯 VISVISE/异人之下）②过场播片=AIGC 视频（Veo/Kling/Wan）
 - **更新**：ROADMAP（主线章节）、P2 spec（§9 动画化工业实现 + 状态后置）、TECH-STACK（动画化行）、reference
 - **下一步**：P1 开发（t1 验证 GPT/Nano Banana + TTS 多后端）
+
+## 2026-08-12 —— 链路整理：Part 范围边界 + 分 Part 验证（专项）
+- 产出 `链路总览.md`（根目录）：全链路一图流 + 每 Part 范围边界表（目标/输入/输出/做/不做/验证/gate/依赖/状态）+ 分 Part 验证策略 + 边界红线 8 条
+- 边界关键：P1 不做 3D/引擎/Live2D 绑定；P3 不做游戏逻辑；P4 不做完整游戏；P2/P5 后置；云生图优先；资产中立；评测后置；一个 Part 一个 Part
+- README/ROADMAP 已加引用
+- **下一步**：Part 1（P1）开发，从 t1 工具链验证开始

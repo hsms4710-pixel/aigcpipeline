@@ -33,6 +33,12 @@
 - AITuberKit：https://docs.aituberkit.com/zh/ ｜ prometheus-avatar ｜ aituber-onair ｜ handcrafted-persona-engine
 - 2D 动画（主流）：Live2D Cubism / Spine
 
+## 动画化（NPC/游戏内，工业）
+- **intern-learn 实践**：ue_lyra_kb animation 系列（UE5 动画蓝图 UAnimInstance/状态机、IK FABRIK、Motion Matching、Control Rig、程序化动画 Warping/PoseDriver/FullBodyIK、动画通知/性能优化）——工业 AAA 引擎内动画系统范式
+- **AI 生成动画（工业落地）**：腾讯 VISVISE（GDC2026：3D 动画生成+自动绑骨+自动蒙皮+MIB 中间帧）、腾讯《异人之下》（实时 AI 过渡动画，UE）
+- 2D 动画：Live2D/Spine（表情/口型/骨骼，二次元标配）
+- 结论：NPC 动画化走引擎内动画系统；AIGC 视频（Veo/Kling/Wan）只用于过场播片
+
 ## P2 过场
 - 范式 A 视频生成（2026）：Veo 3/3.1（Google，4K/原生音频/API）、Kling 3.0（快手，动作真实性第一）、Wan 2.1/2.7（阿里开源，音画同步）、Runway Gen-4.5、Seedance 2.0、Sora 2
   - 对比：wavespeed.ai/blog/zh-CN/posts/ai-video-generation-models-2026、elser.ai 2026 评测（Kling 3.0 与 Wan 2.1 动作真实性并列第一）

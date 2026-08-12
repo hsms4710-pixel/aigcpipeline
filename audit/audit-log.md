@@ -38,3 +38,9 @@
 - **P2 过场**：重写 spec —— 三范式（A AIGC 视频 / B 引擎内 / C 混合），MVP 走 B 为主 + A 展示；管线：Ink → Director Agent 拆镜头 → GPT/Nano Banana 视觉资产 → Veo/Kling/Wan 动画化或 Godot 时间轴 → TTS 配音
 - **更新**：TECH-STACK（生图行 + 视频生成行 + 过场编排行）、P1 spec、t1、ROADMAP、reference、tasks/p2
 - **下一步**：P1 开发（t1 验证 GPT/Nano Banana + TTS 多后端）
+
+## 2026-08-12 —— 优先级决策：过场动画后置，先做 NPC 生成（专项）
+- **决策**：P2 过场整体后置；主链 = P1 形象+语音 → P3 Agent → P4 引擎接入（NPC 实体化+引擎内动画）
+- **动画化工业实现**：两类——①游戏内角色动画=引擎内动画系统（UE5 AnimBP/Motion Matching/Control Rig，intern-learn Lyra 实践；本项目 Godot AnimationTree + Live2D/3D blendshape；AI 生成动画=腾讯 VISVISE/异人之下）②过场播片=AIGC 视频（Veo/Kling/Wan）
+- **更新**：ROADMAP（主线章节）、P2 spec（§9 动画化工业实现 + 状态后置）、TECH-STACK（动画化行）、reference
+- **下一步**：P1 开发（t1 验证 GPT/Nano Banana + TTS 多后端）

@@ -1,6 +1,6 @@
-﻿# P2 Spec：过场动画 AIGC（详细方案）
+# P2 Spec：过场动画 AIGC（详细方案）
 
-> 状态：**规划中（Part 4，依赖 P1 资产 + 生图 GPT/Nano Banana）** ｜ 选型基线：TECH-STACK.md
+> 状态：**后置（优先做 NPC 生成主链：P1→P3→P4；P2 在 NPC 打通后再启动）** ｜ 选型基线：TECH-STACK.md
 
 ## 1. 三种范式（先想清楚做什么）
 | 范式 | 做法 | 优点 | 缺点 | 用途 |
@@ -76,3 +76,12 @@
 - P1：角色立绘（分层）+ 语音（台词 TTS）
 - P3（可选）：Agent 驱动的动态台词（先预写剧本）
 - 云 key：GPT（gpt-image）/ Gemini（Nano Banana）/ 视频模型（Veo 走 Vertex 或 Kling 国内）进 .env
+
+## 9. 动画化的工业实现（先想清楚"动"用哪条路）
+**两类动画，别混**：
+1. **游戏内角色动画（NPC 动起来）= 引擎内动画系统**（本项目主路）：
+   - 工业 AAA 标准（intern-learn ue_lyra_kb 实践）：UE5 动画蓝图（UAnimInstance/状态机）+ Motion Matching + Control Rig + 程序化动画（IK/Warping/PoseDriver）→ 角色走/跑/表情/交互
+   - 本项目（Godot）：AnimationPlayer/AnimationTree + 2D（Live2D/Spine 表情口型）或 3D（blendshape + 骨骼动画 + 简易状态机）
+   - 动画数据来源：手 K / 动捕 / **AI 生成动画**（腾讯 VISVISE：3D 动画生成+自动绑骨+自动蒙皮+MIB 中间帧；腾讯《异人之下》实时 AI 过渡动画——工业已落地）
+2. **过场播片（AIGC 视频）= Veo/Kling/Wan 图生视频**（本 spec 范式 A）→ 只用于预告/展示/非交互剧情
+**结论**：NPC 的"动画化"走引擎内（路径 1），不是 AI 视频；AIGC 视频只在过场播片用。所以 P2 整体后置，先打通 NPC 生成（P1→P3→P4）。

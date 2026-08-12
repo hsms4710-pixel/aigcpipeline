@@ -21,6 +21,9 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 复用：dcc-mcp-creator（intern-learn 664011）+ layout-forge dccBridge 经验；见 spec/p6
 - 进入时机：P1 3D 扩展（S1）→ P4（S3/S5）→ P2（S4）
 
+## 主线（当前重点）：生成一个可交互 NPC
+> 用户决策 2026-08-12：**过场动画（P2）后置**，先考虑怎么把 NPC 生成出来。
+> 主链：**P1 形象+语音 → P3 Agent → P4 引擎接入（NPC 实体化+引擎内动画）** → 打通后再启动 P2 过场 / P5 评测。
 ## 执行环境（全 Part 通用）
 - 管线在**隔离环境**执行（env/README.md：Docker Compose / WSL2 / 云机三选一），本机只做浏览器入口 + git
 - 本机 8GB 显存 → 隔离机按需选型（SDXL 8GB 够；FLUX/PuLID/3D 需 24GB+ 或云 API）
@@ -42,7 +45,7 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 借鉴：noko / godot-AI-Dialog / OpenGameAgent（Godot）、StardewLivingNPCs / ValleyTalk / SentientValley（Mod）、Thrall / Sigrid（BepInEx）、Convai Modding
 - **gate**：Godot 单 NPC demo 可玩；Mod POC 不破坏原游戏（回归检查）
 
-## Part 4 —— P2 过场 AIGC（暂缓，方案已细化见 spec/p2-cutscene）
+## Part 4 —— P2 过场 AIGC（⏸️ 后置，NPC 主链打通后再启动；方案见 spec/p2-cutscene）
 - 范式：A AIGC 视频过场（播片）/ B 引擎内程序化过场（实机）/ C 混合 → MVP 走 B 为主 + A 做展示
 - 管线：Ink 剧本 → Director Agent 拆镜头 → GPT Image 2（角色/关键帧）+ Nano Banana Pro（场景/分镜）→ 动画化（B: Godot 时间轴 / A: Veo/Kling/Wan 图生视频）→ TTS 配音
 - **gate**：M2-1→M2-3（引擎内过场 demo）+ M2-4（AIGC 视频 POC）

@@ -1,0 +1,47 @@
+﻿# ROADMAP：实现路线（一个 part 一个 part）
+
+> 总原则：**顺序推进，做透一个再进下一个**；评测（P5）后置，不在前期实现。
+> 每个 Part 完成后必须过 gate（完成标准）+ 审计，才能进入下一个 Part。
+
+## 依赖关系
+```
+P1 资产 ──► P2 过场（用 P1 资产）
+  │
+  └──────► P4 引擎接入（用 P1 资产）
+P3 Agent（引擎无关，可先沙盒）──► P4
+P2 / P3 / P4 ──► P5 评测（后置）
+```
+
+## Part 0 —— 地基（✅ 本次完成）
+- 仓库骨架、rule、spec 占位、harness、task 拆解、审计机制
+- **gate**：README 目录地图与实际一致；每个 part 有 spec 占位；P1 有可执行任务拆解
+
+## Part 1 —— P1 角色形象+语音生成工作台 MVP（⏳ 下一个）
+- 目标：本地 Web 工作台：人设卡/参考图/参考音 → 立绘（2-4 表情差分）+ 3 句克隆语音 → 资产包下载
+- 借鉴：CharForge / Flux Kontext（形象一致性）、GPT-SoVITS / CosyVoice / F5-TTS（语音）、handcrafted-persona-engine / AITuberKit（虚拟人栈）、3dModelGenerator（job 状态机）
+- **gate**：P1 验收全部通过（见 `spec/p1-character-voice/spec.md` + `tasks/p1/`）；Godot 最小工程能导入立绘+播放语音；P1 审计记录入 `audit/audit-log.md`
+
+## Part 2 —— P3 AI NPC Agent 服务（规划中）
+- 目标：引擎无关 Agent 服务（Memory-RAG + 对话 + 白名单动作），先做"无游戏也能对话"沙盒
+- 借鉴：AI-NPC / ai-character-engine / MindFox / Letta / Mem0 / Zep / Gemma4NPC-it；协议参考 Narra
+- **gate**：沙盒可对话、记忆跨会话一致、HTTP/WS/MCP 三种协议至少通一种
+
+## Part 3 —— P4 引擎接入（规划中）
+- 目标 A：Godot 场景（交互/寻路/任务）接入 P3 Agent，可玩单 NPC demo
+- 目标 B（POC）：接入现有游戏（星露谷类 SMAPI/开源游戏），白名单安全动作
+- 借鉴：noko / godot-AI-Dialog / OpenGameAgent（Godot）、StardewLivingNPCs / ValleyTalk / SentientValley（Mod）、Thrall / Sigrid（BepInEx）、Convai Modding
+- **gate**：Godot 单 NPC demo 可玩；Mod POC 不破坏原游戏（回归检查）
+
+## Part 4 —— P2 过场 AIGC（暂缓）
+- 目标：用 P1 资产做程序化过场（Dialogic/时间轴+表情+运镜），进阶参考 Cutscene Agent（MCP+director）
+- **gate**：脚本→可播放过场 demo
+
+## Part 5 —— P5 评测（⏸️ 后置，暂不实现）
+- 目标：内容×行为×集成 三维评分卡 + 跨层归因 + 元评测（详见 `研究计划.md` §4）
+- **前置依赖**：P1-P4 至少各有一个稳定 demo 可被评测；评测方法论先行（人工锚点→VLM judge）
+- **明确不做**：在 P1-P4 跑通之前，不实现评测功能、不建评测平台
+
+## 阶段流转（每个 Part 内部）
+```
+spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开发（逐 task）→ verify → audit → 归档
+```

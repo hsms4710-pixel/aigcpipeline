@@ -1,0 +1,34 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Godot
+.godot/
+*.import
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 产物/大文件（工作产物不入库）
+assets/output/
+*.wav
+*.mp4
+!assets/README.md
+!reference/README.md
+
+# 日志/临时
+*.log
+tmp/
+.work/

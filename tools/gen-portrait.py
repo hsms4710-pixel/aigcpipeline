@@ -162,6 +162,22 @@ def main():
             bw, bh = _PIL.open(bust).size
             box = face_bbox(bw, bh)
             print(f"[expressions] 逐表情人脸区域编辑 + 人脸层合成回 bust 基底（box={box}）…")
+            from PIL import Image as _PIL2
+            _bust_arr = None
+            def _face_metrics(raw_path):
+                """人脸区相对 bust 的质量指标：肤色占比 + 平均差异（用于检出'模型重绘失真'坏样本）"""
+                import numpy as _np
+                nonlocal _bust_arr
+                if _bust_arr is None:
+                    b = _PIL2.open(bust).convert("RGBA")
+                    _bust_arr = _np.asarray(b, dtype=_np.float32)[box[1]:box[3], box[0]:box[2]]
+                r = _np.asarray(_PIL2.open(raw_path).convert("RGBA"), dtype=_np.float32)
+                rf = r[box[1]:box[3], box[0]:box[2]]
+                md = float(_np.abs(rf - _bust_arr)[..., :3].mean())
+                def skin(x):
+                    R, G, B = x[..., 0], x[..., 1], x[..., 2]
+                    return float(((R > 110) & (R < 250) & (G > 70) & (G < 225) & (B > 50) & (B < 210) & (R > G) & (G > B * 0.7)).mean())
+                return md, skin(rf[..., :3]), skin(_bust_arr[..., :3])
             for emo in ("happy", "sad", "angry", "neutral"):
                 final = os.path.join(portrait_dir, f"exp_{emo}.png")
                 raw = os.path.join(raw_dir, f"raw_exp_{emo}.png")
@@ -172,17 +188,29 @@ def main():
                                         "engine": a.model, "prompt": prompt, "source": "face-mask-edit+composite"})
                     continue
                 print(f"[exp_{emo}] 生成中…")
-                try:
-                    n, dt = gen_image(client, prompt, raw, ref=bust, model=a.model, backend=a.backend,
-                                      transparent=True, mask=maskf)
-                    composite_face(bust, raw, box, final)
-                    assets_meta.append({"type": f"{style_type}/exp_{emo}", "file": f"portrait/exp_{emo}.png",
-                                        "engine": a.model, "prompt": prompt, "source": "face-mask-edit+composite",
-                                        "raw_file": f"portrait/raw/raw_exp_{emo}.png",
-                                        "size_bytes": n, "elapsed_s": round(dt, 1)})
-                    print(f"  ok exp_{emo}.png (raw {n}B, {dt:.1f}s) -> 人脸层合成")
-                except Exception as e:
-                    print(f"  ERR exp_{emo}: {e}")
+                attempts = 0
+                ok = False
+                while attempts < 3 and not ok:
+                    attempts += 1
+                    try:
+                        n, dt = gen_image(client, prompt, raw, ref=bust, model=a.model, backend=a.backend,
+                                          transparent=True, mask=maskf)
+                        md, sr, bs = _face_metrics(raw)
+                        bad = (sr < bs - 0.08) or (md > 30)
+                        if bad and attempts < 3:
+                            print(f"    自检未过(肤色 {sr:.2f} vs 基底 {bs:.2f}, 脸区均差 {md:.1f})，重试 {attempts}/3…")
+                            continue
+                        ok = True
+                        composite_face(bust, raw, box, final)
+                        assets_meta.append({"type": f"{style_type}/exp_{emo}", "file": f"portrait/exp_{emo}.png",
+                                            "engine": a.model, "prompt": prompt, "source": "face-mask-edit+composite",
+                                            "raw_file": f"portrait/raw/raw_exp_{emo}.png", "attempts": attempts,
+                                            "face_mean_diff": round(md, 1), "face_skin_ratio": round(sr, 3),
+                                            "size_bytes": n, "elapsed_s": round(dt, 1)})
+                        print(f"  ok exp_{emo}.png (raw {n}B, {dt:.1f}s, 自检通过 肤色{sr:.2f} 均差{md:.1f}) -> 人脸层合成")
+                    except Exception as e:
+                        print(f"  ERR exp_{emo} (尝试{attempts}): {e}")
+                        break
             sheet = make_exp_sheet(portrait_dir, os.path.join(portrait_dir, "exp_sheet.png"))
             print("  2x2 审阅拼图:", sheet or "（缺图，未生成）")
         else:
@@ -200,4 +228,5 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 

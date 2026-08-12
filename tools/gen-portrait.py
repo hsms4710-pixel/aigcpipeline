@@ -12,47 +12,14 @@ from gen_prompt import build_prompt
 
 def load_client():
     from dotenv import load_dotenv
-    from openai import OpenAI
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     load_dotenv(os.path.join(repo, "env", ".env"), override=True)
-    return OpenAI(api_key=os.environ.get("GPT_API_KEY", ""), base_url=os.environ.get("GPT_BASE_URL", ""))
+    return None  # image_backend 内按 backend 懒加载
 
 
-def download(url, out):
-    import requests
-    img = requests.get(url, timeout=180).content
-    with open(out, "wb") as f:
-        f.write(img)
-    return len(img)
-
-
-def gen_image(client, prompt, out, ref=None, model="gpt-image-1", size="1024x1024"):
-    """文生图（无参考）或 responses 参考图锚点。返回 (bytes 大小, 用时秒)。"""
-    t0 = time.time()
-    if ref is None:
-        resp = client.images.generate(model=model, prompt=prompt, n=1, size=size)
-        url = resp.data[0].url
-        n = download(url, out)
-    else:
-        with open(ref, "rb") as f:
-            b64 = base64.b64encode(f.read()).decode()
-        resp = client.responses.create(model=model, input=[
-            {"type": "image", "image_url": "data:image/png;base64," + b64},
-            {"type": "text", "text": prompt},
-        ])
-        saved = False
-        for it in resp.output:
-            for part in (getattr(it, "content", None) or []):
-                if getattr(part, "type", "") == "image":
-                    url = getattr(part, "image_url", "")
-                    if isinstance(url, str) and url.startswith("data:"):
-                        data = base64.b64decode(url.split(",", 1)[1])
-                        with open(out, "wb") as f:
-                            f.write(data)
-                        n = len(data); saved = True
-        if not saved:
-            raise RuntimeError("responses 输出中未找到图片（可能中转站不支持或格式不同）")
-    return n, time.time() - t0
+def gen_image(client, prompt, out, ref=None, model="gpt-image-2", size="1024x1024", backend="openai"):
+    from image_backend import gen_image as _gen
+    return _gen(prompt, out, ref=ref, backend=backend, model=model, size=size, client=client)
 
 
 def main():
@@ -61,7 +28,8 @@ def main():
     ap.add_argument("--out", required=True, help="角色资产目录")
     ap.add_argument("--dry-run", action="store_true", help="只打印计划，不调用 API")
     ap.add_argument("--ref", default=None, help="锚点图（参考图）")
-    ap.add_argument("--model", default="gpt-image-1")
+    ap.add_argument("--model", default="gpt-image-2")
+    ap.add_argument("--backend", choices=["openai", "gemini", "fal"], default="openai", help="生图后端")
     ap.add_argument("--scene", choices=["pixel", "splash"], default=None, help="overwrite persona.style.type")
     a = ap.parse_args()
 
@@ -104,7 +72,7 @@ def main():
         prompt = build_prompt(persona, style_type, view, exp=exp)
         outfile = os.path.join(portrait_dir, f"{name}.png")
         print(f"[{name}] 生成中...")
-        n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model)
+        n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend)
         assets_meta.append({"type": f"{style_type}/{name}", "file": f"portrait/{name}.png",
                             "engine": a.model, "prompt": prompt, "size_bytes": n, "elapsed_s": round(dt, 1)})
         print(f"  ok {name}.png ({n}B, {dt:.1f}s)")

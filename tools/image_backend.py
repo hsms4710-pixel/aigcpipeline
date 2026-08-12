@@ -1,4 +1,4 @@
-﻿"""image_backend.py：生图后端统一抽象（openai 中转站 / gemini Nano Banana / fal 聚合）
+"""image_backend.py：生图后端统一抽象（openai 中转站 / gemini Nano Banana / fal 聚合）
 统一接口 gen_image(prompt, out, ref=None, backend=..., model=...) -> (bytes大小, 用时秒)
 """
 import os, time, base64
@@ -12,16 +12,22 @@ def _download(url, out):
     return len(img)
 
 
-def _openai_gen(client, prompt, out, ref, model, size, seed=None):
+def _openai_gen(client, prompt, out, ref, model, size, seed=None, transparent=False, mask=None):
     if ref is None:
         kwargs = {"model": model, "prompt": prompt, "n": 1, "size": size}
+        if transparent:
+            kwargs["background"] = "transparent"
         if seed is not None:
             kwargs["extra_body"] = {"seed": seed}
         resp = client.images.generate(**kwargs)
         return _download(resp.data[0].url, out)
-    # 参考图锚点：用 images.edit（中转站已验证支持；responses 暂 503）
+    # 参考图锚点：images.edit（保持角色）；mask 存在时只编辑透明区域（表情连贯）
     with open(ref, "rb") as f:
         kwargs = {"model": model, "image": f, "prompt": prompt, "size": size}
+        if transparent:
+            kwargs["background"] = "transparent"
+        if mask is not None:
+            kwargs["mask"] = open(mask, "rb")
         resp = client.images.edit(**kwargs)
         return _download(resp.data[0].url, out)
 
@@ -49,7 +55,7 @@ def _fal_gen(prompt, out, ref, model):
     return _download(url, out)
 
 
-def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None, seed=None):
+def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None, seed=None, transparent=False, mask=None):
     """统一生图入口。client 可复用；返回 (bytes大小, 耗时秒)。"""
     t0 = time.time()
     if backend == "openai":
@@ -59,7 +65,7 @@ def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size
             repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             load_dotenv(os.path.join(repo, "env", ".env"), override=True)
             client = OpenAI(api_key=os.environ.get("GPT_API_KEY", ""), base_url=os.environ.get("GPT_BASE_URL", ""))
-        n = _openai_gen(client, prompt, out, ref, model, size, seed=seed)
+        n = _openai_gen(client, prompt, out, ref, model, size, seed=seed, transparent=transparent, mask=mask)
     elif backend == "gemini":
         if client is None:
             from google import genai
@@ -70,3 +76,17 @@ def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size
     else:
         raise ValueError(f"未知 backend: {backend}")
     return n, time.time() - t0
+
+
+def face_mask(ref_img, out_mask, cy=0.40, rx=0.20, ry=0.24):
+    """生成脸部近似 mask（二次元立绘表情切换：只改脸，构图不变）。
+    mask 中透明区域=要编辑的部位。cy/rx/ry 为脸部椭圆参数（比例）。"""
+    from PIL import Image, ImageDraw
+    im = Image.open(ref_img).convert("RGBA")
+    w, h = im.size
+    m = Image.new("RGBA", (w, h), (0, 0, 0, 255))
+    d = ImageDraw.Draw(m)
+    cx = w * 0.5
+    d.ellipse([cx - w*rx, h*cy - h*ry, cx + w*rx, h*cy + h*ry], fill=(0, 0, 0, 0))
+    m.save(out_mask)
+    return out_mask

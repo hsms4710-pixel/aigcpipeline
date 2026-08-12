@@ -119,3 +119,9 @@
 - 方案：中转站 responses 503 → 改用 images.edit（图生图）做锚点；seed 支持
 - 重跑 v2：场景 A/B 全带锚点（assets/demo/char_ailin_v2、char_ailin_splash_v2）
 - 待用户对比 v1/v2
+
+## 2026-08-13 —— 表情连贯 + 透明背景（v3）+ 人设卡编辑器
+- 表情方案：透明背景（background=transparent）+ mask edit（face_mask 生成脸部 mask，只编辑表情区域，构图不变）→ 二次元立绘表情切换工业做法
+- v3 验证：全 RGBA 透明背景（full 68万+ 透明像素）；待用户审阅表情连贯性
+- 人设卡编辑器：工作台前端 PersonaForm（名字/种族/职业/性格/视觉/装备/服饰/细节/风格类型/资产勾选）→ 生成 persona.json → 创建角色；build 成功
+- 参考图锚点确认：images.edit（responses 仍 503）

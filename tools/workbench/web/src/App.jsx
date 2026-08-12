@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Tldraw, useEditor } from '@tldraw/tldraw'
+import PersonaForm from './PersonaForm.jsx'
 import '@tldraw/tldraw/tldraw.css'
 
 function AddToCanvas({ onAdd }) {
@@ -18,6 +19,14 @@ export default function App() {
     setChars(await r.json())
   }
   useEffect(() => { refresh(); const t = setInterval(refresh, 5000); return () => clearInterval(t) }, [])
+
+  const uploadFromForm = async (fd) => {
+    setBusy(true)
+    const r = await fetch('/api/characters', { method: 'POST', body: fd })
+    const j = await r.json()
+    setMsg(已创建角色 )
+    setBusy(false); refresh()
+  }
 
   const upload = async (e) => {
     e.preventDefault()
@@ -79,6 +88,9 @@ export default function App() {
       {/* 侧栏 */}
       <div style={{ width: 300, borderRight: '1px solid #ddd', padding: 12, overflowY: 'auto', background: '#fafafa' }}>
         <h3 style={{ marginTop: 0 }}>角色 AIGC 工作台</h3>
+        <PersonaForm onCreate={uploadFromForm} />
+        <hr />
+        <h4>或上传 persona.json</h4>
         <form onSubmit={upload}>
           <div style={{ margin: '6px 0' }}><input type="file" name="persona" accept=".json" /></div>
           <div style={{ margin: '6px 0' }}><input type="file" name="ref" accept="image/*" /></div>

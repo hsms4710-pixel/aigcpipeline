@@ -8,6 +8,7 @@ import os, sys, json, time, base64, argparse, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gen_prompt import build_prompt
+from image_backend import face_mask
 
 
 def load_client():
@@ -17,9 +18,11 @@ def load_client():
     return None  # image_backend 内按 backend 懒加载
 
 
-def gen_image(client, prompt, out, ref=None, model="gpt-image-2", size="1024x1024", backend="openai"):
+def gen_image(client, prompt, out, ref=None, model="gpt-image-2", size="1024x1024", backend="openai",
+             transparent=False, mask=None):
     from image_backend import gen_image as _gen
-    return _gen(prompt, out, ref=ref, backend=backend, model=model, size=size, client=client)
+    return _gen(prompt, out, ref=ref, backend=backend, model=model, size=size, client=client,
+                transparent=transparent, mask=mask)
 
 
 def main():
@@ -68,12 +71,21 @@ def main():
     client = load_client()
     ref = a.ref
     assets_meta = []
+    transparent = style_type == "splash"  # 立绘/表情：透明背景
     for name, view in tasks:
         exp = name.split("_")[-1] if name.startswith("exp_") else "neutral"
         prompt = build_prompt(persona, style_type, view, exp=exp)
         outfile = os.path.join(portrait_dir, f"{name}.png")
+        mask = None
+        if name.startswith("exp_") and ref:
+            # 表情连贯：基于锚点立绘生成脸部 mask，只编辑表情区域
+            mask = os.path.join(portrait_dir, f"{name}_mask.png")
+            face_mask(ref, mask)
         print(f"[{name}] 生成中...")
-        n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend)
+        n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend,
+                          transparent=transparent, mask=mask)
+        if mask and os.path.exists(mask):
+            os.remove(mask)
         assets_meta.append({"type": f"{style_type}/{name}", "file": f"portrait/{name}.png",
                             "engine": a.model, "prompt": prompt, "size_bytes": n, "elapsed_s": round(dt, 1)})
         print(f"  ok {name}.png ({n}B, {dt:.1f}s)")

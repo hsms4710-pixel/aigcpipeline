@@ -88,3 +88,9 @@
 - t2 ✅：persona-schema.json v0（visual/style/assets/voice 对齐 prompt-templates）+ asset-package-spec.md + validate-persona.py + validate-asset-package.py（utf-8-sig 兼容 BOM）+ 示例 persona 通过校验
 - 参考图：gpt-image-1 = responses-only；正确调用 = responses.create(input=[image, text])；中转站 gpt-image 后端 503 待恢复；gpt-4o/gpt-5.5 中转站 404
 - 下一步：中转站恢复后跑场景 A/B（含参考图锚点）
+
+## 2026-08-13 —— t3 提前执行：形象生成 CLI 代码框架完成
+- tools/gen_prompt.py：persona + scene + view → 分层提示词（scene 优先；像素三视图/行为帧/立绘表情均验证）
+- tools/gen-portrait.py：云生图 CLI（文生图 images.generate / 参考图锚点 responses；任务自动派生：pixel→front/side/back+行为帧，splash→立绘+表情；落盘资产包+metadata；dry-run 验证）
+- 真实生成待中转站 gpt-image 恢复（503）
+- 下一步：中转站恢复 → gen-portrait 实跑场景 A/B；或 t8 模板文件细化

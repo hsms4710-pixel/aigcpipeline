@@ -21,3 +21,14 @@
 - **新增**：`spec/TECH-STACK.md` 选型基线 + 原则 P9（工业主流优先，防"为省事选非主流"）
 - **fixes**：t1/t3/t4/t5、SKILL_character-gen/voice-clone/workbench-web、P2/P3/P4 spec、reference 全部同步更新
 - **下一步**：P1 开发（t1 按新基线验证 ComfyUI+InstantID+TTS 多后端）
+
+## 2026-08-12 —— 表情方案修正 + 环境核查（专项）
+- **范围**：2D/3D 表情技术路径 + 本机环境能力
+- **结论**：
+  - 2D 表情：修正为 Live2D Cubism（免费版商用门槛<1000万日元）+ **Umamo（开源 rigging，drop-in）** 绑定，参数化表情/口型
+  - 3D 表情：修正为**引擎原生 Blend Shapes/Morph Target**（Godot/Unity/UE 内调权重），不需要 AIGC 生成表情图
+  - 环境：本机 RTX 4060 8GB / RAM 15.2GB / C 盘 285GB / uv 3.11 可用 / 无 ffmpeg·ComfyUI·Godot / 代理未启动
+- **能力矩阵**：本机可跑 SDXL+InstantID+LoRA+GPT-SoVITS/CosyVoice；FLUX 需量化、PuLID-Flux/Hunyuan3D 需租机或 API
+- **产物**：`reference/env-report-2026-08-12.md`；t1 按 8GB 约束重写（含本机/API/租机决策清单）
+- **fixes**：TECH-STACK / P1 spec / SKILL_character-gen 同步更新
+- **下一步**：t1 前置（启动 Clash → uv 3.11 venv → CUDA torch → ffmpeg → ComfyUI+InstantID）

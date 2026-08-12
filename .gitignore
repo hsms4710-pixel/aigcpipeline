@@ -52,3 +52,7 @@ env/runtime/tools/*.png
 # GPT-SoVITS 源码+模型（运行时依赖，重新 clone）
 env/runtime/tools/GPT-SoVITS/
 
+
+# 下载的压缩包
+*.zip
+

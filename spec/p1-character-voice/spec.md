@@ -27,7 +27,7 @@
 │   ├── layered/            # 分层输出（工业主流：Live2D/Spine 需要分图层）
 │   │   ├── body/           #   body 分部件（头发/脸/身体/服饰…）
 │   │   └── ...             #   由 ComfyUI workflow 或后处理拆分
-│   ├── expressions/        # 表情差分（引擎友好图集；Live2D 阶段替代为绑定）
+│   ├── expressions/        # 可选：快速可玩表情图集（非主路径）
 │   │   ├── neutral.png
 │   │   └── ...
 │   └── sheet.png           # 表情图集
@@ -36,7 +36,8 @@
 │   ├── ...
 └── preview.html            # 本地预览页（看图/听音）
 ```
-> 说明：MVP 仍产出表情差分图集（快速可玩），但**契约预留 layered/ 分层**，Live2D 绑定是工业主流路径（见 §6）。
+> 表情方案（已修正）：**2D 走 Live2D/Umamo 绑定（参数化表情/口型），3D 走引擎原生 Blend Shapes/Morph Target**，都不靠 AIGC 生成表情图。
+expressions/ 图集仅作无绑定的快速可玩占位，非主产物。
 
 ## 4. 子模块
 | 模块 | 职责 | 技术（工业主流） |
@@ -56,8 +57,15 @@
 - CharForge（社区项目）：仅研究参考（单参考图训 LoRA 流程），不默认进主线
 
 ### 2D 角色动画管线（工业主流，P1 预留）
-- **Live2D Cubism**：二次元手游互动/表情/卡面标配（Live2D+Spine 为动态 2D 主流；Live2D 强在表情与立体感、不损原画风格）→ 目标管线：立绘分层 PSD → Live2D 绑定
+- **Live2D Cubism**：二次元手游互动/表情/卡面标配；**FREE 版个人/年销售额<1000 万日元可商用**；SDK 发布需出版许可（开源 demo 本地运行无碍）
+- **Umamo**（开源，GPLv3）：Live2D Cubism Editor 的 drop-in 替代（跨平台 rigging）→ 开源管线首选
+- **DragonBones/LoongBones**（开源 2D 动画）→ 备选
 - **Spine**：2D 骨骼动画行业标准，运行时性能好 → 大幅动作/战斗场景备选
+- 目标管线：分层立绘（PSD/layered）→ Live2D Cubism/Umamo 绑定 → 参数化表情/口型（引擎内驱动）
+
+### 3D 表情（P1 预留，引擎内完成）
+- 3D 表情**不需要 AIGC 生成表情图**：Godot/Unity 用 **Blend Shapes**（SkinnedMeshRenderer.SetBlendShapeWeight）、UE 用 **Morph Targets**，引擎内调权重即可
+- 参考 ARKit 46 blendshape 标准设计面部 morph 集合
 
 ### 语音（工业主流）
 - **云 API（生产后端）**：火山引擎 TTS（国内综合首选，中文自然度/定价合理）、Azure TTS（延迟最低/免费层大，游戏解说场景推荐）、ElevenLabs（情感/音质天花板，海外）—— 2026 TTS 选型评测
@@ -96,3 +104,4 @@
 - Live2D 分层如何自动生成/拆分（先人工拆分 + 规范，工具化后置）
 - 无参考音时 TTS 音色如何选（预设音色库：云 API 音色 vs CosyVoice 克隆）
 - 表情差分数量/情绪集合定多少（先 neutral/happy/sad/angry 4 个）
+

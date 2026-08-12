@@ -18,9 +18,11 @@
 - 过场：P2 → 见 spec/p2（暂缓）
 - 评测：P5 → 见 spec/p5（后置，不实现）
 - 调研引用：reference/README.md
+- 环境事实：reference/env-report-2026-08-12.md（本机 8GB 显存约束 + 租机/API 决策）
 - 经验沉淀：harness/memory/（daily/errors/knowledge/decisions）
 
 ## 关键契约文件（待创建）
 - `spec/p1-character-voice/contracts/persona-schema.json`（人设卡 v0）
 - `spec/p1-character-voice/contracts/asset-package-spec.md`（资产包规范）
 - `spec/p3-npc-agent/contracts/agent-protocol.md`（Agent 协议，Part 2 建）
+

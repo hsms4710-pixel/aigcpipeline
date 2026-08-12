@@ -159,3 +159,10 @@
 - 阿米娅立绘（画师唯@W，同画师不混用）：2048x2048 立绘 4 张（初始/精一/精二/皮肤）+ 1024 半身像 2 + 512 2d小人 2 + 头像 1 → assets/reference/arknights_amiya/
 - --style-ref 功能打通：阿米娅 art_1 风格 → 新角色艾琳（char_ailin_ak，立绘+表情拼图）
 - 待办：坎公骑冠剑（像素风）参考图；明日方舟画风效果待用户审阅
+
+## 2026-08-13 —— 闪退诊断 + 风格参考 prompt 重构 + 意图模板 + 参考图扩充
+- 闪退：uvicorn 本身正常启动（诊断确认）→ start-workbench.cmd 重写（纯 ASCII + python 存在检查 + 自动开浏览器 + pause），请用户重新双击
+- 风格参考 prompt 重构：有参考图用 build_style_prompt（画风迁移专用：模仿线条/上色/光影，创建新角色，不复制参考角色），与无参考 build_prompt 完全不同结构；重测 char_ailin_ak2
+- 意图区分：splash.json 加 three_view/dialogue（对话用无边框立绘）；pixel.json 加 chibi_three_view（像素小人三视图）
+- 参考图：prts.wiki 立绘差分 33 张（400x400，Playwright 绕过 403）；FGO 阿尔托莉雅立绘（512x724 RGBA 无背景，atlasacademy）
+- 待办：FGO 高清立绘 API、坎公（像素风）参考图、对话用立绘测试

@@ -4,6 +4,8 @@
     "portrait": "full-body splash art, standing pose, facing viewer",
     "expressions": "same character, exactly same pose and composition as reference, only the facial expression changes to {exp}, keep hair/outfit/weapon identical, head-and-shoulders",
     "turnaround": "same character, three-quarter / side / back views, same outfit and colors",
+    "three_view": "character sheet, front / side / back three views, same character, consistent design, same outfit",
+    "dialogue": "half-body portrait for in-game dialogue, transparent background, clean, no background elements, same character, subtle neutral expression",
     "expressions_sheet": "2x2 grid, four panels of the same character, identical pose and composition, top-left: happy smile, top-right: sad, bottom-left: angry, bottom-right: neutral expression, each panel head-and-shoulders, transparent background, no panel borders, no text",
     "action": "same character, dynamic action pose, full body"
   },

@@ -10,7 +10,8 @@
     "attack": "animation frame, attacking pose, single frame, consistent with reference",
     "hurt": "animation frame, hurt pose, single frame, consistent with reference",
     "sprite_sheet": "sprite sheet, evenly spaced grid of animation frames, same character",
-    "directional": "directional sprite sheet, 4 directions (down/up/left/right), same character"
+    "directional": "directional sprite sheet, 4 directions (down/up/left/right), same character",
+    "chibi_three_view": "chibi pixel character, cute deformed proportions, front / side / back three views, same character"
   },
   "output_constraint": "same character, consistent design, no text, no watermark"
 }

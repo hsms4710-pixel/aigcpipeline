@@ -87,3 +87,19 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def build_style_prompt(persona, with_composition="full body, standing pose, facing viewer"):
+    """有参考图（风格参考）时的专用 prompt：模仿参考图画风，创建新角色，不复制参考角色。
+    与无参考的 build_prompt 结构完全不同（聚焦画风迁移，而非拼模板）。"""
+    v = persona.get("visual", {})
+    parts = [v.get("subject", persona.get("name", ""))]
+    for k in ("outfit", "equipment", "detail"):
+        if v.get(k):
+            parts.append(v[k])
+    desc = ", ".join(p for p in parts if p)
+    style = persona.get("style", {})
+    anchor = style.get("anchor") or ""
+    return (f"Create a brand new original character artwork, NEVER copy the character from the reference image. "
+            f"Match the reference image's art style, line quality, coloring, shading and overall finish quality. "
+            f"New character: {desc}. {with_composition}. {anchor} transparent background, no text, no watermark")

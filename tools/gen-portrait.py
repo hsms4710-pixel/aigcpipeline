@@ -7,7 +7,7 @@
 import os, sys, json, time, base64, argparse, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gen_prompt import build_prompt
+from gen_prompt import build_prompt, build_style_prompt
 from image_backend import face_mask
 
 
@@ -74,7 +74,10 @@ def main():
     assets_meta = []
     transparent = style_type == "splash"  # 立绘/表情：透明背景
     for name, view in tasks:
-        prompt = build_prompt(persona, style_type, view, exp="neutral")
+        if style_ref is not None and name == "full":
+            prompt = build_style_prompt(persona)  # 有参考图：画风迁移专用 prompt
+        else:
+            prompt = build_prompt(persona, style_type, view, exp="neutral")
         outfile = os.path.join(portrait_dir, f"{name}.png")
         print(f"[{name}] 生成中...")
         n, dt = gen_image(client, prompt, outfile, ref=ref, model=a.model, backend=a.backend,

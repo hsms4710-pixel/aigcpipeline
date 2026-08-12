@@ -16,7 +16,7 @@
 | 角色一致性 | **InstantID**（首选）/ PuLID / IP-Adapter FaceID | 按需训练角色 LoRA | CharForge 当默认 | 2025-12 社区共识 InstantID 最佳平衡；PuLID 高质量慢；IP-Adapter 快低显存 |
 | 风格锁定 | 角色 LoRA（按需训练） | 风格 LoRA | — | 大厂/工作室通用做法 |
 | 2D 角色动画 | **Live2D Cubism**（免费版个人/小规模<1000万日元可商用）+ **Umamo**（开源 rigging，Cubism 的 drop-in）+ **Spine** | DragonBones（开源） | 只出静态表情 PNG（不够） | Live2D 二次元标配；Umamo 开源替代（GPLv3）；Spine 2D 骨骼行业标准 |
-| TTS | **云 API：火山引擎（国内综合）/ Azure（延迟/免费）/ ElevenLabs（情感）**；**开源：CosyVoice（阿里，本地/离线）** | F5-TTS（快/MIT）、MiniMax、Fish-Speech | GPT-SoVITS 当生产默认 | 2026 TTS 选型评测：火山综合首选、Azure 低延迟、ElevenLabs 音质天花板；CosyVoice 大厂开源工业级 |
+| TTS + 音色 | **云 API：火山（国内综合）/ Azure / ElevenLabs（情感）**；**开源：CosyVoice（本地，零样本+情绪）**；**RVC 音色后处理（增强层，推荐）**：通用 TTS 表达情感 → RVC 转角色音色 | F5-TTS / MiniMax / Fish-Speech / GPT-SoVITS（研究/微调） | — | 2026 实测：RVC 音色相似度 9.5 最高但韵律 6.0；「TTS 情感 + RVC 音色」组合自然度 90%+ vs TTS 单独 60-70%（AMD 社区实测）；RVC 开源活跃（2.3.260718） |
 | 视频生成（P2 过场） | **Veo 3/3.1**（Google，4K/原生音频/指令保真，API）+ **Kling 3.0**（快手，动作真实性第一）+ **Wan 2.1/2.7**（阿里开源，音画同步） | Runway Gen-4.5 / Seedance 2.0 / Hailuo / Sora 2 | — | 2026 评测：Kling 3.0 与 Wan 2.1 动作真实性并列第一；Veo 3 指令复现精度高 |
 | 动画化（NPC/游戏内） | **引擎内动画系统**：Godot AnimationPlayer/AnimationTree（本项目）/ UE5 AnimBP+Motion Matching+Control Rig / Unity Animator（工业 AAA 标准，intern-learn Lyra 教程） | 动画数据来源：手 K / 动捕 / **AI 生成动画**（腾讯 VISVISE 3D 动画+自动绑骨蒙皮+MIB 中间帧、腾讯《异人之下》实时 AI 过渡动画） | AIGC 视频（Veo/Kling）当游戏内动画（只适合播片） | intern-learn ue_lyra_kb animation 系列：状态机/IK/Motion Matching/Control Rig/程序化动画；2D 用 Live2D/Spine 表情口型 |
 | 过场编排（P2） | **Director Agent**（LLM 拆镜头：分镜/景别/运镜/台词/情绪）+ **关键帧→图生视频**工作流 | CineGen / open-director / storyboard-director / ComfyUI-Novel-Director / Cutscene Agent(论文) | 纯手工分镜 | 2026 主流：静态关键帧 + 独立运动模型；游戏工业：腾讯 VISVISE/异人之下实时过渡动画 |

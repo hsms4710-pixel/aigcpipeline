@@ -74,7 +74,14 @@ expressions/ 图集仅作无绑定的快速可玩占位，非主产物。
 - 3D 表情**不需要 AIGC 生成表情图**：Godot/Unity 用 **Blend Shapes**（SkinnedMeshRenderer.SetBlendShapeWeight）、UE 用 **Morph Targets**，引擎内调权重即可
 - 参考 ARKit 46 blendshape 标准设计面部 morph 集合
 
-### 语音（工业主流）
+### 语音（工业主流 + RVC 音色增强）
+- 两条路线（都可，推荐组合）：
+  1. **克隆 TTS 直接生成角色音色**（简单）：CosyVoice 零样本（本地）/ 火山克隆音色（云）
+  2. **通用 TTS + RVC 音色转换**（高质量角色音色，推荐）：通用 TTS（火山/Azure，情感自然）→ **RVC**（用 5-10min 角色素材训练模型）转换音色 → 音色一致 + 情感自然（2026 实测组合自然度 90%+）
+- RVC 定位：音色转换（非 TTS），音色相似度最高（9.5），开源活跃（RVC-Project WebUI）
+- 设计：TTS 抽象 + **可选 RVC 后处理阶段**（tools/tts 加 rvc 步骤）
+
+### 语音（工业主流）### 语音（工业主流）
 - **云 API（生产后端）**：火山引擎 TTS（国内综合首选，中文自然度/定价合理）、Azure TTS（延迟最低/免费层大，游戏解说场景推荐）、ElevenLabs（情感/音质天花板，海外）—— 2026 TTS 选型评测
 - **开源（本地/离线）**：**CosyVoice（阿里开源，流式低延迟/高音色一致性/情感控制，工业级）**、F5-TTS（快/MIT）
 - GPT-SoVITS：社区热门，**仅作克隆研究候选**，不作为生产默认

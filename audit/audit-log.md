@@ -63,3 +63,9 @@
 - 声音集训练主流：GPT-SoVITS 微调（1-5min，98%+ 相似度）/ CosyVoice2 / Spark-TTS / Qwen3-TTS / XTTS-v2；数据工具 zh-tts-mini-corpus；VN 提取配音微调教程
 - 更新：链路总览（P1 拆形象 + V1 语音）、ROADMAP（Part 1 可并行）、spec/voice 新建、TECH-STACK、tasks/voice、reference
 - 版权约束：仅用自有/授权声音集
+
+## 2026-08-13 —— Key 接入（OpenClaw 方式）+ 无限画布 + GPT-SoVITS 主线（专项）
+- **Key 接入**：按 OpenClaw config.toml 格式落地（env/config.toml：model_providers.OpenAI，中转站 api.sisct2.xyz/v1，wire_api=responses；model=gpt-5.5）；Tripo 试用 key 入 env/.env；**config.toml/.env 已加 .gitignore，不入库**；MCP 用 OpenClaw 集成（openclaw mcp / mcp.servers），复用 dcc-mcp，不自写（env/key-access.md）
+- **无限画布**：新增 spec/canvas（tldraw 首选，角色板/分镜板/世界板 + 产物节点联动 + AI 批注后置）；TECH-STACK/链路总览/t5 同步
+- **语音主线**：V1 语音确认 GPT-SoVITS 首选（国内二次元角色声音集生态成熟：崩铁/原神/崩三全角色模型+教程）
+- **下一步**：P1 t1（GPT Image/Nano Banana 验证，key 已就位）+ V1 语音（GPT-SoVITS 声音集训练）

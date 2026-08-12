@@ -27,6 +27,7 @@
 | NPC 运行时参考 | Inworld / Convai / NVIDIA ACE（商业，米哈游/网易/腾讯/育碧采用） | 自研（研究用途） | — | NVIDIA ACE 采用列表；网易《逆水寒》AI NPC 落地；腾讯《元梦之星》AI 伴玩 |
 | 任务队列（服务化） | Celery/Redis、Temporal | 轻量（SQLite+状态机，仅 MVP） | — | 生产 AIGC 服务标准做法；轻量仅作占位，接口需可替换 |
 | DCC 资产加工 | **DCC-MCP（dcc-mcp-core，自研适配器）** 控制 Blender/Maya/Houdini/UE | Blender 官方 MCP / 社区 MCP | 人工 DCC 操作（不可自动化） | 已有 dcc-mcp-creator skill（intern-learn 664011）+ layout-forge dccBridge 经验 |
+| 无限画布（工作台交互） | **tldraw**（开源 SDK，事实标准） | Excalidraw | Miro/Figma（不开源） | Cowart（tldraw+Codex AI 改图）、tldraw-sandbox、@xpert-ai/plugin-canvas 参照；角色板/分镜板/世界板 |
 | Web 后端 | FastAPI（主流） | Streamlit（仅原型） | — | — |
 | 引擎 | Godot（主实现，indie 2D 增长最快） | Unity / Unreal（作为导入目标） | 绑定单一引擎 | GMTK 2025：Unity 64% / Godot 20% / Unreal 11%；工业主导 Unity/Unreal，Godot 增长快且开源 |
 

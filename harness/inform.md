@@ -1,4 +1,4 @@
-﻿# harness/inform.md —— 项目地图（AI 先看这里）
+# harness/inform.md —— 项目地图（AI 先看这里）
 
 ## 我是什么
 「角色 AIGC → AI NPC → 引擎接入 → 评测」研究课题仓库。当前主线：**Part 1 = P1 形象+语音工作台 MVP**。
@@ -18,7 +18,8 @@
 - 过场：P2 → 见 spec/p2（暂缓）
 - 评测：P5 → 见 spec/p5（后置，不实现）
 - 调研引用：reference/README.md
-- 环境事实：reference/env-report-2026-08-12.md（本机 8GB 显存约束 + 租机/API 决策）
+- 环境事实：reference/env-report-2026-08-12.md
+- Key 接入：env/key-access.md（OpenClaw 格式，config.toml/.env 不入库）+ env/api-costs.md（付费清单）（本机 8GB 显存约束 + 租机/API 决策）
 - 经验沉淀：harness/memory/（daily/errors/knowledge/decisions）
 
 ## 关键契约文件（待创建）

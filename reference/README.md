@@ -70,3 +70,15 @@
 - Orak（Krafton 12 游戏基准）/ M3-BENCH / FAIRGAMER / FlashAdventure
 - CharacterBench（AAAI2025）/ RoleplayEval / ViStoryBench / HEART-BENCH / persona fidelity（ACL2025）
 - 资源占用：Enriching Gameworlds With LLM NPCs
+
+## Key 接入 / MCP（OpenClaw 方式）
+- OpenClaw 配置：config.toml [model_providers.XXX]（base_url / api: openai-completions|anthropic-messages / wire_api）；docs.openclaw.ai + github.com/openclaw/openclaw
+- MCP：OpenClaw 作为 MCP 客户端注册表（openclaw mcp add/list/show/doctor；mcp.servers；stdio/SSE/Streamable HTTP）；docs.openclaw.ai/cli/mcp
+- 我们的落地：env/key-access.md + env/config.toml（不入库）
+
+## 无限画布
+- tldraw（开源 SDK）：tldraw.dev ｜ Cowart（tldraw+Codex AI 改图）：36kr 报道 ｜ tldraw-sandbox（画布+AI 终端）：github acoyfellow ｜ @xpert-ai/plugin-canvas（画布+Agent workspace）
+
+## 二次元 GPT-SoVITS（V1 生态）
+- 崩铁/原神/崩三/绝区零/蔚蓝档案 全角色 GPT-SoVITS 模型分享（B站 BV1FqsKegEHv、BV1GJ4m1e7x2 等）；整合包+AutoDL/Colab 教程；情感分类训练
+- 开源：github RVC-Boss/GPT-SoVITS；SLFork 分支（1min few-shot）

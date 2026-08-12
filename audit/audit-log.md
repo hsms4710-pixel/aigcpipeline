@@ -69,3 +69,10 @@
 - **无限画布**：新增 spec/canvas（tldraw 首选，角色板/分镜板/世界板 + 产物节点联动 + AI 批注后置）；TECH-STACK/链路总览/t5 同步
 - **语音主线**：V1 语音确认 GPT-SoVITS 首选（国内二次元角色声音集生态成熟：崩铁/原神/崩三全角色模型+教程）
 - **下一步**：P1 t1（GPT Image/Nano Banana 验证，key 已就位）+ V1 语音（GPT-SoVITS 声音集训练）
+
+## 2026-08-13 —— t1 实跑：生图 + GPT-SoVITS 零样本克隆验证通过（执行）
+- 环境：runtime venv（浅路径 C:\Users\26046\Desktop\inerview\runtime\.venv，py3.11+torch CPU）+ ffmpeg 9.0（winget）+ GPT-SoVITS（clone + v1 模型下载 hf-mirror）
+- 生图 ✅：中转站 api.sisct2.xyz（gpt-image-2 列名；gpt-image-1 实测成功，1024px PNG）
+- TTS ✅：GPT-SoVITS 零样本克隆（edge-tts 参考音 → 2.78s 台词 wav，CPU 5.7s）
+- 坑已记录 knowledge：venv 路径/jieba_fast shim/torchaudio monkey-patch/TTS_Config custom/generator
+- 待办：Nano Banana（Gemini key 用户未提供）、声音集微调（路线 B）、角色一致性对比

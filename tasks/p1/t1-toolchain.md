@@ -1,6 +1,6 @@
 # t1：工具链验证（隔离环境执行）
 
-状态：in_progress（生图链路已验证，TTS 待验） ｜ 依赖：无 ｜ 预估：2-3 天 ｜ 选型基线：spec/TECH-STACK.md
+状态：in_progress（生图 ✅ + GPT-SoVITS 零样本 ✅；Nano Banana 待 key、声音集微调待做） ｜ 依赖：无 ｜ 预估：2-3 天 ｜ 选型基线：spec/TECH-STACK.md
 环境方案：**env/README.md（隔离环境执行，本机只做入口）** ｜ 环境事实：reference/env-report-2026-08-12.md
 
 ## 目标

@@ -76,3 +76,10 @@
 - TTS ✅：GPT-SoVITS 零样本克隆（edge-tts 参考音 → 2.78s 台词 wav，CPU 5.7s）
 - 坑已记录 knowledge：venv 路径/jieba_fast shim/torchaudio monkey-patch/TTS_Config custom/generator
 - 待办：Nano Banana（Gemini key 用户未提供）、声音集微调（路线 B）、角色一致性对比
+
+## 2026-08-13 —— 生图按场景测试框架落地（专项）
+- 提示词模板体系：spec/p1/contracts/prompt-templates.md（分层 prompt + 风格锚点 + 视图/行为模板 + 参考图锚点 + 多轮调整 + 三次生成规则）
+- t1 重写为按场景（像素三视图+行为帧 / 立绘+表情+转面）；新增 t8/t9/t10
+- 样例：test_gpt-image-1.png + pixel_front_anchor.png（中转站 gpt-image）
+- ⚠️ 外部依赖：中转站 gpt-image 503（responses-image 亦 503）→ 参考图锚点机制待中转站恢复/换渠道；纯 prompt 兜底
+- 声音：用户决定暂缓；可选直接下载现成二次元角色 GPT-SoVITS 模型

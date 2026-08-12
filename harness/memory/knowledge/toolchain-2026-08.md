@@ -27,3 +27,9 @@
   - run() 是 generator → next(tts.run(params)) 取 (sr, audio)
   - fast_langdetect 需缓存目录 + hf-mirror
 - 结论：**GPT-SoVITS 本地零样本克隆链路通**；下一步路线 B 声音集微调（二次元角色声音集）
+## 生图场景化测试（2026-08-13）
+- 场景框架就绪：t1 重写（场景 A 像素三视图+行为帧 / 场景 B 立绘+表情+转面）、提示词模板（contracts/prompt-templates.md）、gen-assets.py、t8/t9/t10
+- 已生成：test_gpt-image-1.png（1024px 立绘样例）、pixel_front_anchor.png（像素 front 锚点，501KB）
+- ⚠️ 中转站状态：gpt-image 曾成功；后续 503 "No available compatible accounts"；responses-image（参考图锚点）也 503 → **外部服务不稳定，待恢复或换 fal/官方 key**
+- 参考图锚点：openai 3.0 images.generate 无参考图参数；需 responses API（中转站暂 503）→ 锚点机制实现待定，纯 prompt + 风格锚点先兜底
+- 待办：中转站恢复后跑完场景 A（side/back/行为帧）与场景 B；或用户提供更稳生图渠道

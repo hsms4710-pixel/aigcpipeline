@@ -1,37 +1,49 @@
-# t1：工具链验证（隔离环境执行）
+﻿# t1：生图工具链验证（按资产场景测试）
 
-状态：in_progress（生图 ✅ + GPT-SoVITS 零样本 ✅；Nano Banana 待 key、声音集微调待做） ｜ 依赖：无 ｜ 预估：2-3 天 ｜ 选型基线：spec/TECH-STACK.md
-环境方案：**env/README.md（隔离环境执行，本机只做入口）** ｜ 环境事实：reference/env-report-2026-08-12.md
+状态：in_progress（基础生图链路 ✅，GPT-SoVITS 零样本 ✅；按场景测试进行中）
+依赖：runtime venv + key（已就绪）｜ 预估：2-3 天
+选型基线：spec/TECH-STACK.md ｜ 提示词模板：spec/p1/contracts/prompt-templates.md
 
 ## 目标
-在**本地隔离文件夹**（env/runtime/，uv venv 3.11，见 env/README.md）验证 P1 主链路。
-**生图后端：云 API = GPT Image 2 + Nano Banana**（用户决定）；本地 ComfyUI（SDXL+InstantID）作为可选离线后端，首期只做探测不默认验证。
+验证生图链路，**按资产场景测试**（不是生成一张图就算完成）：
+- 场景 A：2D 像素游戏角色（三视图 + 行为帧 + 精灵表）
+- 场景 B：高清立绘角色（主立绘 + 表情差分 + 转面）
+每场景：锚点机制保一致 → 三次生成规则 → 多轮调整 → 沉淀 prompt 模板。
 
-## 前置（本地隔离文件夹，见 env/README.md）
-1. 建 env/runtime/ + uv venv（Python 3.11）
-2. 复制 .env.example → env/.env，填 key（GPT/Gemini/TTS）
-3. 装依赖 + portable ffmpeg 到 runtime/tools/
-4. 装 CosyVoice（本地 TTS）→ 验证语音；生图直接调云 API（不需本地 ComfyUI）
+## 前置（已就绪）
+1. runtime venv（浅路径）+ 中转站 key（GPT Image）
+2. 基础生图链路已验证（gpt-image-1/2，见 knowledge/toolchain-2026-08.md）
+3. 提示词模板文档（contracts/prompt-templates.md）
 
-## 验证内容
-- **生图（云 API 首选）**：GPT Image 2（gpt-image-1）vs **Nano Banana Pro**（Gemini API/fal）——4 表情（neutral/happy/sad/angry）身份一致性/质量/耗时/成本；角色设定图（三视图）一致性
-- **本地探测（可选）**：ComfyUI + SDXL + InstantID 能否在本机/隔离机跑通（记录结论，不阻塞）
-- **TTS**：本地 **CosyVoice** + 云 API（火山/Azure，key 进 .env）各 3 句
-- **3D**：不在本阶段验证（API/租机项，见 env-report）
+## 验证内容（按场景）
+### 场景 A：2D 像素角色
+- A1 生成 **front 锚点图**（像素风，32×32 或 64×64 档）
+- A2 带锚点生成 **三视图**（front/side/back）
+- A3 带锚点生成 **行为帧**（idle/walk/attack/hurt）
+- A4 拼 **精灵表**（统一画布/网格）→ 透明背景、像素干净
+### 场景 B：高清立绘
+- B1 生成**主立绘**（full-body）
+- B2 带锚点生成**表情差分**（happy/sad/angry/neutral）
+- B3 带锚点生成**转面/多视图**（three-quarter/side/back）
+### 通用
+- 一致性手段：风格锚点 + 参考图锚点（GPT Image 多参考图）+ 三次生成规则
+- **多轮调整**：至少一次"生成 → 反馈 → 追加描述/换锚点 → 重生成"，记录前后对比
+- 每项记录：prompt / 模型 / 耗时 / 成本 / 是否达标
 
 ## 产出
-- 4 表情测试图（InstantID 路径）+ 6 句语音（本地+云）+ 字幕
-- 验证报告（harness/memory/knowledge/toolchain-2026-08.md）：引擎/模型/耗时/显存/成本/质量/一致性方案结论
-- **决策清单**：哪些在隔离环境跑、哪些走云 API、是否需要升显存（写入报告 + ROADMAP 备注）
+- 测试图集：assets/demo/pixel/（场景 A）、assets/demo/splash/（场景 B）
+- `tools/gen-prompt.py`：persona + 资产场景 + 视图 → 提示词（读 prompt-templates）
+- 模板文件：contracts/prompt-templates/pixel.md、splash.md
+- 验证报告（knowledge/prompt-engineering.md）：锚点机制有效性、一致性结论、调整经验
 
 ## 验收
-- [ ] GPT Image 2 / Nano Banana Pro 至少一条链路生成 4 表情身份一致（肉眼确认）
-- [ ] 生图后端结论：GPT vs Nano Banana 选型（质量/成本/一致性数据）
-- [ ] 本地 + 云 TTS 各 3 句可播放
-- [ ] FLUX 可行/不可行结论明确
-- [ ] 本机/隔离/API 决策清单完成
-- [ ] 报告含耗时/显存/成本
+- [ ] 场景 A：三视图身份一致、4 行为帧风格统一、透明背景/像素干净
+- [ ] 场景 B：表情/转面与主立绘一致
+- [ ] gen-prompt.py 可跑通（persona+场景+视图 → 提示词）
+- [ ] 多轮调整流程验证（1 次"生成→反馈→重生成"前后对比）
+- [ ] 报告含耗时/成本/一致性结论
 
 ## 借鉴
-- ComfyUI 生产案例（Ubisoft CHORD / Series Entertainment）
-- InstantID/PuLID/IP-Adapter 对比（apatero 2025-12）
+- ai-game-spritesheets（GPT Image 2 锚点 + 方向表 + idle/attack 精灵表）
+- 大厂立绘流程（线稿→配色→立绘→三视图→游戏内效果）
+- 像素精灵工作流（基础角色→三视图→行为帧）；三次生成规则

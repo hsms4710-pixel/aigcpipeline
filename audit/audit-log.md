@@ -101,3 +101,9 @@
 - 启动：start-workbench.cmd（uvicorn :8000）；浏览器 localhost:8000
 - 验证：TestClient API 全通过 + GET / 返回前端
 - 中转站仍 503（gpt-image 后端）；恢复后：工作台内生成自动跑通 + monitor 脚本可跑场景 A/B
+
+## 2026-08-13 —— t8 完成 + t5 前端资源修复 + 中转站模型确认
+- t8 ✅：contracts/prompt-templates/{pixel,splash}.json 模板文件（无 BOM）+ gen_prompt.py 读模板（--templates 覆盖 + 内置回退），像素三视图/立绘表情测试通过
+- t5 ✅：角色资产改挂 /char-assets，前端 dist 由 mount / 兜底托管 → JS/CSS 200，页面完整可用
+- 中转站模型：curl /v1/models = 唯一 gpt-image-2（生图后端确定；gpt-5.5 LLM 该 key 404）
+- 待办：中转站 gpt-image 后端恢复 → 工作台/CLI 实跑场景 A/B

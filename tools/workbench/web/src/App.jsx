@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Tldraw, useEditor } from '@tldraw/tldraw'
 import '@tldraw/tldraw/tldraw.css'
 
@@ -58,7 +58,7 @@ export default function App() {
   const addToCanvas = (path) => {
     const ed = editorRef.current
     if (!ed) return
-    const url = '/assets/' + selected.id + '/' + path
+    const url = '/char-assets/' + selected.id + '/' + path
     const c = ed.getViewportPageBounds()
     ed.createShape({
       type: 'image',

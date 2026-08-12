@@ -1,0 +1,10 @@
+{
+  "style_anchor": "high-quality game splash art, anime style, clean lineart, detailed rendering, vibrant colors",
+  "views": {
+    "portrait": "full-body splash art, standing pose, facing viewer",
+    "expressions": "same character, {exp} expression, head-and-shoulders closeup",
+    "turnaround": "same character, three-quarter / side / back views, same outfit and colors",
+    "action": "same character, dynamic action pose, full body"
+  },
+  "output_constraint": "same character, consistent design, no text, no watermark"
+}

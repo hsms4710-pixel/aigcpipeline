@@ -39,3 +39,8 @@
   client.responses.create(model="gpt-image-1", input=[{"type":"image","image_url":"data:image/png;base64,..."},{"type":"text","text":"..."}])
 - 中转站状态：gpt-image 后端整体 503（images.generate 与 responses 都 "No available compatible accounts"）→ **待恢复**；gpt-4o/gpt-5.5 在中转站 LLM 组 404（模型名可能不同）
 - 一旦恢复：用 test-ref.py（responses 带图）验证参考图锚点；与用户 CLI 传参考图方式一致
+## 中转站模型清单（2026-08-13 curl /v1/models）
+- 唯一模型：**gpt-image-2**（生图后端确定；gpt-image-1 亦兼容，曾成功）
+- 无 Nano Banana / 其他生图模型（需 Gemini/fal key，用户暂缓）
+- gpt-5.5（用户 config 里的 LLM）在中转站 404 → 该 key 是生图专用组，LLM 需另配
+- 参考图锚点 = responses API（gpt-image-1/2 responses-only）

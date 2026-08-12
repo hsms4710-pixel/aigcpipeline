@@ -1,4 +1,4 @@
-﻿"""t5 工作台后端：FastAPI + SQLite job 队列 + 云生图集成 + 无限画布前端托管"""
+"""t5 工作台后端：FastAPI + SQLite job 队列 + 云生图集成 + 无限画布前端托管"""
 import os, sys, json, uuid, sqlite3, threading, subprocess, datetime, shutil
 
 repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 仓库根
@@ -134,4 +134,9 @@ def retry(job_id: str):
     return {"ok": True}
 
 # 静态资产
-app.mount("/assets", StaticFiles(directory=CHAR_DIR), name="assets")
+app.mount("/char-assets", StaticFiles(directory=CHAR_DIR), name="char-assets")
+
+# 前端构建产物（web/dist）兜底托管 —— 放在所有 API 之后
+_web_dist = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "dist")
+if os.path.exists(os.path.join(_web_dist, "index.html")):
+    app.mount("/", StaticFiles(directory=_web_dist, html=True), name="web")

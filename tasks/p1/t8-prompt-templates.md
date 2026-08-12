@@ -1,6 +1,6 @@
-﻿# t8：提示词模板实现（gen-prompt.py + 模板文件）
+# t8：提示词模板实现（gen-prompt.py + 模板文件）
 
-状态：todo ｜ 依赖：t1 场景测试结论 ｜ 预估：1 天
+状态：done（pixel/splash.json 模板 + gen_prompt 读模板，测试通过） ｜ 依赖：t1 ｜ 预估：1 天
 
 ## 目标
 把 prompt-templates.md 落成可执行模板：persona.json + 资产场景 + 视图 → 提示词。

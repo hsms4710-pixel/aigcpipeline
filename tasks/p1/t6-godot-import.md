@@ -1,6 +1,6 @@
 # t6：资产包导出 + Godot 导入验证
 
-状态：in_progress（工程骨架已建 assets/demo/godot-import-demo；headless 验证待 Godot 安装） ｜ 依赖：t5 ✅ ｜ 预估：1-2 天
+状态：done（Godot 4.7.1 headless：import 成功 + 场景无解析错误，立绘/语音导入验证通过） ｜ 依赖：t5 ✅ ｜ 预估：1-2 天
 
 ## 目标
 证明资产中立：P1 产物能被 Godot 最小工程导入并使用。

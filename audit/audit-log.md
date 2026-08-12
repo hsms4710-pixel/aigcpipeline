@@ -134,3 +134,9 @@
 ## 2026-08-13 —— t6：Godot 导入验证工程骨架
 - Godot 下载受阻（GitHub/TuxFamily/gh-proxy 均失败，网络限制）→ 降级：建 assets/demo/godot-import-demo（project.godot + demo.tscn + 立绘/语音资产 + README 验证步骤）
 - headless 验证待 Godot 可用；用户可从 godotengine.org 装或稍后重试
+
+## 2026-08-13 —— t6 完成：Godot 4.7.1 headless 导入验证通过
+- 用户提供 Godot 4.7.1（lovegaming 目录）
+- headless：--import 成功（full.png + voice.wav 导入）+ --path --quit 无资源加载/解析错误（仅退出清理警告，正常）
+- 证明 P1 资产（透明 PNG + WAV）可被 Godot 直接导入 → 资产中立成立
+- .gitignore 加 .godot/ + *.import

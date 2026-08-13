@@ -1,0 +1,33 @@
+{
+  "character": "艾琳",
+  "generated_at": "2026-08-13T07:58:23",
+  "attempts": {
+    "attempt_a_2ref": {
+      "refs": [
+        "阿米娅_1.png",
+        "阿米娅_2.png"
+      ],
+      "prompt": "Draw a brand-new original character in the EXACT art style of the reference images (their lineart, cel-shading, painterly rendering, color palette): 年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色. Full-body standing splash art, facing viewer, transparent background, no text.",
+      "size": 1354975,
+      "elapsed": 67.1
+    },
+    "attempt_b_3ref": {
+      "refs": [
+        "阿米娅_1.png",
+        "阿米娅_2.png",
+        "阿米娅_skin1.png"
+      ],
+      "prompt": "The reference images are all by the same artist in one consistent style. Recreate that style exactly (thin elegant lineart, soft painterly cel-shading, muted warm palette) for a NEW character: 年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色. Full-body splash art, transparent background, no text.",
+      "size": 1307443,
+      "elapsed": 68.0
+    },
+    "attempt_c_1ref_strong": {
+      "refs": [
+        "阿米娅_2.png"
+      ],
+      "prompt": "IMITATE the art style of the reference image precisely: same line weight, same coloring technique, same shading and finish. Character: 年轻女性精灵，纤细体型, 绿色皮甲, 复合弓, 银白长发、翠绿瞳色. Full-body standing splash art, facing viewer, transparent background, no text.",
+      "size": 1566391,
+      "elapsed": 60.4
+    }
+  }
+}

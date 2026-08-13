@@ -69,3 +69,19 @@ spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开�
 
 
 
+
+## 双管线推进（2026-08-13 起，详见 spec/dev-roadmap-2d3d.md + tasks/pipeline/tasks.md）
+> 依据：生图.md（网易 DreamMaker 调研）+ pipeline-unified-2d3d.md（双管线统一分析，网易内部=缺口）
+> 原则：**2D 线优先**（外部工具齐，差异化在 2D 骨骼）；3D 线后置（可选）
+
+| 阶段 | 名称 | 主线 | 验收一句话 |
+|---|---|---|---|
+| P1-A | 画风定稿+生图基线 | 定主画风→三件套同画风 | 立绘/表情/小人同画风，用户确认 |
+| P1-B | 2D 拆层 | 立绘→可动部件（Live2D 规范 PSD） | ≥8 可动层，可导入 Spine/Live2D |
+| P1-C | 2D 骨骼 | Spine/Live2D + 自动绑骨 | 可摆姿势+表情参数 |
+| P1-D | 2D 动画 | 基础动画+AI 补帧 | 动作循环+表情切换 |
+| P1-E | 打包/引擎 | 图集+Godot 导入 | demo 分层显示/动画播放 |
+| P2-3D | 3D 线（后置） | 3D生成→修正→绑骨→动作→引擎 | 3D 角色进 Godot 可动 |
+
+**每阶段 gate**：任务全过 + 产出物 + 验收清单 + audit 记录（沿用项目 verify/audit 文化）
+**横切**：画风 LoRA（如选 ComfyUI 路线）、工作台 v2 前端（后续）、memory 沉淀

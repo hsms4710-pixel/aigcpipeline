@@ -1,8 +1,8 @@
-﻿# StretchyStudio 骨骼绑定工作流（tools/rig-workflow.md）
+# StretchyStudio 骨骼绑定工作流（tools/rig-workflow.md）
 
 > P1-C「2D 骨骼绑定」：立绘分层 PSD → DWPose 自动绑骨 → 微调 → Live2D 参数 → 导出 Spine 4.0。
 > 工具：StretchyStudio（开源 MIT，MangoLion/stretchystudio，原生支持 See-Through PSD）。
-> 状态：✅ 已打通端到端（2026-08-14 验证），自动化脚本见 tools/rig-automation/。
+> 状态：✅ 已打通端到端（2026-08-14 验证，立绘 + chibi 均完成），自动化脚本见 tools/rig-automation/。
 
 ## 一、工具部署（已完成）
 - 位置：`env/runtime/tools/stretchy-studio/`
@@ -52,7 +52,9 @@
 运行：`node <script>.cjs`（需本地 5173/5174 已启动）
 
 ## 五、当前产物
-- 导出：`assets/demo/char_ailin_rigged/spine_export.zip`（3.2MB）
+- 立绘导出：`assets/demo/char_ailin_rigged/spine_export.zip`（3.2MB，13 bones/25 slots，Idle+Parameters 动画）
+- chibi 导出：`assets/demo/char_ailin_chibi_rigged/front_b_spine.zip`（3.4MB，18 bones/25 slots，25 图）
+- chibi 拆层源：`assets/demo/char_ailin_chibi_v4/layered/front_b.psd`（See-Through blockswap，1280x1280，17 层）
 - 输入源：`assets/demo/char_ailin_v10/layered/char_ailin_v10_layered.psd`（See-Through 拆层 18 层）
 
 ## 六、后续（P1-D 动画 / P1-E 引擎）

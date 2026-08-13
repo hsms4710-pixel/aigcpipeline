@@ -27,8 +27,8 @@
 |---|---|---|---|
 | C1 | 装 Spine / Live2D（StretchyStudio 部署：本地化 DWPose+wasm） | done | StretchyStudio @ env/runtime/tools/stretchy-studio，start-stretchy.cmd 一键启动 |
 | C2 | 自动绑骨（DWPose，本地 ONNX） | done | char_ailin_v10 立绘自动绑骨成功（13 bones/25 slots，零报错） |
-| C3 | 骨骼/权重校验修正 | in_progress | 浏览器 Adjust Joints 微调黄点；冒烟脚本 rig3.cjs 已自动验证 |
-| C4 | 绑定小人+立绘表情参数 | in_progress | 立绘：Live2D 参数面板 OK + Spine 4.0 导出 OK（spine_export.zip）；chibi 待绑 |
+| C3 | 骨骼/权重校验修正 | done | 自动化绑定验证通过（立绘 13 bones/25 slots；chibi 18 bones/25 slots），浏览器可微调黄点 |
+| C4 | 绑定小人+立绘表情参数 | done | 立绘+chibi 均完成：DWPose 绑骨 + Live2D 参数 + Spine 4.0 导出（spine_export.zip / front_b_spine.zip） |
 
 ## P1-D 2D 动画
 | 任务 | 内容 | 状态 | 产出/验收 |

@@ -1,0 +1,15 @@
+﻿{
+  "style_id": "amiya-wei-at-w",
+  "artist": "唯@W",
+  "source": "PRTS Wiki 阿米娅立绘/头像（reference/arknights/阿米娅/）",
+  "style_desc": "明日方舟官方画风（唯@W）：薄线稿、柔和笔触赛璐璐上色、暖灰调、布料/装甲细节精致、低饱和高级灰、半写实比例。",
+  "known_names": ["Arknights official art style", "明日方舟立绘"],
+  "contains_target_character": false,
+  "refs": [
+    {"file": "../../arknights/阿米娅/立绘/阿米娅_1.png", "role": "默认立绘(精英0/1)", "note": "基础画风基准，构图干净"},
+    {"file": "../../arknights/阿米娅/立绘/阿米娅_2.png", "role": "精英2立绘", "note": "细节最丰富，上色/材质参考"},
+    {"file": "../../arknights/阿米娅/立绘/阿米娅_skin2.png", "role": "皮肤立绘", "note": "服装/配色变化参考"},
+    {"file": "../../arknights/阿米娅/头像/阿米娅.png", "role": "头像", "note": "面部上色/五官画法参考"},
+    {"file": "../../arknights/阿米娅/头像/阿米娅_2.png", "role": "精英2头像", "note": "面部光影参考"}
+  ]
+}

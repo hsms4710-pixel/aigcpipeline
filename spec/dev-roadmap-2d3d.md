@@ -17,18 +17,23 @@
 ---
 ## P1-A 画风定稿 + 生图基线（0.5-1 天）
 ### 任务
-- [ ] A1 用户选定主画风（style_attempts 三变体 / compare_sheet 四风格 选一或混合）
-- [ ] A2 按主画风重生成基线三件套：立绘(full+bust) + 表情×4 + Q版小人（多参考画风迁移，v10）
+- [ ] A0 **建风格标杆库 + 反馈飞轮**：`reference/style-library/<画师-系列>/`（精选 3-8 张同画师图 + manifest）；`harness/memory/style/lessons-learned.md + preferences.md`（已完成骨架，需随尝试填充）
+- [ ] A1 用户选定主画风（style_attempts / compare_sheet / 风格标杆库 选一）
+- [ ] A2 按约束**分离式参考**重生成基线三件套：立绘(full+bust) + 表情×4 + Q版小人
+      —— `--style-ref 风格图×1-3（风格标杆库）` + `--ref 角色锚点` 分开；prompt 点名 known_names + 正向表述（约束见 spec/style-reference-constraints.md）
 - [ ] A3 画风锁定决策：云 API 多参考（快） vs ComfyUI+风格 LoRA（锁死）——若 A2 达标选云 API，否则上 ComfyUI
-- [ ] A4 沉淀画风 prompt 模板（固定部分=风格/色调/光影；可变=主体/场景）
+- [ ] A4 沉淀画风 prompt 模板（固定=风格/色调/光影；可变=主体/场景）
+- [ ] A5 **反馈飞轮**：审图通过→回填标杆库（manifest 标 quality:high）；不通过→记 lessons-learned（原因+规避）
 ### 产出物
+- reference/style-library/（风格标杆库：阿米娅-唯@W 已建）
 - assets/demo/char_ailin_v10/（同画风 full+bust+exp×4）
 - assets/demo/char_ailin_chibi_v3/（同画风 Q 版小人）
-- 画风模板（contracts/prompt-templates/）
+- 画风模板（contracts/prompt-templates/）+ lessons-learned 记录
 ### 验收
 - [ ] 立绘/表情/小人三件套画风一致且被用户确认
+- [ ] 风格标杆库 ≥1 个画风系列（manifest 完整）
 - [ ] 表情自检通过（脸区均差/肤色占比阈值，复用 v8 机制）
-- [ ] audit：画风决策记录（云 API or ComfyUI+LoRA）
+- [ ] audit：画风决策记录（云 API or ComfyUI+LoRA）+ lessons-learned 已记录
 
 ---
 ## P1-B 2D 资产拆层（1-2 天）
@@ -105,3 +110,4 @@
 
 ## 推进方式
 一个阶段一个阶段推进，每阶段过"任务→产出→验收→audit"再进下一阶段（沿用 ROADMAP 总原则）。
+

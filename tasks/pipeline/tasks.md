@@ -5,10 +5,12 @@
 ## P1-A 画风定稿 + 生图基线
 | 任务 | 内容 | 状态 | 产出/验收 |
 |---|---|---|---|
-| A1 | 用户选定主画风（style_attempts/compare_sheet） | todo | 主画风确定 |
-| A2 | 按主画风重生成三件套（立绘+表情+Q版小人 v10） | todo | char_ailin_v10 + chibi_v3 |
+| A0 | 建风格标杆库 + 反馈飞轮（manifest/lessons/preferences） | in_progress | style-library 阿米娅-唯@W 已建 |
+| A1 | 用户选定主画风（style_attempts/compare_sheet/标杆库） | todo | 主画风确定 |
+| A2 | 分离式参考重生成三件套（风格图+角色锚点，v10） | todo | char_ailin_v10 + chibi_v3 |
 | A3 | 画风锁定决策（云API vs ComfyUI+LoRA） | todo | decision 记录 |
 | A4 | 沉淀画风 prompt 模板 | todo | contracts/prompt-templates |
+| A5 | 反馈飞轮（审图回填 + lessons-learned） | todo | manifest quality + lessons 记录 |
 
 ## P1-B 2D 资产拆层
 | 任务 | 内容 | 状态 | 产出/验收 |
@@ -48,3 +50,4 @@
 | F3 | Mixamo/RigNet 绑骨 | todo | 绑定模型 |
 | F4 | 动作（动作库/手K/SCAIL2） | todo | 动画资源 |
 | F5 | Godot 导入 | todo | 3D demo |
+

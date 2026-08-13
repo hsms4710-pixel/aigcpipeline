@@ -44,10 +44,11 @@ P2 / P3 / P4 ──► P5 评测（后置）
 - 借鉴：AI-NPC / ai-character-engine / MindFox / Letta / Mem0 / Zep / Gemma4NPC-it；协议参考 Narra
 - **gate**：沙盒可对话、记忆跨会话一致、HTTP/WS/MCP 三种协议至少通一种
 
-## Part 3 —— P4 引擎接入（规划中）
+## Part 3 —— P4 引擎接入（⏳ M0 已完成：Godot 角色展示链路，见 tasks/p1/t11）
 - 目标 A：Godot 场景（交互/寻路/任务）接入 P3 Agent，可玩单 NPC demo
 - 目标 B（POC）：接入现有游戏（星露谷类 SMAPI/开源游戏），白名单安全动作
 - 借鉴：noko / godot-AI-Dialog / OpenGameAgent（Godot）、StardewLivingNPCs / ValleyTalk / SentientValley（Mod）、Thrall / Sigrid（BepInEx）、Convai Modding
+- **M0（✅ 2026-08-13）**：Godot 角色展示（立绘+表情切换+小人，t11）
 - **gate**：Godot 单 NPC demo 可玩；Mod POC 不破坏原游戏（回归检查）
 
 ## Part 4 —— P2 过场 AIGC（⏸️ 后置，NPC 主链打通后再启动；方案见 spec/p2-cutscene）
@@ -64,6 +65,7 @@ P2 / P3 / P4 ──► P5 评测（后置）
 ```
 spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开发（逐 task）→ verify → audit → 归档
 ```
+
 
 
 

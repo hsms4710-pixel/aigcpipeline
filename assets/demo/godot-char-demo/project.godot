@@ -1,0 +1,12 @@
+config_version=5
+
+[application]
+
+config/name="角色 Godot 展示"
+config/features=PackedStringArray("4.7")
+run/main_scene="res://demo.tscn"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900

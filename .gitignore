@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 .venv/
@@ -66,3 +66,16 @@ assets/characters/
 assets/demo/char_*/
 
 
+
+env/runtime/tools/ComfyUI/
+
+
+env/runtime/tools/see-through/venv/
+env/runtime/tools/see-through/downloads/
+env/runtime/tools/see-through/logs/
+env/runtime/tools/see-through/workspace/
+env/runtime/tools/see-through/input/
+
+
+# StretchyStudio 工具（嵌套 git 仓库，可重新 clone）
+env/runtime/tools/stretchy-studio/

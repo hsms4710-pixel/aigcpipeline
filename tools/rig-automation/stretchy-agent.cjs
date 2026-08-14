@@ -67,6 +67,17 @@ async function dropPsd(page, b64) {
   }, { b64, box });
 }
 
+async function loadStretch(page, stretchPath) {
+  await page.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await page.waitForTimeout(4000);
+  await page.getByTitle('Load project').click({ force: true, timeout: 45000 });
+  await page.waitForTimeout(2000);
+  await page.locator('input[type=file]').first().setInputFiles(stretchPath);
+  for (let i = 0; i < 25; i++) { await page.waitForTimeout(1000); const s = await page.evaluate(() => window.__ss.readState()); if (s.animations.length > 0) break; }
+  await page.waitForTimeout(1500);
+  console.log('STRETCH LOADED');
+}
+
 async function loadAndRig(page, psdPath) {
   const b64 = fs.readFileSync(psdPath).toString('base64');
   let imported = false;
@@ -201,7 +212,7 @@ const SYSTEM_PROMPT = `你是 StretchyStudio 的动画导演 Agent。你可以�
   const page = await browser.newPage({ viewport: { width: 1680, height: 1050 }, acceptDownloads: true });
 
   if (loadPsd) {
-    await loadAndRig(page, loadPsd);
+    if (loadPsd.toLowerCase().endsWith('.stretch')) { await loadStretch(page, loadPsd); } else { await loadAndRig(page, loadPsd); }
   } else {
     await page.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await page.waitForTimeout(4000);

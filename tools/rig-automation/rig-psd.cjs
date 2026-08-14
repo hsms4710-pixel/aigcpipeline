@@ -85,6 +85,22 @@ async function dropPsd(page) {
   await page.getByRole('button', { name: /Done/i }).first().click({ force: true, timeout: 45000 }).catch(() => {});
   await page.waitForTimeout(15000);
   console.log('EDITOR READY:', (await page.locator('body').innerText()).includes('PARAMETERS') ? 'yes' : 'no');
+
+  // 保存 .stretch 工程（供 S3 动画直接加载）
+  await page.getByTitle('Save project').click({ force: true, timeout: 45000 }).catch(() => {});
+  await page.waitForTimeout(2000);
+  const dlTab = page.getByRole('tab', { name: /Download File/i }).first();
+  if (await dlTab.count()) await dlTab.click({ force: true, timeout: 45000 });
+  await page.waitForTimeout(800);
+  const nameInput = page.locator('#name');
+  if (await nameInput.count()) {
+    await nameInput.fill(`${name}_rigged`);
+    const sdP = page.waitForEvent('download', { timeout: 60000 }).catch(() => null);
+    await page.getByRole('button', { name: /^Save$/i }).first().click({ force: true, timeout: 45000 }).catch(() => {});
+    const sd = await sdP;
+    if (sd) { const dest = path.join(OUT, `${name}_rigged.stretch`); await sd.saveAs(dest); console.log('STRETCH SAVED:', dest, fs.statSync(dest).size); }
+  }
+
   await page.screenshot({ path: path.join(OUT, `${name}_rigged.png`) });
 
   await page.getByTitle('Export frames').click({ force: true, timeout: 45000 }).catch(() => {});

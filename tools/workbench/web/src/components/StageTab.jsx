@@ -142,6 +142,7 @@ export default function StageTab({ stage, refreshHealth }) {
                       <span className="aext">{a.ext.replace('.', '')}</span>
                       <a href={a.url} target="_blank" rel="noreferrer">{a.path}</a>
                       <span className="asz">{fmtSize(a.size)}</span>
+                      <button className="btn ghost sm" title="复制绝对路径（供下一阶段输入）" onClick={() => { navigator.clipboard.writeText(a.abs); alert('已复制: ' + a.abs); }}>📋</button>
                     </div>
                   ))}
                 </div>

@@ -74,3 +74,30 @@ node tools/rig-automation/rig-full.cjs assets/demo/char_ailin_chibi_v4/layered/f
 - 已知小坑：保存 .stretch 后第一次点 Export 偶发不弹窗，脚本已内置"重试点击直到弹窗"逻辑
 - 运行前建议启动 keep-awake（笔记本休眠会断网导致 ERR_NETWORK_IO_SUSPENDED）
 - 输出：`<outdir>/<name>_rigged.stretch` + `<name>_spine.zip` + 截图
+## 八、LLM 驱动动画 agent（stretchy-agent.cjs）— P1-D 核心
+**不再是硬脚本**：DeepSeek（deepseek-v4-flash，key 在 C:\Users\26046\Desktop\gitub.txt）作为"动画导演"，通过 window.__ss 桥接编程控制 StretchyStudio。
+
+### 架构
+1. **桥接层**（stretchy-studio/src/bridge/ss-bridge.js，已挂到 main.jsx）：把 zustand store 暴露为 window.__ss：
+   - 读：eadState() / listNodes() / listParams() / listClips()
+   - 写：createClip / deleteClip / clearClip / enameClip / keyframe(clip,node,property,timeMs,value,easing) / setNodeTransform / setParam / setActiveClip / seek / play / pause / setMode（'animation' 渲染关键帧姿态）
+   - 保护：系统 "Parameters" clip 禁止 clear/delete（保留表情 warp 轨道）
+2. **驱动层**（tools/rig-automation/stretchy-agent.cjs）：Playwright 连页面 → 导入/绑骨（bootstrap）→ **LLM 循环**：读状态 → LLM 决策 JSON 动作 → 执行 → 反馈 → 迭代 → 导出。
+
+### 运行
+```
+node tools/rig-automation/stretchy-agent.cjs --load <psd> --task "<任务>" --out <目录> --max-steps 16
+# key 自动从 C:\Users\26046\Desktop\gitub.txt 读取（sk- 开头最后一行）；可设 DEEPSEEK_API_KEY / AGENT_MODEL
+```
+LLM 动作 schema：create_clip / keyframe(rotation|x|y|scaleX|scaleY|opacity) / clear_clip / delete_clip / set_param / set_active / seek / end_frame / play / pause / screenshot / note。循环动画要求首尾关键帧一致。
+
+### 关键坑（已解决）
+- **deepseek-v4-flash 是推理模型**：默认会先生成 reasoning_content 吃光 token 导致 content 为空 → 加 easoning_effort: 'none' 直接输出 + 3 次重试
+- **截图姿态不生效**：编辑器默认 Staging 模式不渲染关键帧 → bridge.seek() 自动切 editorMode='animation'
+- 笔记本休眠断网 → keep-awake.ps1
+
+### P1-D 产出（2026-08-14，LLM 驱动完成）
+- ssets/demo/char_ailin_anim/char_ailin_animated.stretch（3.36MB，4 clip + Parameters）
+- ssets/demo/char_ailin_anim/char_ailin_animated_spine.zip（Spine 含 idle/walk/attack/hurt 4 动画）
+- ssets/demo/char_ailin_anim/{happy,sad,angry,neutral}.png（表情截图）
+- 动画设计：idle=呼吸(torso scaleY)+头摆；walk=双腿交替+臂摆+torso 起伏；attack=手臂挥击+前倾；hurt=后仰+头倾

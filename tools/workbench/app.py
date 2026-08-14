@@ -81,6 +81,7 @@ STAGES = {
             _f("ref", "参考图路径", "text", "", help="角色锚点参考图（可留空）"),
             _f("style_ref", "风格参考(逗号分隔)", "text", "", help="风格锚点图，多图逗号分隔"),
             _f("force", "强制重生成", "bool", False),
+            _f("dry_run", "仅预览提示词(不调API)", "bool", False, help="调试用：打印将执行的命令，不实际调用生图"),
         ],
         "outputs": "full.png / bust.png / exp_*.png / chibi_*",
     },
@@ -279,6 +280,8 @@ def _exec_s0(job_id, job_dir, cfg, log_path):
         refs = [x.strip() for x in str(cfg["style_ref"]).split(",") if x.strip()]
         cmd += ["--style-ref", ",".join(refs)]
     if cfg.get("force") in (True, "true", "on"): cmd.append("--force")
+    if cfg.get("dry_run") in (True, "true", "on"): cmd.append("--dry-run")
+    open(os.path.join(job_dir, "cmd.txt"), "w", encoding="utf-8").write(" ".join(cmd))
     update_job(job_id, stage_detail="调用生图后端")
     rc, so, se = _run_cmd(cmd, repo, log_path)
     if rc != 0: raise RuntimeError((se or so or "生图失败")[-500:])

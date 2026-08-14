@@ -201,11 +201,13 @@ def get_job(job_id):
     return d
 
 # ── 各阶段执行器 ───────────────────────────────────────────────────────────
-def _run_cmd(cmd, cwd, log_path, timeout=7200):
+def _run_cmd(cmd, cwd, log_path, timeout=7200, env=None):
+    _env = dict(os.environ)
+    if env: _env.update(env)
     logf = open(log_path, "a", encoding="utf-8")
     logf.write("$ " + " ".join(str(x) for x in cmd) + "\n"); logf.flush()
     try:
-        r = subprocess.run(cmd, cwd=cwd, timeout=timeout, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        r = subprocess.run(cmd, cwd=cwd, timeout=timeout, capture_output=True, text=True, encoding="utf-8", errors="replace", env=_env)
         logf.write((r.stdout or "") + "\n" + (r.stderr or "")); logf.flush()
         return r.returncode, r.stdout, r.stderr
     except subprocess.TimeoutExpired as e:
@@ -216,6 +218,20 @@ def _run_cmd(cmd, cwd, log_path, timeout=7200):
 
 def _write_log(job_id, text):
     c = db(); c.execute("UPDATE jobs SET log=? WHERE id=?", (text, job_id)); c.commit(); c.close()
+
+def estimate_cost(stage, duration_ms, cfg):
+    """粗粒度成本估算（元人民币）。真实计费后续接入。"""
+    try:
+        h = (duration_ms or 0) / 3600000.0
+        if stage == "s0_generate":
+            return 0.0 if str(cfg.get("dry_run", "")).lower() in ("true", "on") else 0.05  # 每张生图约¥0.05
+        if stage == "s1_decompose":
+            return round(h * 0.5, 4)  # 本地GPU约¥0.5/小时
+        if stage == "s3_animate":
+            return round(0.05 + h * 0.3, 4)  # LLM token + 少量算力
+        return 0.0
+    except Exception:
+        return 0.0
 
 def run_stage(job_id, stage, config):
     job_dir = os.path.join(ARTIFACTS_DIR, job_id)
@@ -240,13 +256,15 @@ def run_stage(job_id, stage, config):
             raise ValueError(f"未知阶段 {stage}")
         dur = int((datetime.datetime.now() - t0).total_seconds() * 1000)
         arts = _collect_artifacts(job_dir)
-        update_job(job_id, status="done", stage_detail="完成", duration_ms=dur,
+        cost = estimate_cost(stage, dur, config)
+        update_job(job_id, status="done", stage_detail="完成", duration_ms=dur, cost=cost,
                    artifacts=json.dumps(arts, ensure_ascii=False),
                    log=_read_log(log_path), finished=now())
     except Exception as e:
         dur = int((datetime.datetime.now() - t0).total_seconds() * 1000)
         update_job(job_id, status="failed", stage_detail=f"失败: {str(e)[:200]}", duration_ms=dur,
-                   error=str(e)[:1000], log=_read_log(log_path), finished=now())
+                   error=str(e)[:1000], cost=estimate_cost(stage, dur, config),
+                   log=_read_log(log_path), finished=now())
 
 def _read_log(log_path):
     try:
@@ -300,11 +318,11 @@ def _exec_s1(job_id, job_dir, cfg, log_path):
     if cfg.get("tblr_split", False) in (True, "true", "on"): cmd.append("--tblr_split")
     if cfg.get("seed"): cmd += ["--seed", str(cfg["seed"])]
     update_job(job_id, stage_detail="See-through 拆层（GPU，约20min）")
-    rc, so, se = _run_cmd(cmd, os.path.join(repo, "env", "runtime", "tools", "see-through"), log_path, timeout=7200)
+    rc, so, se = _run_cmd(cmd, os.path.join(repo, "env", "runtime", "tools", "see-through"), log_path, timeout=7200, env={"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "PYTHONIOENCODING": "utf-8"})
     if rc != 0: raise RuntimeError((se or so or "拆层失败")[-500:])
     # 门禁：层完整性
     val = os.path.join(TOOLS, "validate-layered.py")
-    rc2, so2, se2 = _run_cmd([VENV_PY, val, "--dir", out], repo, log_path, timeout=120)
+    rc2, so2, se2 = _run_cmd([SEE_THROUGH_PY, val, "--dir", out], repo, log_path, timeout=120)
     if rc2 != 0:
         update_job(job_id, stage_detail="拆层完成，层校验告警")
         open(os.path.join(job_dir, "gate_layered.txt"), "w", encoding="utf-8").write((so2 or se2 or "")[:2000])

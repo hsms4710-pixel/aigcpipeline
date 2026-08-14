@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api, fmtSize, fmtDur, stageName } from '../api.js';
 
 // 通用阶段 Tab：左侧配置表单（由后端 schema 动态渲染，保证覆盖全部后端能力）+ 右侧 Job 列表/详情/日志/产物
@@ -10,6 +10,7 @@ export default function StageTab({ stage, refreshHealth }) {
   const [detail, setDetail] = useState(null);
   const [running, setRunning] = useState(false);
   const [msg, setMsg] = useState('');
+  const [upstreamArts, setUpstreamArts] = useState([]);
   const timer = useRef(null);
 
   useEffect(() => { api.stages().then(ss => {
@@ -20,6 +21,13 @@ export default function StageTab({ stage, refreshHealth }) {
     setConfig(c);
   }).catch(e => setMsg(e.message)); }, [stage]);
 
+  useEffect(() => {
+    if (!schema?.prev?.length) return;
+    api.jobs(schema.prev[0]).then(async (list) => {
+      const done = list.find(j => j.status === 'done');
+      if (done) { const d = await api.job(done.id); setUpstreamArts((d.artifacts || []).filter(a => /\.(psd|stretch|zip|png|json)$/i.test(a.ext))); }
+    }).catch(() => {});
+  }, [schema]);
   useEffect(() => {
     const load = () => api.jobs(stage).then(setJobs).catch(() => {});
     load();
@@ -78,8 +86,16 @@ export default function StageTab({ stage, refreshHealth }) {
                     <textarea value={config[f.key] ?? ''} onChange={e => set(f.key, e.target.value)} placeholder={f.default} />
                   )}
                   {(f.type === 'text' || f.type === 'int' || f.type === 'number') && (
-                    <input type={f.type === 'int' || f.type === 'number' ? 'number' : 'text'}
-                           value={config[f.key] ?? ''} onChange={e => set(f.key, e.target.value)} placeholder={f.default} />
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input type={f.type === 'int' || f.type === 'number' ? 'number' : 'text'}
+                             value={config[f.key] ?? ''} onChange={e => set(f.key, e.target.value)} placeholder={f.default} />
+                      {upstreamArts.length > 0 && (
+                        <select style={{ width: 130, flexShrink: 0 }} value="" onChange={e => { if (e.target.value) { set(f.key, e.target.value); e.target.value = ''; } }}>
+                          <option value="">↑ 上游({upstreamArts.length})</option>
+                          {upstreamArts.map((a, i) => <option key={i} value={a.abs}>{a.path.split('/').pop()}</option>)}
+                        </select>
+                      )}
+                    </div>
                   )}
                   {f.type === 'file' && (
                     <>
@@ -130,6 +146,7 @@ export default function StageTab({ stage, refreshHealth }) {
                 <dt>阶段</dt><dd>{stageName(detail.stage)}</dd>
                 <dt>创建</dt><dd>{new Date(detail.created).toLocaleString()}</dd>
                 <dt>耗时</dt><dd>{fmtDur(detail.duration_ms)}</dd>
+                <dt>成本</dt><dd>¥{detail.cost ?? 0}</dd>
                 {detail.error && <><dt>错误</dt><dd style={{ color: 'var(--danger)' }}>{detail.error}</dd></>}
               </dl>
               <h4 style={{ fontSize: 12, color: 'var(--text-2)', margin: '10px 0 6px' }}>运行配置</h4>

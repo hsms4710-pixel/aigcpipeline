@@ -61,3 +61,16 @@
 - Godot 接入：spine-godot 运行时加载 skeleton.json + atlas
 - 动画：在 StretchyStudio Timeline 做 idle/walk/attack/hurt 关键帧再导出
 - 表情：用 Live2D 参数滑块在 Timeline 打关键帧（happy/sad/angry/neutral 参数过渡）
+
+## 七、全自动管线（rig-full.cjs）
+**整条流程可一键自动化**（无需手动浏览器操作）：
+```
+node tools/rig-automation/rig-full.cjs <psd> <outdir> "<joint调整>"
+# 例：chibi
+node tools/rig-automation/rig-full.cjs assets/demo/char_ailin_chibi_v4/layered/front_b.psd assets/demo/char_ailin_chibi_rigged "leftElbow:+14,+6;head:0,-10"
+```
+自动完成：① PSD 导入(重试4次) → ② 启发式关节微调 → ③ DWPose 自动绑骨 → ④ DWPose 后关节再微调 → ⑤ Live2D 参数 → Done → ⑥ **保存 .stretch 工程** → ⑦ **导出 Spine ZIP**。
+- 关节微调格式：`<role>:<dx>,<dy>;...`（如 `leftElbow:+14,+6` 把左肘关节右移14px下移6px），可传空字符串跳过
+- 已知小坑：保存 .stretch 后第一次点 Export 偶发不弹窗，脚本已内置"重试点击直到弹窗"逻辑
+- 运行前建议启动 keep-awake（笔记本休眠会断网导致 ERR_NETWORK_IO_SUSPENDED）
+- 输出：`<outdir>/<name>_rigged.stretch` + `<name>_spine.zip` + 截图

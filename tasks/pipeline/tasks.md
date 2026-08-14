@@ -33,8 +33,8 @@
 ## P1-D 2D 动画
 | 任务 | 内容 | 状态 | 产出/验收 |
 |---|---|---|---|
-| D1 | 基础动画 idle/walk/attack/hurt | todo | 动画资源 |
-| D2 | 表情切换动画 | todo | 参数过渡 |
+| D1 | 基础动画 idle/walk/attack/hurt | done | LLM agent 生成 4 clip（骨骼关键帧），Spine 导出含 4 动画 |
+| D2 | 表情切换动画 | in_progress | 4 表情 set_param 预览截图完成（happy/sad/angry/neutral）；mesh 变形表情仅 Live2D 导出支持，Spine 暂不支持 |
 | D3 | 可选 AI 补帧（SCAIL2/2dimg2motion） | todo | 前后对比 |
 
 ## P1-E 打包/引擎

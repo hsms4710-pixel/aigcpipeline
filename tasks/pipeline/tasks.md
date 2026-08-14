@@ -33,7 +33,7 @@
 ## P1-D 2D 动画
 | 任务 | 内容 | 状态 | 产出/验收 |
 |---|---|---|---|
-| D1 | 基础动画 idle/walk/attack/hurt | done | LLM agent 生成 4 clip（骨骼关键帧），Spine 导出含 4 动画 |
+| D1 | 基础动画 idle/walk/attack/hurt | ⚠️ 已生成但质量不合格（无IK/权重/方法论），待 M0-M1 重做 |
 | D2 | 表情切换动画 | in_progress | 4 表情 set_param 预览截图完成（happy/sad/angry/neutral）；mesh 变形表情仅 Live2D 导出支持，Spine 暂不支持 |
 | D3 | 可选 AI 补帧（SCAIL2/2dimg2motion） | todo | 前后对比 |
 
@@ -63,3 +63,20 @@
 
 
 
+
+## 动画质量修复 + 流水线重规划（2026-08-14，依据 spec/2d-animation-quality.md）
+> 触发：用户反馈"动画烂（位置不对/图层缺漏/动作不科学）"。根因：rig 缺 IK/权重、动画缺方法论、拆层缺门禁。
+
+| 任务 | 内容 | 状态 | 产出/验收 |
+|---|---|---|---|
+| M0-1 | 图层修复：B3 遮挡补全 + chibi 层补齐（bottomwear/legwear 分离） | todo | 分层 PSD v2，层完整性脚本过 |
+| M0-2 | 标准骨架模板 + 枢轴校准（Q 版/立绘两套） | todo | rig 模板 JSON + 校准脚本，摆姿势不穿模 |
+| M0-3 | Spine 导出扩展：IK 约束 + weighted mesh（或 region+IK 先行） | todo | spine v2 导出含 ik[]/weights[] |
+| M0-4 | 动画方法论重做 walk：contact/down/passing/up + bezier + 髋肩反向 | todo | walk GIF v2，无脚滑/循环闭合 |
+| M0-5 | 人工确认 walk 效果 | todo | 用户验收 |
+| M1 | idle/walk/attack/hurt + 表情按方法论全部重做 | todo | 4 动画 GIF + 质量门禁 |
+| M2 | 流水线编排（orchestrator + contracts + gates + job 记录） | todo | 一条命令全自动 + 阶段确认点 |
+| M3 | Spine atlas 打包 + Godot runtime 接入 + 交互 | todo | Godot 播放动画 |
+| M4 | 反馈闭环 + 成本核算 + 开源发布 | todo | 归因/回填/成本记录 |
+
+## P1-D 现状标记（旧条目保留，标注质量问题）

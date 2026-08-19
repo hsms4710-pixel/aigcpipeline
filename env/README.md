@@ -1,79 +1,127 @@
-# 隔离环境执行方案（env/）
+# 运行环境与工具配置说明（env/）
 
-> 决定：P1 管线（ComfyUI 生图 / TTS / 工作台）在**隔离环境**执行，不在本机系统里安装。
-> 本机只做入口：浏览器访问工作台 + git 管理代码。
+> 更新：2026-08-19 ｜ 本文件是**环境重建/复现的唯一入口**：隔离环境形态、key 配置、每个工具从哪 clone、怎么装、模型怎么下载、当前阻塞点。
+> 原则：`env/` 不入库（含 key/大体积运行依赖）；公开仓库只保留本说明 + `.env.example` + `config.toml.example`。
 
-## 为什么隔离
-- 不污染本机 Windows 系统（避免 Python 3.14/系统依赖冲突）
-- 可复现：同一套编排在本机 Docker / WSL2 / 云开发机都能跑
-- 可切换：本机 8GB 显存不够的环节（FLUX/PuLID/3D）在云机上跑同一套编排
+---
 
-## 隔离环境形态（✅ 已选定：本地隔离文件夹）
+## 0. 一句话
+本项目所有可执行依赖都放**本地隔离目录**（不污染系统），生图走云 API；新机器复现 = 建 venv + 填 key + clone 下面几个工具 + 下载模型。
+
+## 1. 隔离环境形态（当前：本地隔离文件夹）
 | 形态 | 说明 | 状态 |
 |---|---|---|
-| **D. 本地隔离文件夹（选定）** | 本机独立目录 env/runtime/：uv venv（Python 3.11）+ 依赖/模型/工具全部放目录内，不污染系统；生图走云 API（GPT/Nano Banana），本地只跑工作台 + TTS + 音频 | ✅ 当前 |
-| A. Docker Compose | 容器编排：comfyui / tts / workbench，GPU 透传 | 备用（需升显存时） |
-| B. WSL2 裸装 | 不装 Docker，WSL2 里 venv 安装 | 备用 |
-| C. 云开发机 | 租 GPU 机（4090 24GB+） | 备用（3D/PuLID 时） |
+| **D. 本地隔离文件夹（当前）** | 独立目录 env/runtime/ + 项目级 venv；生图走云 API（GPT 中转站），本地只跑工作台/TTS/音频 | ✅ |
+| A. Docker Compose（env/docker-compose.yml） | comfyui / tts / workbench 容器编排，GPU 透传 | 备用 |
+| B. WSL2 裸装 / C. 云开发机（4090 24GB+，3D/PuLID 时） | 备用 | 备用 |
 
-## 服务编排（docker-compose.yml 骨架）
+## 2. Key 配置（⚠️ 不入库）
+### 2.1 `env/.env`（从 `.env.example` 复制后填写）
+```bash
+# 生图/LLM 中转站（OpenAI 兼容）
+GPT_API_KEY=sk-xxx
+GPT_BASE_URL=https://api.sisct2.xyz/v1
+GPT_MODEL=gpt-5.5
+# 视觉验收/视觉提示词（vision_gate.py / prompt_vision.py / vision_review.py 读取）
+VISION_KEY=sk-xxx
+# 3D（Tripo 试用，额度有限）
+TRIPO_API_KEY=tcli_xxx
+# 语音（按需）
+TTS_PROVIDER=cosyvoice
+VOLC_API_KEY=
+# 视频/生图备选（按需）
+GEMINI_API_KEY=
+DEEPSEEK_API_KEY=
+HF_ENDPOINT=https://hf-mirror.com   # 国内下载 HF 模型用镜像
 ```
-comfyui     # 生图执行引擎（ComfyUI + InstantID/IP-Adapter 节点），GPU 必需
-tts         # TTS 服务（CosyVoice 本地 / 云 API 走 workbench 直连）
-workbench   # FastAPI 工作台 + Job 队列 + 阶段状态机
-```
-- 数据卷：`../assets` 挂载 → 产物在宿主机可见（本机/宿主机直接看）
-- 模型卷：`comfy-models`、`tts-models` 持久化（避免重启重下）
-- 端口：workbench 8000（本机浏览器入口）、comfyui 8188（调试用）
+### 2.2 `env/config.toml`（OpenClaw 风格，LLM/审阅/Agent 框架用）
+- 模板见 `env/config.toml.example`（已脱敏，复制为 config.toml 填真实 key）
+- 结构：`[model_providers.OpenAI]` base_url=中转站 /v1，wire_api="responses"，requires_openai_auth=true
+- 原则：**不自己写 key 接入**——LLM/生图参照 OpenClaw config.toml 格式；MCP 用 OpenClaw/现有集成（`openclaw mcp add`），复用 dcc-mcp 等 adapter
+### 2.3 Key 申请链接
+| 用途 | 链接 |
+|---|---|
+| GPT Image / gpt-5.5 | https://platform.openai.com/api-keys（国内需中转/代理） |
+| Gemini Nano Banana | https://aistudio.google.com/app/apikey ｜ fal.ai ｜ openrouter.ai |
+| TTS 火山（豆包） | https://console.volcengine.com/ark |
+| TTS Azure | https://portal.azure.com（Speech） |
 
-## 本地隔离文件夹布局（env/runtime/，不入库）
-\\\
-env/runtime/
-├── .venv/          # uv 创建，Python 3.11（ML 库兼容）
-├── tools/          # portable ffmpeg 等（不装系统）
-├── models/         # 本地模型缓存（CosyVoice 等，可删可重建）
-├── logs/           # 工作台/任务日志
-└── app/            # 工作台代码（或软链 tools/workbench）
-\\\
-- 隔离原则：**一切可执行文件/依赖/缓存都在 runtime/ 内**；系统只装通用工具（git 已有）
-- 生图云 API 不占本地显存；CosyVoice 可 CPU 推理 → 本机 8GB 完全够 P1
+## 3. Python 环境
+- **项目工具 venv（当前实际使用）**：`C:\Users\26046\Desktop\inerview\runtime\.venv`（Python 3.11，含 PIL/openai/python-dotenv/httpx2 等）
+  ```powershell
+  # 重建
+  cd C:\Users\26046\Desktop\inerview
+  python -m venv runtime\.venv
+  runtime\.venv\Scripts\pip install pillow openai python-dotenv numpy httpx2
+  ```
+- env/runtime/.venv（备用，ML 工具用，含 torch 2.8+cu128）
 
-## 本机/宿主机职责
-- 浏览器访问 `http://localhost:8000`（工作台）
-- git / 文档 / 审计（代码在仓库，管线在容器）
-- 云 API key 放 `.env`（不入库）：火山/Azure TTS、Tripo/Meshy 3D（按需）
+## 4. 工具清单（clone/安装方式 + 用途 + 使用入口）
 
-## GPU 透传（Windows Docker Desktop）
-- 需 WSL2 backend + NVIDIA Container Toolkit（winget 装）
-- Linux 云机：`nvidia-container-toolkit` 一行安装
-
-## 租开发机建议（2026-08 调研）
-| 平台 | 4090 24GB 时租 | 特点 | 适合 |
-|---|---|---|---|
-| **AutoDL（首选）** | ¥1.2-2.7/时 | 国内最主流、按秒计费、Docker 容器、镜像丰富、停机保留数据约 1 个月、新用户赠额度 | 本课题（国内访问 HF 走 hf-mirror） |
-| 恒源云 | ¥1.3-1.8/时 | 稳定、免费存储 | 备选 |
-| 矩池云 | ¥2.0-5/时 | 镜像丰富、省心 | 快速复现 |
-| RunPod（国外） | ~\.34-0.69/时 | 均衡默认、ComfyUI 模板、秒级计费 | 访问 HF/GitHub 顺畅时 |
-| Vast.ai（国外） | ~\.1-0.6/时 | 最便宜但 P2P 无 SLA | 预算极致、能折腾 |
-- 推荐配置：**RTX 4090 24GB**（ComfyUI FLUX/SDXL + CosyVoice 足够；PuLID-Flux 需 48GB L40S/A6000）
-- 选型：短期调试 AutoDL 按秒计费；长期跑租月卡更划算
-- 我们编排（env/docker-compose.yml）可直接部署到租的 Linux 机
-
-## 部署步骤（本地隔离文件夹，当前）
-1. 复制 env/.env.example → env/.env，填 key（见下）
-2. 建隔离环境：uv venv --python 3.11 env/runtime/.venv → 激活 → 装依赖（FastAPI/uvicorn 等）
-3. 装 portable ffmpeg 到 env/runtime/tools/（音频处理必需）
-4. 装 CosyVoice（本地 TTS，可选 CPU）→ 验证语音
-5. 启动工作台 → 浏览器 localhost:8000 走通上传→生成→下载
-6. 跑 	ools/validate-* 校验资产包
-
-### 付费 API 清单与价格：见 env/api-costs.md（按管线分阶段整理，标注必需/后置/免费替代）
-
-### Key 申请链接（用户自行申请，填进 env/.env）
-| 用途 | 链接 | 说明 |
+### 4.1 本仓库自带（tools/，已上传）
+| 工具 | 用途 | 运行 |
 |---|---|---|
-| GPT Image（OpenAI） | https://platform.openai.com/api-keys | 需账号+充值；国内需代理/中转 |
-| Nano Banana（Google Gemini） | https://aistudio.google.com/app/apikey | Gemini API key；或 Vertex AI：console.cloud.google.com/vertex-ai |
-| Nano Banana 聚合（国内友好） | https://fal.ai ｜ https://openrouter.ai | 聚合 Nano Banana/GPT 等，按量付费 |
-| TTS 火山引擎（豆包） | https://console.volcengine.com/ark | 国内首选 TTS，音色/克隆 |
-| TTS Azure | https://portal.azure.com（Speech 服务） | 低延迟/免费层 |
+| a2-pipeline.py | A2 资产生成标准入口（视觉提示词→生图→Vision Gate→重试→manifest） | `python tools/a2-pipeline.py --demand "..." --style pokemon-nds-bw --type character --name xxx` |
+| prompt_vision.py | 视觉提示词设计师（gpt-5.5 视觉模型出 prompt） | 被 a2-pipeline 调用 |
+| vision_gate.py | Vision Gate 视觉验收门禁（多维评分，阈值 7.0） | `python tools/vision_gate.py <img> --type map --baseline <基准> --out gate.json` |
+| vision_review.py | 视觉审查基础调用 | `python tools/vision_review.py <img>` |
+| godot-shot.py | Godot MCP 截图（游戏内画面→Vision Gate） | `python tools/godot-shot.py --scene res://main.tscn --out shot.png` |
+| image_backend.py / aigc-toolkit.py | 生图统一后端 / AIGC 工具统一入口 | 被各生成脚本调用 |
+| build-pokemon-map-v2.py / render-map-png.py | 程序化地图生成 / 地图渲染 PNG | `python tools/build-pokemon-map-v2.py --seed 20260819` |
+| workbench/ | 工作台 FastAPI+React（阶段状态机） | `python tools/workbench/app.py` |
+| rig-automation/ | StretchyStudio 自动绑骨 agent | `node tools/rig-automation/stretchy-agent.cjs` |
+
+### 4.2 第三方工具（clone/安装，按需；`env/runtime/tools/`）
+| 工具 | 来源（clone URL） | 用途 | 本仓库用法 | 体积/依赖 |
+|---|---|---|---|---|
+| **See-through** | https://github.com/shitagaki-lab/see-through.git | 单图动漫立绘拆层（SIGGRAPH 2026）→ 分层 PSD | P1-B 拆层（char_ailin_v10 → 18层 PSD） | ~12GB（venv+依赖）；**模型待下载（见 §5）** |
+| **StretchyStudio** | https://github.com/MangoLion/stretchystudio.git | Spine/Live2D 自动绑骨（DWPose 本地 wasm） | P1-C 绑骨（13-18 bones），start-stretchy.cmd | ~1.2GB |
+| **GPT-SoVITS** | https://github.com/RVC-Boss/GPT-SoVITS | 声音克隆 TTS（声音集训练） | P1 语音路线 B | ~1.4GB |
+| **ComfyUI** | https://github.com/comfyanonymous/ComfyUI | 本地生图后端（可选离线） | 备用后端（comfyui-lora-plan.md） | ~83MB（不含模型） |
+| **Godot 4.7.1** | https://godotengine.org/download | 引擎（demo 运行/截图） | 装在 `C:\Users\26046\Documents\lovegaming\`；console exe 被 godot-shot/headless 测试调用 | ~1GB |
+| **godot-assistant（npm MCP）** | `npx -y godot-assistant` | Godot MCP（读场景/运行/截图 25 工具） | 已注册 Codex MCP，指向 godot-pokemon-demo；`npx -y godot-assistant doctor --project <demo>` | npm 包 |
+
+### 4.3 已 vendor 的 skills（tools/vendor/，已入库；也可从上游重新 clone）
+| skill | 来源 | 用途 |
+|---|---|---|
+| ai-pixel-art-image-generation | https://github.com/ianlintner/ai-pixel-art-image-generation | 精灵/无缝瓦片/动画 + QA 门禁 + Tiled 导出（**已打 TLS 补丁**，中转站可用） |
+| agent-sprite-forge | https://github.com/0x0funky/agent-sprite-forge | 精灵/分层地图生成 + Godot TileMapLayer 导出 |
+| spine-animation-ai | https://github.com/GenielabsOpenSource/spine-animation-ai | Spine 自动绑骨/动画 |
+| character-animation-creator | https://github.com/tachikomared/character-animation-creator-skill | 文本/参考图→64px 像素角色精灵表 |
+| FrameRonin-MCP | https://github.com/GOODDAYDAY/FrameRonin-MCP | 22 个像素资产 MCP 工具（已注册 codex mcp） |
+| pixellab-mcp | https://github.com/pixellab-code/pixellab-mcp | 像素角色/动画/瓦片 MCP |
+
+### 4.4 外部免费资产包（env/assets/，CC0，可重下）
+- SunnyLand（ansimuz）、TinyRPG Forest、Kenney（topdown / rpg-urban）：横板/俯视地图与角色资产源
+
+## 5. 需要手动下载的模型（当前阻塞点）
+| 模型 | 用于 | 下载方式 |
+|---|---|---|
+| **See-Through LayerDiff3D** | 立绘拆层（P1-B）→ **2D 骨骼 A 路线（Spine）前置** | HF：`HF_ENDPOINT=https://hf-mirror.com` 下载到 `env/runtime/tools/see-through/downloads/`；**当前阻塞（模型未下载）** |
+| GPT-SoVITS 预训练模型 | 声音克隆 | `python env/runtime/tools/download-gptsovits-models.py` |
+| DWPose 模型 | StretchyStudio 绑骨 | StretchyStudio 本地模型首次加载约 8s 自动拉取 |
+
+## 6. MCP 注册（Codex）
+```bash
+codex mcp add godot-assistant --env GODOT_PATH="C:\Users\26046\Documents\lovegaming\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe" -- npx -y godot-assistant --project <demo>
+codex mcp add frame-ronin -- python -m frame_ronin_mcp.server
+```
+- 已注册：godot-assistant / frame-ronin / layout_forge / figma / github
+- 验证：`npx -y godot-assistant doctor --project <demo>`（All checks passed）
+
+## 7. 从零重建步骤（新机器）
+1. clone 仓库 → 读 README.md / PROJECT-INDEX.md
+2. 建 venv（§3）+ 装依赖
+3. 复制 `env/.env.example` → `env/.env`、`env/config.toml.example` → `env/config.toml`，填 key（§2）
+4. 按需 clone §4.2 工具（先 See-through + StretchyStudio + Godot + GPT-SoVITS）
+5. 下载 §5 模型（HF 走 hf-mirror）
+6. 注册 MCP（§6）
+7. 跑通：`python tools/a2-pipeline.py ...` → `python tools/vision_gate.py ...` → `start-pokemon.cmd` / `start-game.cmd`
+
+## 8. 付费 API 清单与成本
+- 详见 `env/api-costs.md`（按管线分阶段：生图/视觉/3D/语音，标注必需/后置/免费替代）
+- 3D：Tripo 试用 key 额度有限；TRELLIS2/Hunyuan3D 2.5 可本地（6-12GB VRAM）
+
+## 9. 安全
+- `env/.env`、`env/config.toml` 含真实 key，已在 .gitignore，**禁止提交**
+- 审计：`git ls-files | grep -iE "config.toml|\.env"` 应为空；脚本中禁止硬编码 key（全部读 env）

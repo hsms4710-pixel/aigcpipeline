@@ -50,7 +50,7 @@ reference/    # 调研引用（风格标杆库 / aigc-km / 素材站 / 资产源
 assets/       # 工作产物（角色资产、demo 工程、A2 输出，见 ASSET-INDEX.md）
 tools/        # 本地工具脚本（见 tools/README.md）
 pipeline/     # 工作台运行时（artifacts 不入库）
-env/          # 隔离运行环境 + key（不入库）
+env/          # 隔离运行环境 + key（不入库）；**环境重建指南见 env/README.md**（工具 clone/安装/模型下载）
 _archive/     # 本地归档（不入库）
 PROJECT-INDEX.md  # 唯一入口索引（文档/进度/代码/产物全索引）
 ```

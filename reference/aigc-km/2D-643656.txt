@@ -1,0 +1,128 @@
+标题: Spine动画UE接入流程
+作者: cassiushe
+创建时间: 2025-11-24 18:28:00, 更新时间: 2025-11-24 18:28:00
+标签: Spine | ue
+阅读: 54, 点赞: 0, 收藏: 0, 评论: 0
+热度: 1
+K吧: #29321 腾讯游戏知识库 https://km.woa.com/group/29321?jumpfrom=kmmcp
+AI摘要: **文章摘要**  
+本文详细解析了在Unreal Engine中接入Spine动画的核心流程与进阶技巧。通过蓝图配置、动画调用逻辑、坐标转换解决方案和动画混合优化四部分内容，系统性地指导开发者实现动画播放、交互控制和骨骼挂点等功能。
+
+**文章重点总结**  
+1. **前期配置（必要前提）**  
+   - 在UMG设计器中选中Spine控件（如`SpineWidget_left`）  
+   - 开启**是变量(Is Variable)**权限并进入Graph模式连线  
+
+2. **动画调用核心方式**  
+   - **基础状态机模式**：  
+     * 通过`Event Construct`→`Set Animation`节点链初始化常驻/循环动画（如待机动作）  
+     * 关键参数：准确输入Spine动画名（如`"idle"`），按需设置循环（Loop=True/False）  
+     * **强制要求**：必须连接`Event Tick`节点保障帧刷新  
+   - **事件驱动模式**：  
+     * 通过Timeline/Delay或按钮事件触发动画（如点击切换`"idle"→"attack"`）  
+     * 适用于入场退场、状态切换等交互场景  
+
+3. **进阶功能实现**  
+   - **骨骼挂点技术**：  
+     * 用`Get Bone Transformation`获取骨骼位置（非World Transform）  
+     * **坐标转换关键**：Y轴值乘以-1解决UE与Spine坐标系差异  
+     * 通过`Set Render Translation`驱动子控件跟随骨骼（如武器图标）  
+   - **动画混合防跳变**：  
+     * 在`_SkeletonData`资源中设置**Mix Settings**  
+     * 推荐0.2s过渡时间消除动画切换生硬感  
+
+4. **开发速查节点**  
+   | 节点                   | 功能                          | 注意事项                |  
+   |------------------------|-------------------------------|------------------------|  
+   | `Set Animation`        | 播放/切换动画                 | 控制Loop与Track参数    |  
+   | `Get Bone Transformation` | 获取骨骼位置                | 需Y轴取反             |  
+   | `Set Time Scale`       | 调整播放速度（0=暂停）        | 1.0为原速             |  
+
+**评价**  
+本文系统性地梳理了Spine动画在UE中的接入全流程，针对坐标系转换、动画跳变等痛点问题提供了可直接复用的解决方案。内容结构清晰，技术要点覆盖全面，但缺少配图与导语描述稍显不足，建议补充图示增强易读性。
+正文: 🎮 一、动画调用流程（核心环节）
+（一）⚙️ 前期配置（蓝图准备）
+在开始连线前，必须先开启控件的访问权限：
+选中控件：在 UMG 设计器（Designer）中选中你的 Spine Widget（例如 SpineWidget_left）。
+
+开启变量：在右侧「细节面板 (Details)」最上方，勾选 ✅ 是变量 (Is Variable)。
+
+进入图表：切换到 Graph 模式准备连线。
+
+（二）🧠 核心调用方式（二选一）
+🔹 方式 1：基础状态机调用（适用于常驻/循环动画）
+逻辑描述：在界面初始化时指定动画，并依赖 Tick 刷新渲染。
+节点流程：Event Construct (构造) ➡ Set Animation (设置动画)
+🔧 关键节点参数详解：
+Target (目标)：拖入的 Spine Widget 变量（如 SpineWidget_left）。
+
+Animation Name (动画名)：输入 Spine 里的准确名称（如 "idle" 或 "open"）。
+
+Loop (循环)：
+True (勾选)：适用于待机、循环背景。
+
+False (不勾选)：适用于只播一次的入场动画。
+
+图片引用: https://km.woa.com/asset/00010002251100e81b2a8b11a144bb01?height=647&width=933
+
+⚠️ 强制要求：
+必须确保Spine Widget连在 Event Tick 节点上，以确保 Spine 渲染器每帧正常更新，不然动画为静止状态。
+
+🔸 方式 2：事件/时间轴驱动（适用于复杂交互）
+逻辑描述：通过事件触发器触发动画。
+
+图片引用: https://km.woa.com/asset/00010002251100310ec0d21235467501?height=392&width=1438
+
+适用场景：
+入场/退场：配合 Timeline 或 Delay 控制播放节奏。
+
+状态切换：点击按钮后，从 "idle" 切换到 "attack"。
+
+（二）🚀 进阶功能
+1️⃣ 控件跟随骨骼运动（Slot 挂点技术）
+核心痛点：Spine 的坐标系与 UE UMG 的坐标系 Y 轴相反，直接获取坐标会导致挂点位移上下颠倒。
+🔧 蓝图实现步骤（Copy 级逻辑）：
+
+图片引用: https://km.woa.com/asset/00010002251100bebf00f2445f4af301?height=600&width=1832
+
+获取骨骼信息：
+调用节点：Get Bone Transformation (注意不是 World Transform，是基于 Spine 自身的相对变换)。
+
+参数：输入要跟随的 Bone Name（如 "hand_slot"）。
+
+坐标转换（Y 轴取反）：
+拆分：将返回值 Transform 打断（Break），获取 Translation (Location)。
+
+取反：
+Translation X ➡ 保持不变。
+
+Translation Y ➡ 乘以 -1 (Multiply by -1)。
+
+重组：使用 Make Vector 2D 将新的 X 和 Y 组合。
+
+应用位置：
+调用节点：Set Render Translation。
+
+Target：需要跟随移动的 子控件（如一个 Image 图标）。
+
+Translation：连入上一步重组的 2D 向量。
+
+2️⃣ 动画混合设置（防止跳变）
+功能：当从动画 A 切换到动画 B 时，避免瞬间硬切，产生生硬感。
+配置位置：
+找到导入的 _SkeletonData 资源文件。
+
+打开属性面板，找到 Mix Settings。
+
+Default Mix (默认混合)：推荐设置为 0.2s 或 0.25s。
+效果：动画切换时会有 0.25秒 的自动补间过渡。
+
+📝 常用节点速查表（开发备忘）
+
+节点名称 (Node Name)用途备注
+Set Animation播放/切换动画核心节点，控制 Loop 和 Track
+Get Bone Transformation获取骨骼位置用于挂点跟随，记得 Y 轴取反
+Set Time Scale调整播放速度1.0 为原速，0.5 为慢放，0 为暂停
+
+或查阅官方文档
+链接: https://km.woa.com/articles/show/643656?jumpfrom=kmmcp

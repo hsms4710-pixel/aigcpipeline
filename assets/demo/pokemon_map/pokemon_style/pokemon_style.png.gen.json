@@ -1,0 +1,82 @@
+{
+  "kind": "tileset",
+  "sheet": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\pokemon_style\\pokemon_style.png",
+  "tsx": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\pokemon_style\\pokemon_style.tsx",
+  "tmj": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\pokemon_style\\pokemon_style.tmj",
+  "user_prompt": "GBA Pokemon-style top-down RPG overworld tiles, clean SATURATED cartoon pixel art: bright green grass tile (solid bright green with sparse darker green tufts), brighter blue water tile (solid blue with simple white wave lines), light tan dirt path tile, light brown soil tile",
+  "tile_names": [
+    "GBA Pokemon-style top-down RPG overworld tiles",
+    "clean SATURATED cartoon pixel art: bright green grass tile (solid bright green with sparse darker green tufts)",
+    "brighter blue water tile (solid blue with simple white wave lines)",
+    "light tan dirt path tile"
+  ],
+  "tile_prompts": [
+    "GBA Pokemon-style top-down RPG overworld tiles",
+    "clean SATURATED cartoon pixel art: bright green grass tile (solid bright green with sparse darker green tufts)",
+    "brighter blue water tile (solid blue with simple white wave lines)",
+    "light tan dirt path tile"
+  ],
+  "suffix": " medium-scale detail, pristine and clean, clean hard edges, soft diffuse ambient. flat pixel art, limited palette, part of a large seamless tiling surface, top-down game texture, uniform coverage, no border, no frame, no UI chrome, no text, no watermark, transparent or solid flat background.",
+  "variant_idx": 0,
+  "total_variants": 1,
+  "style_preset": null,
+  "style_axes": {
+    "rendering": "clean hard edges",
+    "lighting": "soft diffuse ambient",
+    "wear": "pristine and clean",
+    "scale": "medium-scale detail"
+  },
+  "style_extra_clauses": [],
+  "style_seed": "pokemon_style|GBA Pokemon-style top-down RPG overworld tiles, clean SATURATED cartoon pixel art: bright green grass tile (solid bright green with sparse darker green tufts), brighter blue water tile (solid blue with simple white wave lines), light tan dirt path tile, light brown soil tile|0",
+  "palette_name": "db16",
+  "palette_jitter": 0.0,
+  "palette_hex": [
+    "#140c1c",
+    "#442434",
+    "#30346d",
+    "#4e4a4e",
+    "#854c30",
+    "#346524",
+    "#d04648",
+    "#757161",
+    "#597dce",
+    "#d27d2c",
+    "#8595a1",
+    "#6daa2c",
+    "#d2aa99",
+    "#6dc2ca",
+    "#dad45e",
+    "#deeed6"
+  ],
+  "tile_size": 32,
+  "count": 4,
+  "columns": 4,
+  "source_size": "1024x1024",
+  "quality": "high",
+  "seamless": "auto",
+  "provider": "openai",
+  "model": "gpt-image-2",
+  "seam_metrics_per_tile": [
+    {
+      "seam_diff_before": 109.52536866658467,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 48.37531686713771,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 31.15541515834989,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 5.258005608303529,
+      "strategy_used": "crop",
+      "seam_diff_after": 5.258005608303529
+    }
+  ],
+  "rewrite_prompts": false
+}

@@ -1,0 +1,31 @@
+{
+  "scores": {
+    "角色识别/身份一致性": 8,
+    "像素规格": 7,
+    "透明背景干净度": 8,
+    "动作/姿态可读性": 8,
+    "画风统一性": 7,
+    "画风一致性": 7
+  },
+  "overall": 7,
+  "verdict": "PASS",
+  "issues": [
+    "花丛的花瓣与叶片边缘比基准树略碎，局部笔触感更强，和同组资产的块面节奏不完全一致。",
+    "部分高饱和花色在小尺寸下略抢视觉，和基准瓦片/树的综合色板相比偏亮。",
+    "轮廓识别是清楚的，但作为地图道具时，主体内部细节在32px下还有一点拥挤。"
+  ],
+  "improvements": [
+    "把高饱和点色压一档，并统一阴影方向与基准树保持一致。",
+    "收紧边缘噪点，减少细碎高光，改成更稳定的块面分组。",
+    "适当简化花簇内部层次，让32px下的主体轮廓更干净。"
+  ],
+  "summary": "作为32px db32风格的地图花丛道具可用，识别明确且透明度合格，但和基准资产相比仍有一点边缘与色彩节奏上的不完全统一。",
+  "name": "flower_bush_closed_loop",
+  "type": "sprite",
+  "threshold": 7.0,
+  "baseline": [
+    "C:\\Users\\26046\\Desktop\\inerview\\research\\角色AIGC与AI-NPC全链路\\assets\\demo\\pokemon_map\\tiles\\overworld.png",
+    "C:\\Users\\26046\\Desktop\\inerview\\research\\角色AIGC与AI-NPC全链路\\assets\\demo\\pokemon_map\\tree.png"
+  ],
+  "gate_result": "PASS"
+}

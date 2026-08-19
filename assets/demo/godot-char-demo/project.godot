@@ -1,8 +1,8 @@
-config_version=5
+﻿config_version=5
 
 [application]
 
-config/name="角色 Godot 展示"
+config/name="艾琳 Godot 可玩 demo"
 config/features=PackedStringArray("4.7")
 run/main_scene="res://demo.tscn"
 
@@ -10,3 +10,7 @@ run/main_scene="res://demo.tscn"
 
 window/size/viewport_width=1600
 window/size/viewport_height=900
+
+[rendering]
+
+environment/defaults/default_clear_color=Color(0.13, 0.16, 0.2, 1)

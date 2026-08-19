@@ -1,0 +1,47 @@
+{
+  "style": "hd2d",
+  "view": "side",
+  "generated_at": "2026-08-18T02:33:15",
+  "frames": {
+    "idle_1": {
+      "ok": true,
+      "sec": 69.0
+    },
+    "idle_2": {
+      "ok": true,
+      "sec": 122.4
+    },
+    "walk_1": {
+      "ok": true,
+      "sec": 70.6
+    },
+    "walk_2": {
+      "ok": true,
+      "sec": 71.4
+    },
+    "walk_3": {
+      "ok": true,
+      "sec": 70.8
+    },
+    "walk_4": {
+      "ok": true,
+      "sec": 72.5
+    },
+    "attack_1": {
+      "ok": true,
+      "sec": 79.4
+    },
+    "attack_2": {
+      "ok": true,
+      "sec": 66.8
+    },
+    "attack_3": {
+      "ok": true,
+      "sec": 148.7
+    },
+    "hurt_1": {
+      "ok": true,
+      "sec": 70.1
+    }
+  }
+}

@@ -18,6 +18,11 @@ export const api = {
   config: () => jfetch('/api/config'),
   setConfig: (key, value) => jfetch('/api/config', { method: 'POST', body: JSON.stringify({ key, value }) }),
   status: () => jfetch('/api/pipeline/status'),
+  chainRun: (stages, configs) => jfetch('/api/pipeline/chain/run', { method: 'POST', body: JSON.stringify({ stages, configs }) }),
+  chains: () => jfetch('/api/pipeline/chains'),
+  chain: (id) => jfetch(`/api/pipeline/chains/${id}`),
+  chainResume: (id) => jfetch(`/api/pipeline/chains/${id}/resume`, { method: 'POST' }),
+  lessons: (limit) => jfetch(`/api/pipeline/lessons${limit ? `?limit=${limit}` : ''}`),
 };
 export function fmtSize(n) { if (n == null) return ''; if (n < 1024) return n + 'B'; if (n < 1048576) return (n / 1024).toFixed(1) + 'KB'; return (n / 1048576).toFixed(1) + 'MB'; }
 export function fmtDur(ms) { if (!ms) return '-'; if (ms < 1000) return ms + 'ms'; return (ms / 1000).toFixed(1) + 's'; }

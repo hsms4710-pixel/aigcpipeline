@@ -1,0 +1,18 @@
+﻿{
+  "_doc": "像素小人模板（A4 固化，2026-08-14）。参考方舟/FGO 2D 小人；像素复用 char_ailin_v2 最优版本",
+  "pixel": {
+    "style_signature": "16-bit pixel art sprite, limited color palette, hard edges, grid-aligned pixels, no anti-aliasing, sprite-sheet ready, readable silhouette at small size",
+    "views": {
+      "front": "front view, idle, standing facing viewer, full body",
+      "side": "side view, full body, profile facing left, same character design as front view",
+      "back": "back view, full body, seen from behind, same character design",
+      "three_view": "character sheet, front / side / back three views, same character, consistent design",
+      "idle": "animation frame, idle pose, single frame, consistent with reference",
+      "walk": "animation frame, walk cycle pose, single frame, consistent with reference",
+      "attack": "animation frame, attacking pose, single frame, consistent with reference",
+      "hurt": "animation frame, hurt pose, single frame, consistent with reference",
+      "sprite_sheet": "sprite sheet, evenly spaced grid of animation frames, same character"
+    },
+    "output_constraint": "same character, consistent design, no text, no watermark"
+  }
+}

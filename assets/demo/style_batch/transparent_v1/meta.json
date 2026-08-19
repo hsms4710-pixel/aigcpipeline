@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-08-17T00:44:49",
+  "jobs": {
+    "chibi_pixel": {
+      "ok": true,
+      "sec": 75.6,
+      "size": 794116,
+      "prompt": "Same character as the reference image (young female elf ranger, slender build, silver-white long hair, emerald green eyes, green leather armor with silver trim, composite bow), chibi proportions about 2.5 heads tall, big head small body. hard-edged pixel art (16/24-bit game sprite): limited color palette with dithering, crisp clean pixel edges, no anti-aliasing blur, flat cel shading, sprite-sheet ready. Standing neutral A-pose facing viewer, arms slightly away from the body, full body visible, flat clean silhouette, easy to cut into separate body parts. Isolated character on a FULLY TRANSPARENT background (alpha transparency): NO background scenery, NO floor, NO ground shadow, NO backdrop, NO vignette, NO scene elements, NO watermark, NO text. Only the character visible. AR 1:1",
+      "quality": "high"
+    },
+    "splash_high": {
+      "ok": true,
+      "sec": 71.7,
+      "size": 1119692,
+      "prompt": "Same character as the reference image (young female elf ranger, slender build, silver-white long hair, emerald green eyes, green leather armor with silver trim, composite bow), full-body elegant standing pose, facing viewer, slender stylized proportions. Arknights official art style: thin dark-brown elegant lineart, thick-painting with cel-shading hybrid, low-saturation cool-dark palette (silver-white / deep green / dark brown / dark gold-gray), single main light source with fine highlights, slender stylized 2D anime proportions, dark fantasy elegant ranger vibe, refined fabric and armor rendering. Isolated character cutout. Isolated character on a FULLY TRANSPARENT background (alpha transparency): NO background scenery, NO floor, NO ground shadow, NO backdrop, NO vignette, NO scene elements, NO watermark, NO text. Only the character visible. AR 3:4",
+      "quality": "high"
+    },
+    "splash_default": {
+      "ok": true,
+      "sec": 73.5,
+      "size": 913603,
+      "prompt": "Same character as the reference image (young female elf ranger, slender build, silver-white long hair, emerald green eyes, green leather armor with silver trim, composite bow), full-body elegant standing pose, facing viewer, slender stylized proportions. Arknights official art style: thin dark-brown elegant lineart, thick-painting with cel-shading hybrid, low-saturation cool-dark palette (silver-white / deep green / dark brown / dark gold-gray), single main light source with fine highlights, slender stylized 2D anime proportions, dark fantasy elegant ranger vibe, refined fabric and armor rendering. Isolated character cutout. Isolated character on a FULLY TRANSPARENT background (alpha transparency): NO background scenery, NO floor, NO ground shadow, NO backdrop, NO vignette, NO scene elements, NO watermark, NO text. Only the character visible. AR 3:4",
+      "quality": "default"
+    }
+  },
+  "postprocess": {
+    "chibi_pixel_hard_true_96px.png": {
+      "method": "crop bbox -> 96px -> 16-color MEDIANCUT no-dither -> NN x1024",
+      "review": "PASS (1:1 native crop)"
+    },
+    "chibi_pixel_hard_true_64px.png": {
+      "method": "crop bbox -> 64px -> 16-color MEDIANCUT no-dither -> NN x1024",
+      "review": "generated"
+    }
+  },
+  "updated_at": "2026-08-17T00:52:17"
+}

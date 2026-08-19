@@ -1,0 +1,33 @@
+{
+  "tile_size": 16,
+  "src_ts": 16,
+  "cols": 4,
+  "rows": 2,
+  "scheme": "single-texture + offset-wrap seamless + 4 procedural variants",
+  "report": [
+    {
+      "terrain": "grass",
+      "seam_lr_raw": 10.6,
+      "seam_tb_raw": 18.57,
+      "seam_lr_fixed": 8.77,
+      "seam_tb_fixed": 16.9
+    },
+    {
+      "terrain": "dirt",
+      "seam_lr_raw": 3.1,
+      "seam_tb_raw": 2.43,
+      "seam_lr_fixed": 3.1,
+      "seam_tb_fixed": 2.43
+    }
+  ],
+  "meta": {
+    "grass": {
+      "prompt": "A seamless tileable 2D pixel art grass texture for a top-down SNES-style RPG overworld, 512x512 px, perfectly repeating pattern with matching edges (left==right, top==bottom), flat top-down ground view, green grass with subtle lighter blades and darker soil patches, crisp hard pixel edges, limited 16-color palette, organized pixel clusters (no scattered single-pixel noise), no characters, no objects, no grid lines, no text, no anti-aliasing, no blur.",
+      "generated": "2026-08-18 23:40:52"
+    },
+    "dirt": {
+      "prompt": "A seamless tileable 2D pixel art dirt texture for a top-down SNES-style RPG overworld, 512x512 px, perfectly repeating pattern with matching edges (left==right, top==bottom), flat top-down ground view, brown dirt with small stones and darker moist patches, crisp hard pixel edges, limited 16-color palette, organized pixel clusters (no scattered single-pixel noise), no characters, no objects, no grid lines, no text, no anti-aliasing, no blur.",
+      "generated": "2026-08-18 23:42:08"
+    }
+  }
+}

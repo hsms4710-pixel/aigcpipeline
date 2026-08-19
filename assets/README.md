@@ -1,5 +1,5 @@
-﻿# assets/（工作产物，不入库）
+# assets/（工作产物，不入库）
 
-- 按角色/实验建子目录：`assets/<character_id>/`（人设卡、立绘、语音、资产包）
-- 大文件（wav/mp4/模型）不入 git（见 .gitignore）
-- demo 工程（如 Godot 导入验证）放 `assets/demo/`
+- 按角色/实验建子目录；**索引见 `assets/demo/ASSET-INDEX.md`**（demo 工程 + 角色资产最终/历史版本）
+- 大文件（wav/mp4/模型）不入 git（见 .gitignore）；`assets/demo/char_*/`（生成演示角色）不入库
+- demo 工程（Godot）放 `assets/demo/`，A2 流水线产物放 `assets/demo/a2/`

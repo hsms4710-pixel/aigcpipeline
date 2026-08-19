@@ -1,0 +1,18 @@
+﻿{
+  "_doc": "Q版小人模板（A4 固化，2026-08-14）。对齐方舟 2D 小人（Spine）风格",
+  "chibi": {
+    "style_signature": "Arknights chibi style (2D in-game sprite): cute small character about 2-3 heads tall, big head, large expressive eyes, small body, clean thin lineart, soft cel shading, muted warm-gray palette (#B8AD9E #6E6558 #F5F0E8), simple readable silhouette, game-ready sprite look, no heavy outline, no CG plastic skin.",
+    "multi_ref_role": "Image 1 is the art-style anchor: learn ONLY its lineart, coloring, shading and sprite finish. Image 2 is an additional same-style detail reference.",
+    "views": {
+      "front": "front view, chibi full body, standing facing viewer, big head small body proportions",
+      "side": "side view, chibi full body, profile facing left, same character design as front view",
+      "back": "back view, chibi full body, seen from behind, same character design",
+      "three_view": "character sheet, front / side / back three views, same chibi character, consistent design",
+      "idle": "animation frame, idle pose, chibi, single frame, consistent with reference",
+      "walk": "animation frame, walk cycle pose, chibi, single frame, consistent with reference",
+      "attack": "animation frame, attacking pose, chibi, single frame, consistent with reference",
+      "hurt": "animation frame, hurt pose, chibi, single frame, consistent with reference"
+    },
+    "output_constraint": "same chibi character, consistent design, no text, no watermark"
+  }
+}

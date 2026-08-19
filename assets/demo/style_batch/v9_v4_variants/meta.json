@@ -1,0 +1,42 @@
+{
+  "liping_cold": {
+    "ok": true,
+    "sec": 53.0,
+    "size": 1641098
+  },
+  "liping_warm": {
+    "ok": true,
+    "sec": 58.1,
+    "size": 1659038
+  },
+  "liping_bright": {
+    "ok": true,
+    "sec": 72.0,
+    "size": 2224177
+  },
+  "liping_painterly": {
+    "ok": true,
+    "sec": 51.3,
+    "size": 1993188
+  },
+  "chibi_pixel_hard": {
+    "ok": true,
+    "sec": 45.0,
+    "size": 765253
+  },
+  "chibi_soft": {
+    "ok": true,
+    "sec": 47.3,
+    "size": 1152787
+  },
+  "chibi_hd2d": {
+    "ok": true,
+    "sec": 58.9,
+    "size": 1577438
+  },
+  "chibi_bright": {
+    "ok": true,
+    "sec": 52.2,
+    "size": 1776885
+  }
+}

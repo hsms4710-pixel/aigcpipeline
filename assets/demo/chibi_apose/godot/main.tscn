@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://spineplayer1"]
+
+[ext_resource type="Script" path="res://main.gd" id="1"]
+[ext_resource type="Script" path="res://spine_player.gd" id="2"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Spine" type="Node2D" parent="."]
+script = ExtResource("2")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 16.0
+offset_top = 640.0
+offset_right = 1264.0
+offset_bottom = 700.0
+theme_override_font_sizes/font_size = 15

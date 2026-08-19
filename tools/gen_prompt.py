@@ -68,6 +68,20 @@ def _load_templates(tpl_dir=None):
                     print(f"警告: 模板 {f} 加载失败({e})，使用内置", file=sys.stderr)
     return merged
 
+STYLE_SIGNATURE_ARKNIGHTS = (
+    "Arknights official art style (Wei@W style signature): thin clean elegant lineart, "
+    "soft painterly cel-shading with gentle gradients, low-saturation muted warm-gray palette "
+    "(#B8AD9E #6E6558 #F5F0E8), delicate fabric and armor detail rendering, soft diffuse lighting, "
+    "gentle highlight roll-off, subtle film-like finish, semi-realistic proportions, "
+    "no heavy outline, no CG plastic skin."
+)
+
+STYLE_SIGNATURE_CHIBI_ARKNIGHTS = (
+    "Arknights chibi style (2D in-game sprite): cute small character about 2-3 heads tall, "
+    "big head, large expressive eyes, small body, clean thin lineart, soft cel shading, "
+    "muted warm-gray palette (#B8AD9E #6E6558 #F5F0E8), simple readable silhouette, "
+    "game-ready sprite look, no heavy outline, no CG plastic skin."
+)
 TEMPLATES = _load_templates()
 
 def build_prompt(persona, scene, view, exp="neutral", templates=None):
@@ -99,13 +113,19 @@ EXP_EDIT_PROMPTS = {
 }
 
 def build_exp_edit_prompt(persona, emotion="happy"):
-    """表情差分专用（人脸区域编辑）：保持整张图完全不变，只改表情。
-    参考二次元游戏立绘表情切换（同构图同画风，只换面部表情）。"""
+    """表情差分专用（人脸区域编辑）：Change only X + 保锁清单（SKILL_gpt-image-2.md 5.2）。
+    保持整张图完全不变，只改表情；逐项锁 identity/pose/构图/光线/阴影/背景/服装，避免模型重绘。"""
     e = EXP_EDIT_PROMPTS.get(emotion, EXP_EDIT_PROMPTS["neutral"])
-    return (f"Keep this exact character, pose, outfit, hair, colors, lighting and composition 100% identical. "
-            f"ONLY change her facial expression to: {e}. "
-            f"Anime game portrait expression swap, single face, transparent background, no text, no watermark")
-
+    return (
+        "Change only the facial expression to: " + e + ". Preserve exactly: "
+        "identity (same face shape, same eyes, same hairstyle and hair color, same skin tone), "
+        "pose and body geometry (same posture, same limb positions, same proportions), "
+        "camera angle, crop, and framing, lighting direction and shadow placement, "
+        "every background element, the outfit, and all colors. "
+        "Do not replace the face with a generalized, beautified, or idealized face. "
+        "Keep natural skin texture. Keep everything else in the image unchanged. "
+        "Anime game portrait expression swap, single face, no text, no watermark"
+    )
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("persona")
@@ -123,9 +143,10 @@ if __name__ == "__main__":
     sys.exit(main())
 
 
-def build_style_prompt(persona, with_composition="full body, standing pose, facing viewer"):
-    """有参考图（风格参考）时的专用 prompt：把参考图的画风（线稿/上色/渲染）迁移到新角色上。
-    与无参考的 build_prompt 结构完全不同（聚焦画风迁移，而非拼模板）。"""
+def build_style_prompt(persona, with_composition="full body, standing pose, facing viewer", multi_ref=True, ar=None):
+    """新方法（SKILL_gpt-image-2.md 5.3）：风格签名 + 多图分工 + No-Beautify。
+    参考图：Image1=风格锚点 / Image2=同风格细节，prompt 内按编号声明分工。
+    与无参考的 build_prompt 结构完全不同（聚焦画风迁移）。"""
     v = persona.get("visual", {})
     parts = [v.get("subject", persona.get("name", ""))]
     for k in ("outfit", "equipment", "detail"):
@@ -133,14 +154,38 @@ def build_style_prompt(persona, with_composition="full body, standing pose, faci
             parts.append(v[k])
     desc = ", ".join(p for p in parts if p)
     style = persona.get("style", {})
-    anchor = style.get("anchor") or ""
-    return (f"Study the reference artwork's ART STYLE very carefully: its lineart quality, coloring, "
-            f"shading, painterly texture, rendering and finish. Draw a NEW original character in EXACTLY "
-            f"this art style, using the same line weight, same coloring/shading technique, same level of detail "
-            f"and same overall finish quality as the reference. The new character is: {desc}. {with_composition}. "
-            f"Do NOT copy the reference character's face, pose or outfit, but DO match its art style exactly. "
-            f"SINGLE standalone full-body illustration of ONE character only - NOT a character sheet, "
-            f"NOT multiple views/poses, NOT a concept sheet. {anchor} transparent background, no text, no watermark")
+    style_type = style.get("type", "splash")
+    if style_type == "chibi":
+        sig = style.get("signature") or STYLE_SIGNATURE_CHIBI_ARKNIGHTS
+    else:
+        sig = style.get("signature") or STYLE_SIGNATURE_ARKNIGHTS
+    if multi_ref:
+        role = ("Image 1 is the art-style anchor: learn ONLY its lineart, coloring, shading, "
+                "painterly texture and finish quality. Image 2 is an additional same-style detail "
+                "reference; use it only for style details.")
+    else:
+        role = ("Study the reference artwork's art style very carefully: its lineart, coloring, "
+                "shading, painterly texture and finish.")
+    return (
+        role + " Draw a NEW original character in EXACTLY this art style: " + desc + ". "
+        + with_composition + ". Clean simple background. "
+        "Do NOT copy the reference character's face, pose, or outfit. "
+        "Match the line weight, coloring/shading technique, level of detail and finish exactly. "
+        "Style consistency first; do not invent a new style. " + sig + " "
+        f"natural skin texture, visible pores, no text, no watermark. " + (ar or ("AR 1:1" if style_type in ("chibi", "pixel") else "AR 3:4"))
+    )
 
 
+def build_chibi_pose_edit_prompt(persona, view, hero_note="the chibi character in the input image"):
+    """chibi Hero Reference 编辑：以已验收的 front 为锚点，只换姿势/视角，锁死身份/服装/配色/比例/画风。"""
+    return (
+        f"Same chibi character as {hero_note} — same face, same hair (long silver-white hair), "
+        f"same emerald green eyes, same green leather armor with silver trim, same composite bow, "
+        f"same proportions (about 2-3 heads tall), same art style and same colors. "
+        f"Change ONLY the view/pose to: {view}. "
+        "Preserve exactly: identity, hairstyle and hair color, outfit and colors, "
+        "body proportions, art style (clean thin lineart, soft cel shading, muted warm-gray palette). "
+        "Do not replace the character with a generalized or different design. "
+        "Game-ready chibi sprite, single character, no text, no watermark. AR 1:1"
+    )
 

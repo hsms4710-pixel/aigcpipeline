@@ -1,0 +1,24 @@
+{
+  "generated": "2026-08-16T23:05:14",
+  "package": "_tmp_chibi_pkg",
+  "clips": [
+    "idle",
+    "walk",
+    "attack",
+    "hurt"
+  ],
+  "bones": 14,
+  "slots": 12,
+  "files": [
+    "export-info.json",
+    "images",
+    "main.gd",
+    "main.tscn",
+    "project.godot",
+    "skeleton.json",
+    "skeleton.lite.json",
+    "spine_player.gd",
+    "test_fk.gd",
+    "test_spine.gd"
+  ]
+}

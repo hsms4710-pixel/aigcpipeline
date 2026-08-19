@@ -1,0 +1,98 @@
+{
+  "kind": "tileset",
+  "sheet": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\tiles_v3\\transition.png",
+  "tsx": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\tiles_v3\\transition.tsx",
+  "tmj": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\tiles_v3\\transition.tmj",
+  "user_prompt": "sand beach shoreline strip tile for lake edge, shallow water edge tile with lighter foam, darker grass variation tile, grass with small flowers variation tile. 2D pixel art, top-down RPG overworld, flat shading, hard pixel edges, chunky pixel clusters, limited palette, bright even lighting, no anti-aliasing, no blur, no text, no watermark",
+  "tile_names": [
+    "sand beach shoreline strip tile for lake edge",
+    "shallow water edge tile with lighter foam",
+    "darker grass variation tile",
+    "grass with small flowers variation tile. 2D pixel art"
+  ],
+  "tile_prompts": [
+    "sand beach shoreline strip tile for lake edge",
+    "shallow water edge tile with lighter foam",
+    "darker grass variation tile",
+    "grass with small flowers variation tile. 2D pixel art"
+  ],
+  "suffix": " small-scale detail, cracked with fine texture, clean hard edges, warm directional light. flat pixel art, limited palette, part of a large seamless tiling surface, top-down game texture, uniform coverage, no border, no frame, no UI chrome, no text, no watermark, transparent or solid flat background.",
+  "variant_idx": 0,
+  "total_variants": 1,
+  "style_preset": null,
+  "style_axes": {
+    "rendering": "clean hard edges",
+    "lighting": "warm directional light",
+    "wear": "cracked with fine texture",
+    "scale": "small-scale detail"
+  },
+  "style_extra_clauses": [],
+  "style_seed": "transition|sand beach shoreline strip tile for lake edge, shallow water edge tile with lighter foam, darker grass variation tile, grass with small flowers variation tile. 2D pixel art, top-down RPG overworld, flat shading, hard pixel edges, chunky pixel clusters, limited palette, bright even lighting, no anti-aliasing, no blur, no text, no watermark|0",
+  "palette_name": "db32",
+  "palette_jitter": 0.0,
+  "palette_hex": [
+    "#000000",
+    "#222034",
+    "#45283c",
+    "#663931",
+    "#8f563b",
+    "#df7126",
+    "#d9a066",
+    "#eec39a",
+    "#fbf236",
+    "#99e550",
+    "#6abe30",
+    "#37946e",
+    "#4b692f",
+    "#524b24",
+    "#323c39",
+    "#3f3f74",
+    "#306082",
+    "#5b6ee1",
+    "#639bff",
+    "#5fcde4",
+    "#cbdbfc",
+    "#ffffff",
+    "#9badb7",
+    "#847e87",
+    "#696a6a",
+    "#595652",
+    "#76428a",
+    "#ac3232",
+    "#d95763",
+    "#d77bba",
+    "#8f974a",
+    "#8a6f30"
+  ],
+  "tile_size": 32,
+  "count": 4,
+  "columns": 4,
+  "source_size": "1024x1024",
+  "quality": "high",
+  "seamless": "edge_match",
+  "provider": "openai",
+  "model": "gpt-image-2",
+  "seam_metrics_per_tile": [
+    {
+      "seam_diff_before": 24.490493190223436,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 114.14009159611558,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 25.61151973342603,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 51.02827327999369,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    }
+  ],
+  "rewrite_prompts": false
+}

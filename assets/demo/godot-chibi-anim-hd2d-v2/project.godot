@@ -1,0 +1,16 @@
+config_version=5
+
+[application]
+
+config/name="Ailin HD-2D v2 帧动画"
+config/features=PackedStringArray("4.7")
+run/main_scene="res://demo.tscn"
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+
+[rendering]
+
+environment/defaults/default_clear_color=Color(0.13, 0.16, 0.2, 1)

@@ -1,0 +1,42 @@
+{
+  "chibi_pixel16": {
+    "ok": true,
+    "sec": 62.2,
+    "size": 471397
+  },
+  "chibi_flat": {
+    "ok": true,
+    "sec": 66.8,
+    "size": 521854
+  },
+  "chibi_anime": {
+    "ok": true,
+    "sec": 69.6,
+    "size": 530303
+  },
+  "chibi_hd2d": {
+    "ok": true,
+    "sec": 59.8,
+    "size": 536527
+  },
+  "splash_anime": {
+    "ok": true,
+    "sec": 68.6,
+    "size": 563548
+  },
+  "splash_arknights": {
+    "ok": true,
+    "sec": 71.5,
+    "size": 513259
+  },
+  "splash_painterly": {
+    "ok": true,
+    "sec": 141.6,
+    "size": 504888
+  },
+  "splash_pastel": {
+    "ok": true,
+    "sec": 111.6,
+    "size": 517094
+  }
+}

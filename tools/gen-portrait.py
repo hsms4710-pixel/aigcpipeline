@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """gen-portrait.py：persona.json → 提示词 → 云生图 API → 立绘/表情 → 资产包落盘 + metadata
 用法：
@@ -124,7 +124,7 @@ def main():
     if a.style_ref:
         style_ref = [s.strip() for s in a.style_ref.split(",") if s.strip()]
         style_ref = style_ref[0] if len(style_ref) == 1 else style_ref
-    size = "1536x1024" if style_type == "splash" else "1024x1024"
+    size = "1024x1536" if style_type == "splash" else "1024x1024"
     assets_meta = []
     transparent = style_type in ("splash", "chibi")
 
@@ -135,11 +135,13 @@ def main():
             if ref is None:
                 ref = outfile
             continue
-        if style_ref is not None and name == "full":
-            prompt = build_style_prompt(persona)
+        if style_ref is not None and name in ("full", "bust"):
+            if name == "full":
+                prompt = build_style_prompt(persona, "full body, standing pose, facing viewer")
+            else:
+                prompt = build_style_prompt(persona, "head-and-shoulders chest-up portrait closeup, facing viewer, same character design")
         else:
             prompt = build_prompt(persona, style_type, view, exp="neutral")
-        print(f"[{name}] 生成中…")
         # 中转站偶发断连：自动重试（最多 3 次）
         n = dt = None
         for _attempt in range(3):

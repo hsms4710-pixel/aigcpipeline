@@ -9,6 +9,9 @@ import os, sys, json, uuid, sqlite3, threading, subprocess, datetime, shutil, re
 repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 仓库根
 HERE = os.path.dirname(os.path.abspath(__file__))
 PIPELINE_DIR = os.path.join(repo, "pipeline")
+LESSONS_FILE = os.path.join(repo, "harness", "memory", "pipeline", "lessons-learned.md")
+_real_cost = {}  # job_id -> 真实成本（S3 token 计费）
+_lessons_lock = threading.Lock()
 ARTIFACTS_DIR = os.path.join(PIPELINE_DIR, "artifacts")
 JOBS_DB = os.path.join(HERE, "workbench.db")
 ENV_FILE = os.path.join(repo, "env", ".env")
@@ -38,6 +41,9 @@ def db():
         id TEXT PRIMARY KEY, stage TEXT, config TEXT, status TEXT,
         stage_detail TEXT, log TEXT, artifacts TEXT, error TEXT,
         created TEXT, started TEXT, finished TEXT, duration_ms INTEGER, cost REAL)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS chains (
+        id TEXT PRIMARY KEY, stages TEXT, configs TEXT, jobs TEXT, status TEXT,
+        created TEXT, finished TEXT)""")
     return c
 
 # ── 配置（env/.env，密钥掩码）──────────────────────────────────────────────
@@ -107,8 +113,9 @@ STAGES = {
             _f("psd", "分层 PSD", "text", "", required=True, help="S1 产物 PSD 路径"),
             _f("out_dir", "输出目录", "text", "", help="留空自动生成 pipeline/artifacts/<job>"),
             _f("joints", "关节微调", "text", "", help="格式 leftElbow:+14,+6;head:0,-10（可空）"),
+            _f("gate_strict", "门禁严格模式(失败即停)", "bool", False, help="开：rig 门禁 FAIL 时任务失败；关：仅记录 gate_rig.txt 告警"),
         ],
-        "outputs": "*.stretch + *_spine.zip + 截图",
+        "outputs": "*.stretch + *_spine.zip + 截图 + gate_rig.txt",
         "requires_servers": ["5173", "5174"],
     },
     "s3_animate": {
@@ -120,8 +127,9 @@ STAGES = {
             _f("max_steps", "LLM 最大步数", "int", "16"),
             _f("model", "LLM 模型", "text", "deepseek-v4-flash", help="deepseek-v4-flash / deepseek-v4-pro"),
             _f("out_dir", "输出目录", "text", ""),
+            _f("gate_strict", "门禁严格模式(失败即停)", "bool", False, help="开：动画门禁 FAIL 时任务失败；关：仅记录 gate_anim.txt 告警"),
         ],
-        "outputs": "*.stretch + *_spine.zip + GIF + 表情截图",
+        "outputs": "*.stretch + *_spine.zip + GIF + 表情截图 + gate_anim.txt",
         "requires_servers": ["5173", "5174"],
     },
     "s4_package": {
@@ -256,15 +264,95 @@ def run_stage(job_id, stage, config):
             raise ValueError(f"未知阶段 {stage}")
         dur = int((datetime.datetime.now() - t0).total_seconds() * 1000)
         arts = _collect_artifacts(job_dir)
-        cost = estimate_cost(stage, dur, config)
+        cost = _real_cost.pop(job_id, None)
+        if cost is None:
+            cost = estimate_cost(stage, dur, config)
         update_job(job_id, status="done", stage_detail="完成", duration_ms=dur, cost=cost,
                    artifacts=json.dumps(arts, ensure_ascii=False),
                    log=_read_log(log_path), finished=now())
     except Exception as e:
         dur = int((datetime.datetime.now() - t0).total_seconds() * 1000)
         update_job(job_id, status="failed", stage_detail=f"失败: {str(e)[:200]}", duration_ms=dur,
-                   error=str(e)[:1000], cost=estimate_cost(stage, dur, config),
+                   error=str(e)[:1000], cost=_real_cost.pop(job_id, estimate_cost(stage, dur, config)),
                    log=_read_log(log_path), finished=now())
+
+_LESSON_SEEN = set()
+
+def _append_lesson(stage, job_id, report):
+    """门禁 FAIL → 沉淀经验（harness/memory/pipeline/lessons-learned.md），同签名去重"""
+    if not report:
+        return False
+    try:
+        lines = [l for l in report.splitlines() if l.startswith("FAIL")]
+        if not lines:
+            return False
+        sig = stage + "|" + "|".join(l.strip() for l in lines)
+        if sig in _LESSON_SEEN:
+            return False
+        _LESSON_SEEN.add(sig)
+        entry = (f"## {now()}  |  stage={stage}  |  job={job_id}\n"
+                 + "\n".join(f"- {l.strip()}" for l in lines)
+                 + "\n\n")
+        with _lessons_lock:
+            os.makedirs(os.path.dirname(LESSONS_FILE), exist_ok=True)
+            if os.path.isfile(LESSONS_FILE):
+                body = open(LESSONS_FILE, encoding="utf-8").read()
+                # 简单去重：签名已存在则跳过
+                if sig in body:
+                    return False
+                open(LESSONS_FILE, "a", encoding="utf-8").write(entry)
+            else:
+                open(LESSONS_FILE, "w", encoding="utf-8").write(
+                    "# 流水线门禁经验库（自动沉淀）\n\n> 门禁 FAIL 时自动追加；人工修正后可在此补充规避建议。\n\n" + entry)
+        return True
+    except Exception:
+        return False
+
+def _fix_rig(job_dir, log_path):
+    """S2/S3 产物 spine zip → fix-rig.py 标准骨架修复 → 替换为修复版 zip（保留 raw 在 out 目录）
+    返回修复后 zip 路径或 None"""
+    zips = glob.glob(os.path.join(job_dir, "*_spine.zip"))
+    if not zips:
+        return None
+    src = zips[0]
+    fix = os.path.join(TOOLS, "fix-rig.py")
+    rc, so, se = _run_cmd([VENV_PY, fix, src, "--out", src.replace("_spine.zip", "_fixed_spine.zip")], repo, log_path, timeout=120, env={"PYTHONIOENCODING": "utf-8"})
+    fixed = src.replace("_spine.zip", "_fixed_spine.zip")
+    if rc != 0 or not os.path.isfile(fixed):
+        return src  # 修复失败则用原 zip（gate 会照常检查）
+    os.remove(src)
+    os.rename(fixed, src)
+    return src
+
+def _build_anim_rules():
+    """从经验库提炼 S3 动画规避规则（供动画导演 system prompt 注入）"""
+    rules = []
+    for e in _read_lessons(60):
+        if "stage=s3_animate" not in e.get("header", ""):
+            continue
+        for r in e.get("reasons", []):
+            line = r.replace("FAIL - ", "").strip()
+            if line and line not in rules:
+                rules.append(line)
+    return rules
+
+def _read_lessons(limit=30):
+    try:
+        if not os.path.isfile(LESSONS_FILE):
+            return []
+        body = open(LESSONS_FILE, encoding="utf-8").read()
+        entries = []
+        cur = None
+        for line in body.splitlines():
+            if line.startswith("## "):
+                if cur: entries.append(cur)
+                cur = {"header": line[3:].strip(), "reasons": []}
+            elif cur and line.startswith("- "):
+                cur["reasons"].append(line[2:].strip())
+        if cur: entries.append(cur)
+        return entries[-limit:][::-1]
+    except Exception:
+        return []
 
 def _read_log(log_path):
     try:
@@ -322,10 +410,11 @@ def _exec_s1(job_id, job_dir, cfg, log_path):
     if rc != 0: raise RuntimeError((se or so or "拆层失败")[-500:])
     # 门禁：层完整性
     val = os.path.join(TOOLS, "validate-layered.py")
-    rc2, so2, se2 = _run_cmd([SEE_THROUGH_PY, val, "--dir", out], repo, log_path, timeout=120)
+    rc2, so2, se2 = _run_cmd([SEE_THROUGH_PY, val, "--dir", out], repo, log_path, timeout=120, env={"PYTHONIOENCODING": "utf-8"})
     if rc2 != 0:
         update_job(job_id, stage_detail="拆层完成，层校验告警")
         open(os.path.join(job_dir, "gate_layered.txt"), "w", encoding="utf-8").write((so2 or se2 or "")[:2000])
+        _append_lesson("s1_decompose", job_id, so2 or se2 or "")
 
 # S2 绑骨
 def _exec_s2(job_id, job_dir, cfg, log_path):
@@ -340,6 +429,23 @@ def _exec_s2(job_id, job_dir, cfg, log_path):
     if rc != 0: raise RuntimeError((se or so or "绑骨失败")[-500:])
     for f in glob.glob(os.path.join(out, "*_spine.zip")):
         shutil.copy(f, os.path.join(job_dir, os.path.basename(f)))
+    # 门禁：rig 质量（先 fix-rig 标准骨架修复，再 validate-rig）
+    zips = glob.glob(os.path.join(job_dir, "*_spine.zip"))
+    if zips:
+        _fix_rig(job_dir, log_path)
+        zips = glob.glob(os.path.join(job_dir, "*_spine.zip"))
+        gate = os.path.join(TOOLS, "validate-rig.py")
+        rc3, so3, se3 = _run_cmd([VENV_PY, gate, zips[0]], repo, log_path, timeout=120, env={"PYTHONIOENCODING": "utf-8"})
+        report = (so3 or se3 or "")[:2000]
+        open(os.path.join(job_dir, "gate_rig.txt"), "w", encoding="utf-8").write(report)
+        last = report.strip().split("\n")[-1] if report.strip() else ""
+        if "FAIL" in last:
+            update_job(job_id, stage_detail="绑骨完成，rig 门禁 FAIL（详见 gate_rig.txt）")
+            _append_lesson("s2_rig", job_id, report)
+            if str(cfg.get("gate_strict", "")).lower() in ("true", "on", "1"):
+                raise RuntimeError("rig 门禁 FAIL（严格模式）: " + report[-300:])
+        elif "WARN" in last or "warnings" in last:
+            update_job(job_id, stage_detail="绑骨完成，rig 门禁通过（有警告）")
 
 # S3 动画
 def _exec_s3(job_id, job_dir, cfg, log_path):
@@ -349,9 +455,17 @@ def _exec_s3(job_id, job_dir, cfg, log_path):
     script = os.path.join(TOOLS, "rig-automation", "stretchy-agent.cjs")
     cmd = [NODE, script, "--load", src, "--task", str(cfg.get("task", "")), "--out", out, "--max-steps", str(cfg.get("max_steps", 16))]
     if cfg.get("model"): cmd += ["--model", str(cfg["model"])] if False else []
+    # 经验库 → 规避规则注入（反馈闭环）
+    rules = _build_anim_rules()
+    rules_txt = ""
+    if rules:
+        rules_txt = "\n".join(f"- 已知失败规避：{r}" for r in rules)
+        rpath = os.path.join(job_dir, "rules.txt")
+        open(rpath, "w", encoding="utf-8").write(rules_txt)
+        cmd += ["--rules", rpath]
     env = dict(os.environ)
     if cfg.get("model"): env["AGENT_MODEL"] = str(cfg["model"])
-    update_job(job_id, stage_detail="LLM 动画导演（deepseek）")
+    update_job(job_id, stage_detail=f"LLM 动画导演（deepseek）· 注入规则 {len(rules)} 条")
     logf = open(log_path, "a", encoding="utf-8")
     logf.write("$ " + " ".join(cmd) + "\n"); logf.flush()
     try:
@@ -360,8 +474,36 @@ def _exec_s3(job_id, job_dir, cfg, log_path):
         if r.returncode != 0: raise RuntimeError((r.stderr or r.stdout or "动画失败")[-500:])
     finally:
         logf.close()
-    for f in glob.glob(os.path.join(out, "*_spine.zip")) + glob.glob(os.path.join(out, "*.gif")):
+    for f in glob.glob(os.path.join(out, "*_spine.zip")) + glob.glob(os.path.join(out, "*.gif")) + glob.glob(os.path.join(out, "usage.json")):
         shutil.copy(f, os.path.join(job_dir, os.path.basename(f)))
+    # 真实计费：LLM token 用量（stretchy-agent 写 usage.json）
+    usage_f = os.path.join(out, "usage.json")
+    if os.path.isfile(usage_f):
+        try:
+            u = json.load(open(usage_f, encoding="utf-8"))
+            pt = int(u.get("prompt_tokens", 0)); ct = int(u.get("completion_tokens", 0))
+            cost = round(pt * 0.0015 / 1000 + ct * 0.004 / 1000, 4)  # ¥/1K tokens（deepseek 近似）
+            _real_cost[job_id] = cost
+            update_job(job_id, stage_detail=f"动画完成 · tokens {pt}+{ct}={pt+ct} · 成本 ¥{cost}")
+        except Exception as e:
+            print("usage 解析失败:", e)
+    # 门禁：动画质量（先 fix-rig 标准骨架修复，再 validate-anim）
+    zips = glob.glob(os.path.join(job_dir, "*_spine.zip"))
+    if zips:
+        _fix_rig(job_dir, log_path)
+        zips = glob.glob(os.path.join(job_dir, "*_spine.zip"))
+        gate = os.path.join(TOOLS, "validate-anim.py")
+        rc3, so3, se3 = _run_cmd([VENV_PY, gate, zips[0]], repo, log_path, timeout=120, env={"PYTHONIOENCODING": "utf-8"})
+        report = (so3 or se3 or "")[:2000]
+        open(os.path.join(job_dir, "gate_anim.txt"), "w", encoding="utf-8").write(report)
+        last = report.strip().split("\n")[-1] if report.strip() else ""
+        if "FAIL" in last:
+            update_job(job_id, stage_detail="动画完成，anim 门禁 FAIL（详见 gate_anim.txt）")
+            _append_lesson("s3_animate", job_id, report)
+            if str(cfg.get("gate_strict", "")).lower() in ("true", "on", "1"):
+                raise RuntimeError("anim 门禁 FAIL（严格模式）: " + report[-300:])
+        elif "WARN" in last or "warnings" in last:
+            update_job(job_id, stage_detail="动画完成，anim 门禁通过（有警告）")
 
 # S4 打包
 def _exec_s4(job_id, job_dir, cfg, log_path):
@@ -387,14 +529,150 @@ def _exec_s5(job_id, job_dir, cfg, log_path):
     rc, so, se = _run_cmd(cmd, repo, log_path, timeout=300)
     if rc != 0: raise RuntimeError((se or so or "引擎导出失败")[-500:])
 
+# ── Chain（一键流水线）────────────────────────────────────────────────────────
+FIELD_EXTS = {
+    "s0_generate": {"persona": [".json"]},
+    "s1_decompose": {"src": [".png", ".jpg", ".jpeg"]},
+    "s2_rig": {"psd": [".psd"]},
+    "s3_animate": {"psd_or_stretch": [".stretch", ".psd"]},
+    "s4_package": {"input_zip": [".zip"]},
+    "s5_engine": {"package_dir": ["manifest.json"]},
+}
+
+def _chain_db():
+    c = sqlite3.connect(JOBS_DB)
+    c.execute("""CREATE TABLE IF NOT EXISTS chains (
+        id TEXT PRIMARY KEY, stages TEXT, configs TEXT, jobs TEXT, status TEXT,
+        created TEXT, finished TEXT)""")
+    return c
+
+def _autofill_upstream(stage, cfg, upstream_job_id):
+    """用上游 job 的产物自动填充本阶段空输入字段（返回填充说明列表）"""
+    if not upstream_job_id:
+        return []
+    j = get_job(upstream_job_id)
+    if not j or j["status"] != "done":
+        return []
+    arts = j["artifacts"]
+    fills = []
+    for key, exts in FIELD_EXTS.get(stage, {}).items():
+        if cfg.get(key):
+            continue
+        if stage == "s5_engine" and key == "package_dir":
+            m = next((a for a in arts if a["path"].endswith("manifest.json")), None)
+            if m:
+                cfg[key] = os.path.dirname(m["abs"]); fills.append(f"{key}={cfg[key]}")
+            continue
+        cand = next((a for a in arts if os.path.splitext(a["path"])[1].lower() in exts), None)
+        if cand:
+            cfg[key] = cand["abs"]; fills.append(f"{key}={cand['path']}")
+    return fills
+
+def _run_chain(chain_id, stages, configs):
+    jobs = []
+    prev_job_id = None
+    status = "running"
+    for idx, stage in enumerate(stages):
+        cfg = dict((configs or {}).get(stage, {}))
+        fills = _autofill_upstream(stage, cfg, prev_job_id)
+        job_id, _ = create_job(stage, cfg)
+        jobs.append({"idx": idx, "stage": stage, "job_id": job_id, "status": "created",
+                     "fills": fills, "error": ""})
+        _save_chain(chain_id, stages, configs, jobs, status)
+        run_stage(job_id, stage, cfg)
+        j = get_job(job_id)
+        jobs[-1]["status"] = j["status"]
+        jobs[-1]["error"] = j.get("error") or ""
+        if j["status"] == "done":
+            prev_job_id = job_id
+        else:
+            status = "failed"; _save_chain(chain_id, stages, configs, jobs, status); return
+    status = "done"
+    _save_chain(chain_id, stages, configs, jobs, status)
+
+def _save_chain(chain_id, stages, configs, jobs, status, finished=None):
+    c = _chain_db()
+    c.execute("INSERT OR REPLACE INTO chains (id, stages, configs, jobs, status, created, finished) VALUES (?,?,?,?,?,?,?)",
+              (chain_id, json.dumps(stages, ensure_ascii=False), json.dumps(configs, ensure_ascii=False),
+               json.dumps(jobs, ensure_ascii=False), status, now(), finished or ""))
+    c.commit(); c.close()
+
+def _get_chain(chain_id):
+    c = _chain_db()
+    row = c.execute("SELECT * FROM chains WHERE id=?", (chain_id,)).fetchone()
+    c.close()
+    if not row: return None
+    d = dict(zip(["id", "stages", "configs", "jobs", "status", "created", "finished"], row))
+    d["stages"] = json.loads(d["stages"] or "[]")
+    d["configs"] = json.loads(d["configs"] or "{}")
+    d["jobs"] = json.loads(d["jobs"] or "[]")
+    return d
+
+class ChainRunReq(BaseModel):
+    stages: list = []
+    configs: dict = {}
+
+@app.post("/api/pipeline/chain/run")
+def run_chain_api(req: ChainRunReq):
+    stages = [s for s in (req.stages or STAGE_ORDER) if s in STAGES]
+    if not stages:
+        raise HTTPException(400, "无有效阶段")
+    chain_id = f"chain_{uuid.uuid4().hex[:8]}"
+    _save_chain(chain_id, stages, req.configs, [], "created")
+    threading.Thread(target=_run_chain, args=(chain_id, stages, req.configs), daemon=True).start()
+    return {"chain_id": chain_id, "stages": stages}
+
+@app.get("/api/pipeline/chains")
+def list_chains(limit: int = 20):
+    c = _chain_db()
+    rows = c.execute("SELECT * FROM chains ORDER BY created DESC LIMIT ?", (limit,)).fetchall()
+    c.close()
+    cols = ["id", "stages", "configs", "jobs", "status", "created", "finished"]
+    out = []
+    for r in rows:
+        d = dict(zip(cols, r))
+        d["stages"] = json.loads(d["stages"] or "[]")
+        d["jobs"] = json.loads(d["jobs"] or "[]")
+        out.append(d)
+    return out
+
+@app.get("/api/pipeline/chains/{chain_id}")
+def get_chain(chain_id: str):
+    d = _get_chain(chain_id)
+    if not d: raise HTTPException(404, "chain 不存在")
+    return d
+
+@app.post("/api/pipeline/chains/{chain_id}/resume")
+def resume_chain(chain_id: str):
+    """断点续跑：从第一个未完成阶段开始，用原配置重跑后半段"""
+    d = _get_chain(chain_id)
+    if not d: raise HTTPException(404, "chain 不存在")
+    jobs = d.get("jobs", [])
+    start_idx = 0
+    for j in jobs:
+        if j.get("status") != "done":
+            start_idx = j.get("idx", start_idx); break
+    else:
+        raise HTTPException(400, "该 chain 已全部完成，无需续跑")
+    stages = d.get("stages", [])
+    configs = d.get("configs", {})
+    rest = stages[start_idx:]
+    if not rest:
+        raise HTTPException(400, "无剩余阶段")
+    new_id = f"chain_{uuid.uuid4().hex[:8]}"
+    _save_chain(new_id, rest, configs, [], "created")
+    threading.Thread(target=_run_chain, args=(new_id, rest, configs), daemon=True).start()
+    return {"chain_id": new_id, "stages": rest, "resumed_from": start_idx}
+
 # ── API ────────────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health():
     servers = {}
-    for port in ("5173", "5174"):
+    checks = {"5173": "http://localhost:5173/", "5174": "http://localhost:5174/ort-wasm-simd-threaded.mjs"}
+    for port, url in checks.items():
         try:
             import urllib.request
-            urllib.request.urlopen(f"http://localhost:{port}/", timeout=2)
+            urllib.request.urlopen(url, timeout=2)
             servers[port] = "up"
         except Exception:
             servers[port] = "down"
@@ -482,16 +760,27 @@ def set_config(req: ConfigReq):
     write_env(env)
     return {"ok": True}
 
+@app.get("/api/pipeline/lessons")
+def list_lessons(limit: int = 30):
+    return _read_lessons(limit)
+
 @app.get("/api/pipeline/status")
 def pipeline_status():
     """前端 Dashboard：各阶段最近 job + 产物 + 后端健康"""
     c = db()
     rows = c.execute("SELECT stage, status, COUNT(*) c FROM jobs GROUP BY stage, status").fetchall()
+    cost_rows = c.execute("SELECT stage, COALESCE(SUM(cost),0) FROM jobs WHERE status='done' GROUP BY stage").fetchall()
+    total_rows = c.execute("SELECT COUNT(*) FROM jobs").fetchone()
+    done_rows = c.execute("SELECT COUNT(*) FROM jobs WHERE status='done'").fetchone()
     c.close()
     by_stage = {}
     for stage, status, cnt in rows:
         by_stage.setdefault(stage, {})[status] = cnt
-    return {"stages": STAGE_ORDER, "by_stage": by_stage, "stage_meta": {s: {"name": STAGES[s]["name"], "icon": STAGES[s]["icon"]} for s in STAGE_ORDER}}
+    cost = {s: round(float(v), 3) for s, v in cost_rows}
+    return {"stages": STAGE_ORDER, "by_stage": by_stage,
+            "stage_meta": {s: {"name": STAGES[s]["name"], "icon": STAGES[s]["icon"]} for s in STAGE_ORDER},
+            "cost_by_stage": cost, "total_cost": round(sum(cost.values()), 3),
+            "job_count": total_rows[0] if total_rows else 0, "done_count": done_rows[0] if done_rows else 0}
 
 @app.get("/")
 def index():

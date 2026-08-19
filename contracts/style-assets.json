@@ -1,0 +1,69 @@
+{
+  "schema": "style-assets.v1",
+  "current": "pokemon-nds-bw",
+  "styles": {
+    "pokemon-nds-bw": {
+      "name": "Pokemon-NDS-BW",
+      "description": "宝可梦黑白 NDS 风（用户提示词体系）：精确参考系 + 16-bit + isometric + 场景化",
+      "style_block": "2D pixel art, Nintendo DS era sprite style, Pokemon Black and White inspired, isometric top-down perspective, vibrant saturated colors, clean pixel outlines, chibi character proportions, tile-based map, no anti-aliasing, 16-bit color palette, game screenshot, UI overlay at top",
+      "palette": "aap64",
+      "specs": {
+        "sprite": {"size": 64, "palette": "aap64", "transparent_bg": true, "qa": true, "note": "角色 64px=2 瓦片高，NDS sprite resolution"},
+        "tileset": {"tile_size": 32, "palette": "aap64", "seamless": "edge_match", "qa": true},
+        "animation": {"tile_size": 64, "palette": "aap64", "transparent_bg": true, "qa": true}
+      },
+      "scene_templates": {
+        "town": "2D pixel art game screenshot, Pokemon Black and White style town map, isometric top-down view, a small coastal town with Pokemon Center (red roof, white walls), Pokemon Mart (blue roof), winding brick paths, grass patches, trees with round pixel canopies, a few chibi NPC sprites walking, ocean tiles on the right with animated wave pattern, clear blue sky, vibrant colors, NDS resolution aesthetic, tile-based, UI bar at top showing town name",
+        "route": "2D pixel art, Pokemon Black and White style route, isometric top-down perspective, tall grass patches where wild Pokemon appear, dirt path winding through, fences and ledges, trees and flowers, a signpost, distant mountains in background, sunny daytime, chibi player character sprite standing on path, pixelated shadows, vibrant saturated palette, NDS game screenshot",
+        "battle": "2D pixel art battle screen, Pokemon Black and White style, side-view combat, player's Pokemon on bottom left facing right, enemy wild Pokemon on top right facing left, text box at bottom, HP bars at top, grass field background with simple parallax, menu options, clean pixel sprites, vibrant colors, NDS dual-screen aesthetic",
+        "character": "2D pixel art character sprite sheet, Pokemon Black and White trainer style, chibi proportions, big head small body, a young trainer, 4-direction walking animation frames (down/up/left/right), transparent background, clean pixel outlines, vibrant flat colors, NDS sprite resolution, consistent 32x32 or 64x64 tile size",
+        "gym": "2D pixel art interior, Pokemon Black and White style Gym, isometric top-down view, Gym Leader standing at far end, puzzle-based floor tiles, themed decoration, chibi sprite characters, warm indoor lighting, tile-based floor, doors and walls, vibrant color palette, NDS game screenshot aesthetic"
+      },
+      "tuning": {
+        "retro": "limited color palette, dithering, CRT scanline effect",
+        "hd_remake": "HD-2D, octopath traveler style, 3d characters on pixel background",
+        "ratio": {"map_town": "16:9 or 4:3", "battle": "16:9", "character": "1:1"},
+        "text": "UI text short, or use 'game UI elements, unreadable text' to avoid garbled text"
+      }
+    },
+    "hd2d-octopath": {
+      "name": "HD2D-Octopath",
+      "description": "八方旅人 HD-2D 风（用户提示词体系）：像素角色 + 3D diorama + 微缩景深 + 电影光照",
+      "style_block": "HD-2D art style, Octopath Traveler inspired, pixel art characters in a 3D diorama world, isometric perspective, tilt-shift miniature effect, shallow depth of field, volumetric god rays, particle effects floating in air, hand-painted pixel textures, watercolor sky, cinematic lighting, warm golden hour, Square Enix HD-2D aesthetic, highly detailed environment, fantasy medieval setting",
+      "palette": "custom_cinematic",
+      "specs": {
+        "sprite": {"size": 64, "transparent_bg": true, "qa": true, "note": "像素角色在 3D 场景中"},
+        "scene": {"ratio": {"town_route": "16:9", "battle": "16:9", "character": "1:1 or 3:4", "interior": "4:3"}}
+      },
+      "scene_templates": {
+        "town": "HD-2D game screenshot, Octopath Traveler style medieval town, isometric diorama view, cobblestone streets winding through stone houses with steep tiled roofs, glowing lanterns and market stalls, a central fountain, pixel-art NPCs walking around, chimney smoke rising, distant mountains fading into watercolor mist, volumetric sunlight breaking through clouds, shallow depth of field blurring foreground, warm amber and teal color palette, floating dust particles, cinematic composition",
+        "forest": "HD-2D fantasy forest path, Octopath Traveler aesthetic, isometric perspective, tall ancient trees with pixel-art foliage, dappled sunlight filtering through canopy, a dirt trail with glowing fireflies, small wooden bridge over a stream, pixel character sprite standing on path, moss-covered rocks, wildflowers, misty background with depth of field blur, volumetric light beams, rich greens and golden light, magical atmosphere, diorama miniature look",
+        "battle": "HD-2D battle screen, Octopath Traveler style combat, side-view turned-based battle, pixel-art warrior character on left facing enemy, a dark fantasy monster on right, dynamic action lines and slash effects, glowing magical runes on ground, command menu UI at bottom with elegant fantasy typography, dramatic cinematic lighting, dark background with spotlights on characters, particle effects, shallow depth of field, rich color contrast, HD-2D Square Enix style",
+        "party": "HD-2D character showcase, Octopath Traveler style, a party of four pixel-art adventurers standing in heroic pose, isometric diorama platform, each character with distinct pixel design and animated idle stance, dramatic rim lighting, floating embers and magical particles, dark fantasy background with soft bokeh, volumetric fog, warm and cool color split lighting, highly detailed pixel sprites, cinematic portrait",
+        "tavern": "HD-2D tavern interior, Octopath Traveler style, isometric view, warm candlelit medieval inn, wooden beams and tables, pixel-art patrons drinking and talking, a bard playing lute in corner, fireplace with glowing embers and smoke, chandelier casting warm light, wooden floor planks, barrels and shelves, shallow depth of field, volumetric light from windows, amber and brown palette, cozy atmospheric, diorama miniature effect",
+        "boss": "HD-2D epic boss battle, Octopath Traveler inspired, isometric cinematic view, a colossal pixel-art dragon perched on ancient ruins, tiny adventurer party facing it, dramatic scale contrast, crumbling stone pillars, glowing magical sigils on ground, dark stormy sky with lightning, volumetric god rays, embers and debris flying, extreme depth of field, dark fantasy color palette of deep purples and fiery oranges, epic cinematic composition, HD-2D Square Enix aesthetic"
+      },
+      "tuning": {
+        "miniature": "tilt-shift, miniature diorama, toy-like, focus pull",
+        "lighting": "volumetric god rays, lens flare, bloom, light shafts",
+        "pixel": "16-bit pixel sprites, limited color palette, crisp pixel edges",
+        "oil": "impasto brush strokes, oil painting sky, textured canvas",
+        "night": "moonlit, torchlight, deep shadows, bioluminescent glow, nocturne palette",
+        "japanese": "tatami floors, paper lanterns, cherry blossoms, Edo period architecture",
+        "ratio": {"town_route": "16:9", "battle": "16:9", "character": "1:1 or 3:4", "interior": "4:3"}
+      }
+    }
+  },
+  "rules": [
+    "资产生成必须使用当前风格（style-assets.json current）的 style_block + palette",
+    "角色 64px（2 瓦片高），瓦片/树 32px",
+    "角色必须原生生成（禁止高清插画事后 pixelize）",
+    "生成后必须过 Vision Gate 画风一致性验收（--baseline 基准图）",
+    "场景级 prompt（town/route/battle/...）用于概念/宣传图，资产级用于流水线",
+    "避免真实文字乱码：UI 文字简短或用 'game UI elements, unreadable text'"
+  ],
+  "history": {
+    "PX-DB32": "旧风格（db32 噪点材质），已弃用",
+    "Pokemon-GBA": "中间版（GBA 风），用户提示词体系升级为 NDS BW 后并入 pokemon-nds-bw"
+  }
+}

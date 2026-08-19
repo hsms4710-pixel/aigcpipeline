@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" font-family="Segoe UI, Microsoft YaHei, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#5a6b7d"/>
+    </marker>
+    <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eaf2fb"/><stop offset="100%" stop-color="#d6e4f2"/>
+    </linearGradient>
+    <linearGradient id="gBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eef8ec"/><stop offset="100%" stop-color="#dcefda"/>
+    </linearGradient>
+    <linearGradient id="gContract" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fdf6e3"/><stop offset="100%" stop-color="#f5e9c9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="640" y="34" text-anchor="middle" font-size="26" font-weight="bold" fill="#26323d">角色 AIGC 流水线 · 前后端架构</text>
+  <text x="640" y="58" text-anchor="middle" font-size="13" fill="#6b7a89">persona → 生图 → 对齐 → 动画 → 游戏</text>
+
+  <!-- ============ 前端层 ============ -->
+  <rect x="30" y="80" width="1220" height="300" rx="14" fill="url(#gFront)" stroke="#7fa3c9" stroke-width="2"/>
+  <text x="48" y="106" font-size="18" font-weight="bold" fill="#2b4a6f">前端层（用户交互 / 展示）</text>
+
+  <!-- Workbench Web -->
+  <rect x="60" y="120" width="560" height="240" rx="10" fill="#ffffff" stroke="#8fb0d0" stroke-width="1.5"/>
+  <text x="80" y="146" font-size="16" font-weight="bold" fill="#2b4a6f">A. Workbench Web（tools/workbench）</text>
+  <text x="80" y="172" font-size="13" fill="#3c4c5c">- 人设卡编辑器（表单 / LLM 填充 persona.json）</text>
+  <text x="80" y="194" font-size="13" fill="#3c4c5c">- 流水线编排：单任务（job）与任务链（chain）自动衔接</text>
+  <text x="80" y="216" font-size="13" fill="#3c4c5c">- 产物浏览：PNG / PSD / Spine zip / 审查报告</text>
+  <text x="80" y="238" font-size="13" fill="#3c4c5c">- 配置与 Key 管理（env/.env，打码显示）</text>
+  <text x="80" y="260" font-size="13" fill="#3c4c5c">- 成本估算（按 stage + 耗时）</text>
+  <text x="80" y="282" font-size="13" fill="#3c4c5c">- 反馈闭环：审图回填 → lessons-learned</text>
+  <text x="80" y="308" font-size="12" fill="#6b7a89">技术栈：FastAPI + React/Vite + tldraw + SQLite</text>
+
+  <!-- Godot 游戏端 -->
+  <rect x="660" y="120" width="570" height="240" rx="10" fill="#ffffff" stroke="#8fb0d0" stroke-width="1.5"/>
+  <text x="680" y="146" font-size="16" font-weight="bold" fill="#2b4a6f">B. Godot 游戏 / 预览端（assets/demo/godot-*）</text>
+  <text x="680" y="172" font-size="13" fill="#3c4c5c">- 帧动画播放器：AnimatedSprite2D + 核心身体对齐</text>
+  <text x="680" y="194" font-size="13" fill="#3c4c5c">- 游戏基座（俯视角）：地图 / 玩家(艾琳) / 怪物 / 战斗逻辑</text>
+  <text x="680" y="216" font-size="13" fill="#3c4c5c">- UI：HP / 击杀 / 重开；headless 冒烟测试 test_game.gd</text>
+  <text x="680" y="238" font-size="13" fill="#3c4c5c">- 后续：Spine 运行时（spine-godot）接入骨骼动画</text>
+  <text x="680" y="308" font-size="12" fill="#6b7a89">引擎：Godot 4.7.1（GDScript）</text>
+
+  <!-- 前端到契约的箭头 -->
+  <line x1="640" y1="385" x2="640" y2="415" stroke="#5a6b7d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============ 契约层 ============ -->
+  <rect x="30" y="420" width="1220" height="120" rx="14" fill="url(#gContract)" stroke="#c9b26a" stroke-width="2"/>
+  <text x="48" y="448" font-size="18" font-weight="bold" fill="#6b5520">数据契约层</text>
+  <rect x="60" y="460" width="270" height="66" rx="8" fill="#fffdf5" stroke="#d8c48a"/>
+  <text x="76" y="484" font-size="13" font-weight="bold" fill="#4a3f1f">persona.json</text>
+  <text x="76" y="504" font-size="12" fill="#6b5f3f">name / visual / style / assets / voice（人设唯一事实源）</text>
+  <rect x="350" y="460" width="280" height="66" rx="8" fill="#fffdf5" stroke="#d8c48a"/>
+  <text x="366" y="484" font-size="13" font-weight="bold" fill="#4a3f1f">meta.json（每批次）</text>
+  <text x="366" y="504" font-size="12" fill="#6b5f3f">jobs{key: ok/sec/size/quality/prompt}（可追溯 + 成本）</text>
+  <rect x="650" y="460" width="290" height="66" rx="8" fill="#fffdf5" stroke="#d8c48a"/>
+  <text x="666" y="484" font-size="13" font-weight="bold" fill="#4a3f1f">Stage 产物约定</text>
+  <text x="666" y="504" font-size="12" fill="#6b5f3f">outputs 字段 → 链式自动填充 upstream 产物</text>
+  <rect x="960" y="460" width="270" height="66" rx="8" fill="#fffdf5" stroke="#d8c48a"/>
+  <text x="976" y="484" font-size="13" font-weight="bold" fill="#4a3f1f">env/.env</text>
+  <text x="976" y="504" font-size="12" fill="#6b5f3f">GPT / GEMINI / TRIPO key（workbench 设置页集中管理）</text>
+
+  <line x1="640" y1="545" x2="640" y2="575" stroke="#5a6b7d" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============ 后端层 ============ -->
+  <rect x="30" y="580" width="1220" height="260" rx="14" fill="url(#gBack)" stroke="#7fae78" stroke-width="2"/>
+  <text x="48" y="606" font-size="18" font-weight="bold" fill="#2c5a2f">后端层（执行 / 生成 / 审查）</text>
+
+  <!-- Stage 盒 -->
+  <g font-size="12.5">
+    <rect x="50" y="620" width="180" height="80" rx="8" fill="#fff" stroke="#9cc096"/>
+    <text x="60" y="644" font-weight="bold" fill="#2c5a2f">S0 生图</text>
+    <text x="60" y="664" fill="#3c5c3f">persona + 意图 + 参考图</text>
+    <text x="60" y="682" fill="#3c5c3f">→ 立绘/表情/小人</text>
+    <text x="60" y="700" fill="#7a8f7a">image_backend / gen_prompt</text>
+
+    <rect x="250" y="620" width="180" height="80" rx="8" fill="#fff" stroke="#9cc096"/>
+    <text x="260" y="644" font-weight="bold" fill="#2c5a2f">S0.5 对齐 + 帧动画</text>
+    <text x="260" y="664" fill="#3c5c3f">matte 抠图（不重绘）</text>
+    <text x="260" y="682" fill="#3c5c3f">关键帧 + 核心对齐</text>
+    <text x="260" y="700" fill="#7a8f7a">rembg / gen-frame-cycle / build-godot-anim</text>
+
+    <rect x="450" y="620" width="180" height="80" rx="8" fill="#fff" stroke="#9cc096"/>
+    <text x="460" y="644" font-weight="bold" fill="#2c5a2f">S1 拆层</text>
+    <text x="460" y="664" fill="#3c5c3f">立绘 → 分层 PSD</text>
+    <text x="460" y="682" fill="#3c5c3f">See-Through blockswap</text>
+    <text x="460" y="700" fill="#7a8f7a">see-through venv (CUDA)</text>
+
+    <rect x="650" y="620" width="180" height="80" rx="8" fill="#fff" stroke="#9cc096"/>
+    <text x="660" y="644" font-weight="bold" fill="#2c5a2f">S2 绑骨</text>
+    <text x="660" y="664" fill="#3c5c3f">PSD → DWPose 骨架</text>
+    <text x="660" y="682" fill="#3c5c3f">→ Spine 4.0</text>
+    <text x="660" y="700" fill="#7a8f7a">stretchy-studio (5173/5174)</text>
+
+    <rect x="850" y="620" width="180" height="80" rx="8" fill="#fff" stroke="#9cc096"/>
+    <text x="860" y="644" font-weight="bold" fill="#2c5a2f">S3 动画（A 路线）</text>
+    <text x="860" y="664" fill="#3c5c3f">LLM 导演关键帧</text>
+    <text x="860" y="682" fill="#3c5c3f">→ Spine 导出</text>
+    <text x="860" y="700" fill="#7a8f7a">stretchy-agent.cjs</text>
+
+    <rect x="1050" y="620" width="180" height="80" rx="8" fill="#fff" stroke="#9cc096"/>
+    <text x="1060" y="644" font-weight="bold" fill="#2c5a2f">S4 打包 / S5 审查</text>
+    <text x="1060" y="664" fill="#3c5c3f">校验 + 打包</text>
+    <text x="1060" y="682" fill="#3c5c3f">gpt-5.5 视觉门禁</text>
+    <text x="1060" y="700" fill="#7a8f7a">package-assets / vision_review</text>
+  </g>
+
+  <!-- Stage 间箭头 -->
+  <g stroke="#5a8a55" stroke-width="2" marker-end="url(#arrow)">
+    <line x1="230" y1="660" x2="248" y2="660"/>
+    <line x1="430" y1="660" x2="448" y2="660"/>
+    <line x1="630" y1="660" x2="648" y2="660"/>
+    <line x1="830" y1="660" x2="848" y2="660"/>
+    <line x1="1030" y1="660" x2="1048" y2="660"/>
+  </g>
+
+  <!-- 底部说明 -->
+  <text x="48" y="726" font-size="12.5" fill="#3c5c3f">关键规则：</text>
+  <text x="48" y="746" font-size="12" fill="#5a6f5a">1) 对齐必须 matte（images.edit 重绘必然漂移）；2) 帧一致性 = 单锚点 + 固定风格块；3) 防跳动 = 核心身体对齐；4) 真像素需算法后处理（gpt-image-2 不能直接出硬边像素）</text>
+  <text x="48" y="768" font-size="12" fill="#5a6f5a">5) 审查 = 棋盘格 + 1:1 原生裁切（下采样会糊像素）；6) 扩展点：A 路线 Spine / hard-pixel / 评测评分卡 / MCP 端点</text>
+
+  <text x="640" y="848" text-anchor="middle" font-size="11" fill="#9aa7b2">generated 2026-08-17 · spec/pipeline-architecture.svg</text>
+</svg>

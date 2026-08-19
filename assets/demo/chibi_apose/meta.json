@@ -1,0 +1,7 @@
+{
+  "prompt": "2D pixel art game sprite, cute chibi elf archer girl, about 2 to 3 heads tall, big head with large expressive eyes, short silver-white hair, simple green tunic and brown pants, front view, standing in symmetric A-pose (both arms slightly raised outward from the body, straight arms, palms facing forward, arms clearly separated from the torso with visible gaps at shoulders), NO cape, NO weapons, NO bow, NO quiver, NO accessories covering the body, clean simple readable silhouette, arms and legs fully visible and clearly separated at shoulders, elbows, knees and ankles, simple cel pixel shading, limited color palette, hard pixel edges, grid-aligned, sprite-sheet ready, full body, single character centered, transparent background, no text, no watermark",
+  "model": "gpt-image-2",
+  "size": "1024x1024",
+  "seconds": 95.3,
+  "generated": "2026-08-16 22:49:42"
+}

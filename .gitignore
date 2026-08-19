@@ -79,3 +79,19 @@ env/runtime/tools/see-through/input/
 
 # StretchyStudio å·¥å…·ï¼ˆåµŒå¥— git ä»“åº“ï¼Œå¯é‡æ–° cloneï¼‰
 env/runtime/tools/stretchy-studio/
+
+# ±¾µØ¹éµµ£¨ÕûÀíÊ±ÒÆÈë£¬²»Èë¿â£©
+_archive/
+
+# ¹¤×÷Ì¨ÔËĞĞÊ±²úÎï
+pipeline/artifacts/
+pipeline/_tmp/
+
+
+# macOS À¬»øÄ¿Â¼
+__MACOSX/
+
+
+# See-Through£¨SIGGRAPH µ÷ÑĞ¹¤¾ß£¬¿ÉÖØĞÂ clone£©
+env/runtime/tools/see-through/
+

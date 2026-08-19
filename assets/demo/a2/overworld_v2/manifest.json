@@ -1,0 +1,57 @@
+{
+  "schema": "asset.manifest.v1",
+  "type": "tileset",
+  "name": "overworld_v2",
+  "style": "pokemon-nds-bw",
+  "artifacts": [
+    "C:\\Users\\26046\\Desktop\\inerview\\research\\角色AIGC与AI-NPC全链路\\assets\\demo\\a2\\overworld_v2\\raw.png",
+    "C:\\Users\\26046\\Desktop\\inerview\\research\\角色AIGC与AI-NPC全链路\\assets\\demo\\a2\\overworld_v2\\frames"
+  ],
+  "meta": {
+    "demand": "宝可梦黑白 NDS 风俯视 RPG overworld tileset：8 个 64x64 单元格排成一行——3 种草地（浅/中/深，带有机草叶斑块）、2 种水面（深浅波纹）、1 沙滩、1 土路、1 石板路；全部平坦俯视、硬边像素、同一画风同一调色板、无文字无网格线、每格边缘匹配可平铺",
+    "prompt": "Create a Nintendo DS-era 2D pixel art overworld tileset inspired by Pokemon Black and White, but as a clean standalone asset sheet rather than a scene. Output exactly 8 square tiles, each 64x64 px, arranged in a single horizontal row on a transparent background. Use a flat orthographic top-down 90-degree view, not isometric, with hard-edge pixel art, crisp 1px cluster shading, no anti-aliasing, no blur, no text, no grid lines, no borders, no UI, no characters, no props, no background scenery. All tiles must share one consistent 16-bit console palette, one lighting setup, and perfectly tileable edges on every side.\n\nTile 1: light grass, bright green turf with sparse organic grass-leaf patches and subtle directional texture, clean seamless edges.\nTile 2: medium grass, richer green with denser organic leaf clumps, slightly darker variation, seamless edges.\nTile 3: dark grass, lush deep green turf with thicker grass patches and stronger value contrast, seamless edges.\nTile 4: deep water, dark blue surface with soft layered ripple bands and subtle pixel wave pattern, seamless edges.\nTile 5: shallow water, lighter teal-blue surface with gentle ripple texture and brighter highlights, seamless edges.\nTile 6: sand beach, warm pale beige sand with fine pixel grain and a few irregular organic specks, seamless edges.\nTile 7: dirt road, compact brown earth path with slightly worn texture and faint footpath variation, seamless edges.\nTile 8: stone pavement, gray cobblestone or stone-slab road with simple rectangular stone pattern and restrained shading, seamless edges.\n\nKeep the style cohesive across all eight tiles: vibrant but controlled saturation, clean readable silhouettes, classic handheld RPG map readability, no decorative framing, no perspective distortion, and no mismatch between tile borders. The final image should look like a genuine NDS RPG overworld tileset sheet.",
+    "prompt_json": "C:\\Users\\26046\\Desktop\\inerview\\research\\角色AIGC与AI-NPC全链路\\assets\\demo\\a2\\overworld_v2\\prompt.json",
+    "params": {
+      "size": "512x512",
+      "transparent": false,
+      "split": [
+        8,
+        1
+      ]
+    },
+    "model": "gpt-image-2",
+    "attempts": 1,
+    "duration_s": 92.3,
+    "cost_est_cny": 0.15
+  },
+  "qa": {
+    "vision": {
+      "scores": {
+        "瓦片风格统一": 8,
+        "平铺无缝性": 7,
+        "语义可区分": 9,
+        "像素规格": 5,
+        "整体可用性": 7
+      },
+      "overall": 7,
+      "verdict": "PASS",
+      "issues": [
+        "整体更接近高分辨率手绘纹理，不是真正像素风；对‘真像素/硬边’的要求不完全满足。",
+        "草地与水面存在明显纹理细节和噪点，重复铺开时可能更容易看出模式感。",
+        "石板路、土路和沙滩的边缘过渡略柔，不如严格像素瓦片那样干净利落。"
+      ],
+      "improvements": [
+        "如果目标是像素风，统一降到更明确的像素网格，减少渐变和高频噪点。",
+        "增强同类瓦片边缘的无缝检查，尤其是草地和水面，避免重复后出现节奏化纹理。",
+        "收紧道路与沙地的轮廓对比，让语义在小尺寸下也更容易一眼区分。"
+      ],
+      "summary": "作为多地形游戏瓦片集是可用的，风格统一且类型清楚，但它更像手绘贴图而非严格像素瓦片。",
+      "name": "overworld_v2",
+      "type": "tileset",
+      "threshold": 6.0,
+      "baseline": [],
+      "gate_result": "PASS"
+    }
+  },
+  "confirmed": false
+}

@@ -1,0 +1,74 @@
+{
+  "metrics": {
+    "palette_fidelity": {
+      "value": 1.0,
+      "pass": true,
+      "gate": "hard"
+    },
+    "alpha_crispness": {
+      "value": 1.0,
+      "pass": true,
+      "gate": "hard"
+    },
+    "tile_seam_diff_mean": {
+      "value": 1.3145014020758823,
+      "pass": true,
+      "gate": "hard"
+    },
+    "tile_seam_diffs_per_tile": {
+      "value": [
+        0.0,
+        0.0,
+        0.0,
+        5.258005608303529
+      ],
+      "pass": null,
+      "gate": "info"
+    }
+  },
+  "hard_fail": false,
+  "soft_fail": false,
+  "input": "C:\\Users\\26046\\Desktop\\inerview\\research\\\u89d2\u8272AIGC\u4e0eAI-NPC\u5168\u94fe\u8def\\assets\\demo\\pokemon_map\\pokemon_style\\pokemon_style.png",
+  "kind": "tileset",
+  "palette": "db16",
+  "palette_hex": [
+    "#140c1c",
+    "#442434",
+    "#30346d",
+    "#4e4a4e",
+    "#854c30",
+    "#346524",
+    "#d04648",
+    "#757161",
+    "#597dce",
+    "#d27d2c",
+    "#8595a1",
+    "#6daa2c",
+    "#d2aa99",
+    "#6dc2ca",
+    "#dad45e",
+    "#deeed6"
+  ],
+  "seam_metrics_per_tile": [
+    {
+      "seam_diff_before": 109.52536866658467,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 48.37531686713771,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 31.15541515834989,
+      "strategy_used": "edge_match",
+      "seam_diff_after": 0.0
+    },
+    {
+      "seam_diff_before": 5.258005608303529,
+      "strategy_used": "crop",
+      "seam_diff_after": 5.258005608303529
+    }
+  ]
+}

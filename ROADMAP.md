@@ -85,3 +85,25 @@ spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开�
 
 **每阶段 gate**：任务全过 + 产出物 + 验收清单 + audit 记录（沿用项目 verify/audit 文化）
 **横切**：画风 LoRA（如选 ComfyUI 路线）、工作台 v2 前端（后续）、memory 沉淀
+
+---
+
+## 2D 骨骼动画重规划（2026-08-14）
+> **权威文档：`spec/pipeline-remaster-2d-skeletal.md`**（含「2D 骨骼怎么做」调研 + 烂因实测 + 全任务重规划）
+> 路线：**P1 动画质量修复（M0 walk→M1 全动画）→ P2 流水线硬化（rig/anim gate + S5 spine 播放器）→ P3 引擎闭环 → P4 反馈/成本/开源**
+> 关键：不能把烂动画流水线化；M0/M1 未过前不批量重跑 S3。
+
+---
+
+## 近期重点（2026-08-19：Agent Workflow + AIGC 资产流水线）
+> 权威文档：`spec/agent-workflow.md`（A1-A6 编排）、`spec/aigc-tools-integration.md`（工具集成）、`spec/style-assets.md`（风格资产契约）
+> 主进度表：`tasks/pipeline/tasks.md`
+
+| 项 | 内容 | 状态 |
+|---|---|---|
+| W0 工具层 | skills 6 + frame-ronin MCP + **godot-assistant MCP** + aigc-toolkit + vision_gate | ✅ |
+| A2 标准入口 | tools/a2-pipeline.py（视觉提示词→生图→Vision Gate→重试→manifest） | ✅ 瓦片集 PASS 7.0 |
+| W2 宝可梦俯视地图全链 | 瓦片→地图→Godot demo（4向x4帧 walk + 村庄/湖/桥/森林） | ✅ 闭环 |
+| W2.1 地图打磨 | 全景 gate 6 / 游戏内 5（画风7/可玩7/统一7） | ⏳ 未达 7，待办：过渡瓦片/路标地标/统一描边 |
+| W3 角色/动画全链 | 8向精灵→行动画→Spine（A 路线） | 📋（阻塞：See-Through 模型下载） |
+| W5 评测/反馈闭环 | agent eval 平台接自家 agent | 📋 |

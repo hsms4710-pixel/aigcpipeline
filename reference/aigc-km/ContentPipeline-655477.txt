@@ -1,0 +1,468 @@
+标题: 百科内容生产流水线的工程实践：生产 Agent 调度框架的设计与演进
+作者: brandfeng
+创建时间: 2026-03-23 10:15:04, 更新时间: 2026-03-23 10:15:04
+导语: 大模型正在重塑内容生产方式，但"让 AI 稳定地批量生产高质量内容"远比"让 AI 生成一篇好文章"难得多。本文深入剖析百科内容生产系统 AgentProxy 的工程实践，重点回答三个问题：如何让多个 AI Agent 可靠协作？如何在高并发下保证任务不丢失？如何在不停机的情况下灵活调整生产流程？
+标签: workflow | 工程架构 | 分布式调度
+阅读: 46, 点赞: 1, 收藏: 0, 评论: 1
+热度: 7
+K吧: 无
+AI摘要: **文章摘要**
+
+本文系统阐述了百科AI内容生产流水线中核心调度框架（AgentProxy）的设计与演进。针对从单次生成到规模化生产的工程挑战，文章深度解析了基于Redis状态机、DrawFlow工作流引擎和TTL KV上下文管理的三层架构，重点介绍了高并发调度策略、故障自愈机制与动态扩展方案。通过四级故障防线和双模式输出通道设计，系统实现了日均数万词条的可靠生产。
+
+**文章重点总结**
+
+1. **核心挑战与目标**  
+   - 解决AI生成从单次实验到批量生产的工程难题，需满足可靠性（自动重试/防丢任务）、高并发（数千任务并行）、优先级调度（线索词条优先）、可干预（批量暂停/恢复）、可扩展（动态增删Agent）、可观测（全链路追踪）六大需求。
+
+2. **三层架构设计**  
+   - **任务队列层**：使用12个Redis ZSet队列（3优先级×4状态）解耦Agent，独创`task_id_ip_starttime_batchid_priority`五段式key支持实例重启检测。
+   - **调度算法层**：三级动态配额（高/中/低优）避免优先级"饿死"，配置热更新5秒生效。
+   - **工作流引擎层**：基于DrawFlow实现可视化DAG编排，支持6类节点（Agent/条件分支/Python脚本等）和局部/全局变量注入。
+
+3. **关键创新机制**  
+   - **四重故障防线**：  
+     🔄 失败自动重试（died→waiting）  
+     ⏱ 超时任务回收（running→died）  
+     🔧 实例重启孤儿任务检测（IP+启动时间戳比对）  
+     🛠 批量任务重置（依赖上下文回溯）
+   - **动态扩展能力**：运行时自动注册新Agent（`BaikeGeneralAgentHandler`），零部署新增生产节点。
+   - **双模式输出通道**：兼容静态序列（旧任务）与DrawFlow DAG（支持条件分支的新任务）。
+
+4. **核心工程决策**  
+   - **队列分组**：各优先级独立维护waiting/running/died/pause队列，提升运维精度。
+   - **数据存储策略**：任务上下文用Protobuf（体积小/解析快），Agent输出用JSON（Python兼容）。
+   - **热更新机制**：配额参数存TTL KV，5秒轮询刷新实现动态调优。
+
+**评价**
+
+本文深度剖析了大规模AI生产系统的工程实践，兼具技术深度与落地价值。系统设计亮点包括：独创的五段式队列Key实现无状态故障检测、三级配额调度保障生产公平性、工作流引擎外置Sandbox平衡安全与灵活性。全文逻辑严密，配图数据（如配额计算公式、状态机流转图）强化了技术说服力，为分布式任务调度提供了范本级解决方案。
+正文: 一、背景：一个被低估的工程难题
+
+1.1 从"一次生成"到"批量生产"，差距有多大？
+在 ChatGPT 出现之前，内容生产是纯人工的。大模型出现后，一个自然的想法是：用 AI 自动生产内容。
+但"让 AI 生成一篇文章"和"每天稳定生产数万篇词条"，是两个量级完全不同的问题。
+拿百科词条生产举例，一篇词条的完整生产链路是这样的：
+
+图片引用: https://km.woa.com/asset/0001000226030037acfde6b2ac45e506?height=344&is_missing_image_info=1&width=344
+
+单次生产就需要 10min以上。规模化到每天数万篇，还要满足：
+
+需求挑战
+可靠性任何一步失败，绝不能丢任务；失败要自动重试
+高并发数千任务同时在不同 Agent 间流转，互不干扰
+优先级线索类词条比常规词条更紧急，要优先处理
+可干预某批次质量有问题，能随时暂停、删除，修复后恢复
+可扩展新增一种 Agent 不需要重新编译部署 ,自定义生产路径
+可观测出了问题，能追溯到每个任务的每一步
+
+这就是 mmsearchbaikeagentproxy（以下简称 AgentProxy）要解决的核心问题。
+
+1.2 一句话概括系统设计
+
+用 Redis ZSet 队列解耦各 Agent，用状态机兜底可靠性，用 DrawFlow 工作流做配置化编排，用 TTL KV 串联上下文与可观测性。
+下面逐层展开。
+
+二、整体架构：三层设计
+
+图片引用: https://km.woa.com/asset/00010002260300e158fe0067b84a5806?height=344&is_missing_image_info=1&width=344
+
+三、任务队列：一个精心设计的状态机
+
+3.1 为什么是 Redis ZSet？
+任务队列最核心的操作是：从队列中取出优先级最高的任务，同时从集合中删除它。
+用数据库做这件事，需要：SELECT ... ORDER BY score LIMIT 1 + DELETE ... 两步，必须加锁，并发性差。
+Redis ZSet 的 ZPOPMIN / ZPOPMAX 是原子操作，一条命令完成"取出 + 删除"，天然适合任务队列场景。
+
+3.2 12 个队列的组织方式
+每个 Agent 维护 3 个优先级 × 4 种状态，共 12 个 Redis ZSet：
+
+图片引用: https://km.woa.com/asset/00010002260300945e49c622ca4fac06?height=344&is_missing_image_info=1&width=344
+
+level=1 (高优先级):
+{agent_name}:1:waiting ← 等待分配
+{agent_name}:1:running ← 生产中
+{agent_name}:1:died ← 失败，等待重试
+{agent_name}:1:pause ← 批次暂停
+
+level=2 (中优先级):
+{agent_name}:2:waiting
+{agent_name}:2:running
+{agent_name}:2:died
+{agent_name}:2:pause
+
+level=3 (低优先级):
+{agent_name}:3:waiting
+{agent_name}:3:running
+{agent_name}:3:died
+{agent_name}:3:pause
+
+queue_map_ 是 map<int, TaskQueue>，key 为 level（1/2/3），每个 TaskQueue 对象持有该 level 下 waiting/running/died/pause 四个队列的名称及操作方法。
+
+3.3 Score 公式：优先级 + FIFO 的融合
+同一个 waiting 队列里，score 越小的任务越先出队。score 公式：
+
+inline int64_t getTaskWeightScore(const int64_t& task_id, const int& priority) {
+return int64_t(30 - priority) * 1000000000 + task_id;
+}
+
+以两个任务为例：
+
+task_idpriorityscore
+100115（高优线索）(30-15)×10⁹ + 1001 = 15,000,001,001
+10025（常规生产）(30-5)×10⁹ + 1002 = 25,000,001,002
+
+task_id=1001 的 score 更小，先出队。一个公式同时满足了优先级调度和同优先级 FIFO 两个要求。
+
+3.4 running 队列 Key 的 5 段式设计
+任务进入 running 队列时，key 格式是：
+
+{task_id}_{instance_ip}_{start_time}_{batch_id}_{priority}
+
+携带 IP 和启动时间，是为了支持后面讲的实例重启孤儿任务检测。通过 key 就能知道"这个任务是哪个实例在处理、那个实例是否已重启"，无需额外查询。
+
+3.5 完整状态流转图
+
+图片引用: https://km.woa.com/asset/0001000226030056201b8316fd460306?height=344&is_missing_image_info=1&width=344
+
+四、调度算法：三级配额防止"饿死"
+
+4.1 问题的本质
+高优先级任务持续涌入时，低优先级任务可能永远得不到执行——这是优先级调度的经典"饿死"问题。
+AgentProxy 的场景更具体：线索类词条（priority >= 12）有实时性要求，但如果全部配额都给线索，常规生产（priority < 6）的词条就会积压。
+
+4.2 三级配额约束
+系统将配额分为三个层次，通过三个比例参数控制：
+
+total_quota = fixed_quota（Agent 上报的并发数）
+
+高优配额上限 = (1 - mid_rate - low_rate) × total_quota
+
+中优保底配额 = mid_rate × total_quota
+
+低优保底配额 = low_rate × total_quota
+
+PushAgentTask 的核心调度逻辑（简化）：
+
+// 当前各级 running 数量
+
+int high_running = CountRunning(level=1);
+
+int mid_running = CountRunning(level=2);
+
+int low_running = CountRunning(level=3);
+
+std::vector<int> final_levels;
+
+if (high_running < (1 - mid_rate - low_rate) * quota) {
+
+// 高优配额未满，先补高优
+
+final_levels = {1, 2, 3};
+
+} else {
+
+// 高优已满，保护中低优
+
+if (mid_running < mid_rate * quota) {
+
+final_levels = {2, 1, 3}; // 中优先
+
+} else if (low_running < low_rate * quota) {
+
+final_levels = {3, 1, 2}; // 低优先
+
+} else {
+
+final_levels = {1, 2, 3}; // 正常序
+
+}
+
+}
+
+// 按 final_levels 顺序依次尝试 ZPOPMIN
+
+4.3 热更新：配置改了 5 秒生效
+三个比例参数（high_task_running_rate、middle_task_running_rate、low_task_running_rate）存在 TTL KV 里，后台线程每 5 秒刷新（伪代码）：
+
+循环:
+对 baike_agent_map_ 中每个 agent:
+从 TTL KV 读取 {agent_name}_capacity
+json2pb 反序列化为 AgentCapacityConfig
+调用 SetAgentCapacityConfig 更新配置
+睡眠 5 秒
+
+流量高峰时，在运营平台修改配置，5 秒内所有实例同步生效，无需重启。
+
+五、工作流引擎：从静态序列到 DrawFlow DAG
+
+5.1 为什么需要工作流引擎？
+最简单的方案是在 Kafka 消息里直接写执行序列：
+
+{ "agentexecseq": ["dr_agent", "fact_agent", "quality_agent"] }
+
+代码按序执行，简单直接。但这有一个问题：无法处理条件分支以及自定义规则执行。
+例如，quality_agent 评分后，如果分数 >= 80 才继续，分数 < 80 要重新走 dr_agent 生成。这种逻辑用静态序列无法表达。
+
+5.2 DrawFlow DAG：用 Proto 描述有向图
+AgentProxy 引入了基于 DrawFlow 的可视化工作流编辑器，工作流以 JSON 格式存储，与 Proto 定义一一对应：
+
+message AgentWorkItem {
+
+optional string name = 1;
+
+optional AgentWorkDataInfo data = 2; // 节点类型/条件/脚本/HTTP配置
+
+map<string, AgentWorkInput> inputs = 3; // 输入边
+
+map<string, AgentWorkOutput> outputs = 4; // 输出边
+
+}
+
+message AgentWorkDrawFlow {
+
+optional AgentWorkFlowHome Home = 1; // DrawFlow 编辑器兼容格式
+
+}
+
+5.3 六种节点类型
+
+节点类型执行方式典型用途
+start开始节点流程起点
+agent直接提交到对应 Agent 的 waiting 队列调用大模型（dr_agent、fact_agent 等）
+condition调用 Sandbox RunSelectNode 评估表达式质量分支：≥80 继续 / <80 重新生成
+code调用 Sandbox 执行 Python 脚本数据清洗、格式转换、自定义处理逻辑
+http调用外部 HTTP 接口对接外部数据源或平台接口
+end结束节点流程结束
+
+5.4 两种变量
+条件表达式支持引用两种变量：
+局部变量：{quality_score} → 从前序 Agent 的输出 JSON 中取值、任务信息以及百科基础信息
+全局变量：$enable_fact_check → 从 TTL KV 的 global_var_enable_fact_check 中取值（人工配置）
+例如条件节点的表达式 {quality_score} >= 80 && $enable_fact_check == "true" 会在执行时被动态替换，再交给 Sandbox 的 Python 解释器求值。
+
+5.5 为什么把工作流引擎外置到 Sandbox？
+在 C++ 主服务里执行动态表达式和 Python 脚本，面临两个问题：
+
+安全风险：用户配置的 Python 代码可能执行任意操作
+
+工程成本：在 C++ 里嵌入 Python 解释器并做沙箱隔离，代价极高
+
+外置到 mmsearchbaikesandbox 服务后，隔离由独立进程保证，业务同学可以直接用 Python 写自定义逻辑，研发门槛大幅降低。
+
+六、上下文管理：TTL KV 作为任务总线
+
+6.1 两种存储各司其职
+
+数据类型存储格式Key原因
+任务结构化上下文Protobufcontext_pb_{task_id}字段固定，PB 序列化更快更小
+Agent 输出结果JSON{task_id}_{agent_name}结构灵活，便于 Python 读取
+批次状态字符串batch_status_{batch_id}简单键值，读写频繁
+容量配置JSON{agent_name}_capacity热更新，json2pb 反序列化
+
+BaikeAgentContextInfo Protobuf 包含的核心字段：
+
+task_info → 任务基本信息（task_id, batch_id, priority...）
+
+basic_info → 实体信息（entity_id, lemma_id, schema_key...）
+
+exec_seq_config → 工作流配置（DrawFlow DAG）
+
+recall_agent_steps → 已完成的 Agent 结果 key 列表
+
+trace_info → 完整状态轨迹（每步队列名/IP/时间戳）
+
+call_fail_count → 各 Agent 的失败计数
+
+6.2 双写 + defer：一个防止数据不一致的小技巧
+TaskCallBack 中有一个精心设计的细节——先写 TTL KV，再调用 NextAgentTask：
+
+// ① 先写，Sandbox 做条件判断时能读到最新上下文
+TTL KV 写入 context_pb_{task_id}
+
+// ② 工作流引擎决定下一步（可能会修改 ctx）
+next_task_name = NextAgentTask(ctx, status, content)
+
+// ③ RAII defer：函数退出时再写一次，防止中间更新丢失
+defer { TTL KV 再次写入 context_pb_{task_id} }
+
+为什么要写两次？因为 NextAgentTask 可能会修改 ctx->agent_context（追加 trace_info），如果只在最后写，条件判断时 Sandbox 读到的是旧数据。
+
+6.3 trace_info：每步都有记录，出问题一查即明
+每次任务进入/离开队列，都会追加一条 trace 记录（伪代码）：
+
+trace.agent_name = 当前 Agent 名称
+trace.now_step = 操作描述（如"进入waiting队列"）
+trace.now_queue_name = 队列名
+trace.queue_key = 队列中的 key
+trace.instance_ip = 执行实例 IP
+trace.now_time = 当前时间戳（秒）
+
+线上出了问题，直接读 context_pb_{task_id}，就能看到这个任务完整的"生命历程"——在哪台机器上、走了哪些队列、每步耗时多少。
+
+七、故障处理：四道防线缺一不可
+
+第一道：失败重试（died → waiting）
+Agent 回调失败时，记录失败次数，进入对应 level 的 died 队列（伪代码）：
+
+call_fail_count[agent_name] += 1
+将 task_id 写入 died 队列（对应 level）
+
+LoopLoadTaskDiedRestore 每 10 分钟扫描所有 level 的 died 队列，满足条件则重试：
+
+条件一：call_fail_count[agent_name] <= retry_times（还有重试次数）
+条件二：当前该 level running 数 < 配额（有处理能力）
+条件三：获取分布式锁成功（防多实例重复恢复）
+→ 将任务从 died 移回 waiting（score 保持原值）
+
+第二道：超时检测（running → died）
+LoopCheckRunningTaskTimeout 每 10 分钟扫描所有 level 的 running 队列（伪代码）：
+
+对每个 level 的 running 队列:
+遍历所有 key
+读取 context_pb_{task_id} 中最后一条 trace_info 的时间戳
+如果 now_time - last_trace_time > timeout_second:
+RunningToDied(task_id, level)
+
+解决了"Agent 实例挂了，但任务还在 running 队列里永远不会回调"的问题。
+
+第三道：实例重启检测（孤儿任务回收）
+这是最容易被忽视、但最关键的一道防线。
+问题场景：实例 A 处理任务 T，任务进入 running 队列。此时实例 A 重启，任务 T 永远卡在 running，不会有人回调。既不会超时（因为 last_time 是 running 的入队时间，不会更新），也不会重试。
+解法：每次 AcquireTask 时，异步检测同 IP 实例是否重启（伪代码）：
+
+从 TTL KV 读取 saved_start_time = agent_ip_{ip}
+
+如果 saved_start_time != ctx.agent_info.start_time:
+// 实例已重启
+获取分布式锁（key="check_ip_{ip}"）
+如果拿到锁:
+扫描该 level 的 running 队列中所有 key
+对每个 key，解析出其中的 instance_ip 和 start_time
+如果 instance_ip == 当前 ip 且 start_time 不匹配:
+// 这是旧实例留下的孤儿任务
+将 key 移回 waiting 队列，恢复生产
+
+running 队列 key 携带 instance_ip 和 start_time，正是为这个检测设计的。
+第四道：大批量任务重置
+当某个agent执行失败或者出现bug时，需要执行批量任务重置到该agent重新开始生产。这个时候上下文就起到了关键作用，只需提供任务ID重置任务到该agent等待队列中，存在大批量任务重置某个状态，采用异步任务执行，对任务总数、执行数量、执行状态实时监测。
+
+图片引用: https://km.woa.com/asset/000100022603009ac395ea039c4e0301?height=1798&width=2958
+
+八、动态扩展：无需重新部署的 Agent 注册
+
+8.1 问题
+硬编码 Agent 类型的设计，意味着每增加一种 Agent（如新增 summary_agent），就需要：
+新增 Handler 类，重新编译
+
+在 Logic::Init 里注册，重新部署
+
+这在快速迭代的业务场景下代价太高。
+
+8.2 loadTaskAgentHandler：运行时动态注册
+loadTaskAgentHandler 在每次收到任务时被调用，对序列中出现的 Agent 名称进行检查（伪代码）：
+
+函数 loadTaskAgentHandler(agent_exec_seq):
+// 一次无锁快速检查，全部存在则直接返回
+如果 agent_exec_seq 中所有名称都已在 baike_agent_map_ 中:
+return
+
+加写锁:
+对 agent_exec_seq 中每个 agent_name:
+如果 baike_agent_map_ 中不存在:
+创建 BaikeGeneralAgentHandler 实例
+handler.SetTaskName(agent_name) // 任务名运行时设置
+baike_agent_map_[agent_name] = handler
+// 自动为该 agent_name 初始化 3×4=12 个 Redis ZSet 队列
+
+BaikeGeneralAgentHandler 继承自 AgentTask，实现了标准接口，task_name_ 在运行时通过 SetTaskName 设置。这意味着：
+
+Kafka 消息中携带 "agentexecseq": ["dr_agent", "summary_agent", "quality_agent"]
+
+AgentProxy 自动为 summary_agent 创建完整的 12 个队列体系
+
+对应的 AI Agent 服务调用 AcquireTask(agent_name="summary_agent") 即可接入
+
+整个过程零代码改动，零重新部署。
+
+九、结果输出：两种模式，两路通道
+AgentProxy 存在两种运行模式，它们在结果输出上走的是完全不同的通路，这是容易混淆的地方。
+
+9.1 两种模式的判断依据
+判断依据是任务上下文中是否携带 exec_seq_config（DrawFlow DAG 配置）：
+
+如果 task_info 没有 exec_seq_config:
+→ 静态序列模式（旧模式）
+如果 task_info 有 exec_seq_config:
+→ DrawFlow DAG 模式（新模式）
+
+9.2 静态序列模式（前期）：
+当使用静态序列模式时，按照流水线先后依次执行。
+
+图片引用: https://km.woa.com/asset/0001000226030008b66f4ee5ef496a06?height=344&is_missing_image_info=1&width=344
+
+9.3 DrawFlow DAG 模式：
+当使用 DAG 模式时，每一步 Agent 完成后都会调用 NextAgentTask，通过有向图完成整个生产链路
+
+图片引用: https://km.woa.com/asset/0001000226030004240932b3a740d601?height=1740&width=3256
+
+9.4 两种模式的对比
+
+维度静态序列模式DrawFlow DAG 模式
+判断依据task_info 无 exec_seq_configtask_info 有 exec_seq_config
+触发时机流水线最后一步完成每步 Agent 完成后
+使用场景固定流程的批量生产需要条件分支的复杂流程
+
+十、关键工程决策：取舍与思考
+
+10.1 为什么所有队列都按优先级分组，而不是 running/died 共享？
+一个常见的简化设计是：waiting 按优先级分组，running/died/pause 所有优先级共享一个队列。
+AgentProxy 选择每个优先级 level 都有独立的四个队列，主要原因是：
+
+运维干预精度：批次暂停（pause）时，可以只暂停某个优先级的任务，不影响其他优先级继续生产
+
+统计与监控：可以精确统计各优先级在 running/died 中的任务数，配额控制才有数据基础
+
+重试时 level 保持一致：died 任务重试时直接回到同 level 的 waiting，不会因为共享队列导致 level 信息丢失
+
+代码中，CheckAgentIpValid 扫描孤儿任务时，也是按 level 逐一扫描 running 队列，这依赖队列按 level 分组的结构。
+
+10.2 为什么上下文用 Protobuf，Agent 结果用 JSON？
+BaikeAgentContextInfo 字段固定、频繁读写，Protobuf 序列化体积更小（约为 JSON 的 1/3 ~ 1/2），高并发场景下对 TTL KV 的压力更小。
+Agent 输出结果结构各异（不同 Agent 的输出字段完全不同），而且需要被 Sandbox Python 代码直接读取和处理，JSON 更灵活，也无需维护 proto 定义。
+
+10.3 为什么两种模式（静态序列 vs DAG）共存而不统一？
+静态序列模式是早期方案，已有大量生产任务在使用，线上稳定运行。DrawFlow DAG 模式是后来引入的，支持条件分支等更复杂的逻辑。
+两者并存的原因是渐进迁移：新任务可以使用 DAG 模式享受灵活性，存量任务无需改造继续跑静态序列，通过 exec_seq_config 是否存在做透明路由，上层无感知。
+
+10.4 为什么 running 队列 key 要携带 5 段信息？
+running 队列 key 格式：{task_id}_{instance_ip}_{start_time}_{batch_id}_{priority}
+这 5 段信息在不同场景下各有用途：
+
+字段用途
+task_id唯一标识任务，从 TTL KV 读取上下文
+instance_ip实例重启检测：定位是哪台机器处理的
+start_time实例重启检测：判断该机器是否已重启
+batch_id批次操作（pause/reset）时过滤同批次任务
+priority任务移回 waiting 时恢复原始优先级 level
+
+如果 key 只存 task_id，则实例重启检测、批次操作、优先级恢复都需要额外查询 TTL KV，增加延迟和复杂度。用 key 携带元信息，是以存储空间换查询效率的典型设计。
+
+十一、总结
+AgentProxy 解决的是一个典型的"把多个不可靠组件串成一个可靠系统"的工程问题。
+核心设计可以用一张图概括：
+
+图片引用: https://km.woa.com/asset/00010002260300a7c355216b644dcd06?height=344&is_missing_image_info=1&width=344
+
+几个对类似系统有参考价值的经验：
+
+任务队列的 Key 要携带足够的元信息：running 队列 key 带上 IP 和 start_time，使得实例重启检测得以实现，这是设计时的一个前置决策。
+
+热更新比重启代价小得多：容量配置存 TTL KV、5 秒轮询刷新，让流量高峰时的应急调整变得极其简单。
+
+状态机要穷举所有异常路径：失败、超时、实例重启——每一种故障模式都需要对应的处理机制，缺一不可。
+
+配置化比代码化适应性更强：DrawFlow 工作流让业务同学可以自行调整生产流程，不依赖研发排期。
+
+本文由🦞主编，人工辅助编写而成。
+链接: https://km.woa.com/articles/show/655477?jumpfrom=kmmcp

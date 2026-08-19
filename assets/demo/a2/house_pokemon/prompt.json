@@ -1,0 +1,13 @@
+{
+  "prompt": "Single standalone village hut building sprite for a Nintendo DS-era top-down JRPG map, inspired by Pokemon Black and White overworld architecture props. This is one isolated architectural asset only, not a character, not a sprite sheet, not an animation set, and not multiple directional frames. Fixed 3/4 isometric top-down view with the camera slightly above and angled down, designed to read clearly on a tile-based map.\n\nDesign a small wooden cottage with a compact rectangular footprint sized for a 32px tile world: simple pitched roof, red and blue roof panels, white plaster walls, visible dark wooden beams, one front door, two small square windows with frames, tiny chimney, and a low stone base. Keep the geometry chunky and low-detail so it remains legible at game-map scale. Limit the roof overhang, wall ornament, and trim detail to a few clear pixel clusters; avoid dense texture, tiny clutter, or miniature decorative extras.\n\nHard-edged pixel art only, crisp clustered pixels, clean 1px-style pixel outlines, no anti-aliasing, no blur, no gradients, no painterly shading. Use a restrained Nintendo DS 16-bit palette with saturated but controlled reds, blues, whites, warm browns, and cool gray shadows. Use 3-tone material separation: roof, wall, wood, and stone must each have distinct value steps. Add only subtle integrated sprite shadowing under the eaves and along the base; no separate ground shadow, no terrain, no floor plane.\n\nCenter the hut cleanly on the canvas with enough empty margin around the silhouette for the roof peak and overhang. The sprite must be isolated on a true transparent alpha background, with no black matte, no visible backdrop, no scene, no UI, no text, no labels, no overlay, no extra props. Authentic Pokemon Black and White NDS overworld prop aesthetic, game-ready, crisp, readable, and modest in detail density.",
+  "rationale": "前一版最大的问题是把它写成了偏复杂的建筑概念图，细节和层次都超过了 32px 瓦片级别的可读性。这个版本把目标明确收束为“单体村庄建筑道具”，直接排除角色、多方向帧、动画表、sprite sheet 等歧义，避免模型继续往人物资产上跑。",
+  "params": {
+    "size": "64x64",
+    "palette": "Nintendo DS 16-bit limited palette, saturated red/blue roof, white plaster, dark wood, cool gray shadows",
+    "transparent_bg": true,
+    "notes": "Target a single isometric hut prop readable at 32px tile scale. Keep silhouette chunky, details sparse, and ensure real alpha transparency with no black background or matte."
+  },
+  "style": "pokemon-nds-bw",
+  "type": "character",
+  "demand": "宝可梦黑白 NDS 风俯视 RPG 的村庄小屋 sprite：小木屋带红/蓝屋顶、白墙、窗户，3D 等距视角略俯视，像游戏地图上的建筑，硬边像素、同一 NDS 16-bit 调色板、透明背景、无文字 上一轮验收问题（请针对性修订提示词修复）: 这不是角色多方向资产，而是单体村庄建筑，无法满足8向身份一致性与视角切换要求。; 画面背景为纯黑，未体现透明底，作为游戏素材会直接暴露底色。; 即便作为建筑 sprite，体量和细节密度也偏高，不适合直接按 32px 瓦片无违和落地。; 当前只有单一视角，无法验证下/左下/左/左上/上/右上/右/右下的方向正确性。"
+}

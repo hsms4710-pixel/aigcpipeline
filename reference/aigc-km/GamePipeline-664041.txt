@@ -1,0 +1,240 @@
+标题: 咬文嚼字-游戏开发内功 六大设计原则之开闭原则
+作者: jobspzqiao
+创建时间: 2026-06-29 14:14:25, 更新时间: 2026-06-29 15:58:43
+导语: 最近一直在大量的用ai写代码的时候，总会有失控的感觉，感觉在逐渐的被ai的代码同化，失去判断能力，特别是大段大段的输出后，或者是去做一些非本职的技术探索，ai代码嵌套耦合与历史遗留问题相互纠缠，上下文无限制拉长，ai幻觉问题加重，等等，这些固然可以通过很多方法去解决，但我觉得，作为程序，更应该关注自身的代码思考，就像Harness Engineering所比喻的那样，程序员就像骑在一匹快马上面，这匹马野性难驯，不加管控则会跌入万丈悬崖，而本文，则希望能够通过我在重新回顾设计模式过程中的一些思考，能够帮助到大家去提升驾驭这匹快马的能力
+标签: 设计模式 | 代码 | 游戏客户端 | 游戏客户端技术
+阅读: 280, 点赞: 7, 收藏: 7, 评论: 3
+热度: 5
+K吧: #29321 腾讯游戏知识库 https://km.woa.com/group/29321?jumpfrom=kmmcp
+AI摘要: **文章摘要**
+
+本文是一篇面向游戏开发者的技术分享，深入探讨了软件设计六大原则中的**开闭原则（OCP）**。作者结合游戏开发中的实际案例（如技能系统设计），不仅解释了OCP的定义，更着重剖析了在工程实践中如何正确理解和应用这一原则，特别是如何平衡“抽象”与“修改”之间的关系。文章还联系了当前热门的AI编程话题，强调了程序员自身判断力的重要性。
+
+**文章重点总结**
+
+1.  **开闭原则的核心与困惑**：
+    *   **定义**：对扩展开放，对修改封闭。即软件实体应通过扩展（新增代码）来实现变化，而非修改已有代码。
+    *   **实践难题**：作者提出了几个关键问题：什么算“扩展”？什么算“修改”？如何保证一次抽象就能完美封闭？为什么要这样做？
+
+2.  **案例分析：从“坏味道”到“好设计”**：
+    *   **反面案例**：一个`Player`类的`UseSkill`方法，通过`if-else`判断技能类型。每增加一个新技能（火球、冰冻箭等），都必须修改这个方法，导致代码无限膨胀，这明显违反了OCP。
+    *   **重构优化**：作者展示了如何通过**定义抽象基类`SkillBase`**，让每个技能（如`NormalAttack`、`IceArrowSkill`）独立成子类。`Player`类只依赖抽象基类，新增技能时只需新增子类，无需修改`Player`类。这实现了“对扩展开放，对修改封闭”。
+
+3.  **“精准抽象”的来源与局限性**：
+    *   **来源**：精准的抽象来自于对业务的深刻理解、经验积累和不断试错。
+    *   **现实困境**：第一次设计很难完美。作者举了一个“施法读条”需求的例子：当需要支持“读条期间被打断”这种跨帧状态时，原有的同步技能基类抽象就失效了。强行在基类里加特判（如`if (this is ChannelingSkill)`）会导致代码腐烂。
+
+4.  **对OCP的深度理解：不同时间尺度上的约束**：
+    *   **核心观点**：作者认为，**重构基类属于“抽象演化”层面，而OCP约束的是“抽象稳定后的功能扩展”层面**。两者不在同一个时间尺度上。
+    *   **类比说明**：OCP就像建筑的承重墙。承重墙不能乱凿洞（对修改封闭）。但如果发现承重墙位置画错了（抽象本身有问题），就需要重新规划结构（重构基类）。重构后的新承重墙依然不能随便动。
+    *   **真正违反OCP的行为**：抽象明明还准确，却因为一个特殊情况就往里塞特判，让抽象逐渐失去意义。
+
+5.  **与AI编程的联系**：
+    *   作者认为，开闭原则是判断能否驾驭AI编程的标尺。AI容易实现功能，但很难做到“精准抽象”。
+    *   **核心观点**：程序员的价值在于对代码方案的判断力。AI生成的代码（如直接写特判）会成为后续AI的上下文，导致问题累积。这种判断力目前只能来自程序员本身，且会愈发重要。
+
+**评价**
+
+本文是一篇非常优秀的实战技术文章。它没有停留在对设计原则的教条式讲解，而是通过一个完整的游戏开发案例，层层递进地揭示了OCP的本质、应用场景和常见误区。文章逻辑清晰，语言生动（如“承重墙”的类比），并且能结合AI编程这一前沿话题，引发读者对程序员核心价值的思考。对于希望深入理解设计模式、提升代码质量的开发者来说，具有很高的参考价值。
+正文: 再次回顾设计模式，总会有不一样的收获和思考，给我印象最深刻的就是开闭原则，我们就先从这里入手去分析
+我觉得开闭原则是一个最经典的标尺来判断目前能否很好的驾驭ai coding，因为ai coding最容易做到的是实现功能，但很难做到抽象【即提炼出当前需求的本质】准确，所以，不论在使用什么ai工具 CLI去写代码，人的思考过程都是十分重要 不可避免的，也就是让ai可以解放程序员在舒适区内的重复无意义的劳动，更多的思考内容专注决策
+
+开闭原则：
+
+图片引用: https://km.woa.com/asset/00010002260600b7ca173fb399453e01?height=914&width=1370
+
+我们咀嚼一下这个原则，字面理解起来很容易，但是在实际开发过程中，会有下面几个问题：
+对于一个系统来说
+什么属于拓展？ 新增代码 新文件 类 方法等？
+什么属于修改？ 改动已有代码？
+我们怎么精准的对这个系统抽象，保证它封装好后一定能够不再被修改？
+为什么要对扩展开放，修改关闭呢？
+带着上面的这些问题，我们去根据实际案例思考一下
+
+场景设定
+玩家有一个攻击按钮，按下去根据当前装备释放技能：普通攻击、火球术、冰冻箭……未来还会不断加新技能
+public class Player : MonoBehaviour
+{
+public string currentSkill = "normal";
+
+void Update()
+{
+if (Input.GetKeyDown(KeyCode.Space))
+{
+UseSkill(currentSkill);
+}
+}
+
+public void UseSkill(string skillType)
+{
+if (skillType == "normal")
+{
+Debug.Log("普通攻击：挥剑");
+// 播放挥剑动画
+// 检测碰撞体
+// 扣血
+}
+else if (skillType == "fireball")
+{
+Debug.Log("火球术：发射火球");
+// 实例化火球预制体
+// 设置飞行速度
+// 添加火焰特效
+}
+else if (skillType == "ice")
+{
+Debug.Log("冰冻箭：发射冰箭");
+// 实例化冰箭
+// 添加减速效果
+}
+// 加雷电技能……
+// 加治疗技能……
+// 加传送技能……
+// 这个方法会无限膨胀
+}
+}后续每实现一个技能都要修改这里的代码
+很明显，这就属于肉眼可见的code smell
+我们先简单的优化一下
+
+重构
+定义抽象基类
+public abstract class SkillBase
+{
+public abstract void Execute(Player player);
+public abstract string SkillName { get; }
+}每个技能独立成一个类
+// NormalAttack.cs
+public class NormalAttack : SkillBase
+{
+public override string SkillName => "普通攻击";
+
+public override void Execute(Player player)
+{
+Debug.Log("挥剑！");
+player.GetComponent<Animator>().Play("SwordSwing");
+}
+}
+// IceArrowSkill.cs
+public class IceArrowSkill : SkillBase
+{
+public override string SkillName => "冰冻箭";
+
+public override void Execute(Player player)
+{
+Debug.Log("冰冻箭！");
+}
+}Player只依赖抽象
+public class Player : MonoBehaviour
+{
+public SkillBase currentSkill;
+
+void Update()
+{
+if (Input.GetKeyDown(KeyCode.Space))
+{
+currentSkill?.Execute(this);
+}
+}
+
+public void SwitchSkill(SkillBase newSkill)
+{
+currentSkill = newSkill;
+Debug.Log($"切换技能：{newSkill.SkillName}");
+}
+}
+
+后续再加技能就再继续实现
+例如
+public class ThunderSkill : SkillBase
+{
+public override string SkillName => "雷电术";
+
+public override void Execute(Player player)
+{
+Debug.Log("天降雷劈！");
+// 范围伤害 + 眩晕效果
+}
+}
+那么我们可以先想想，"精准的抽象"来自哪里？
+来自对业务的深刻理解（知道未来会怎么变）
+
+来自经验积累（踩过坑才知道要预留哪些钩子）
+
+不可能第一次就设计完美，通常是先做、再重构、逐渐收敛
+
+对于开闭原则要从更加宏观的视角去看，将基类的骨架写好之后，最理想的情况下【对于该功能有极其精准的抽象提炼】我们后续维护该功能的时候只需要去从基类 抽象类 派生类对应的去做拓展即可，而不需要再次去改动到基类的代码
+
+OCP的最理想状态是“基类封笔”，但在实际工程中往往很难做到一次就精准概括需求，甚至我们遇到的策划提出的需求可能会自相矛盾，所以，在日常工作中，我们允许基类被修改，但要尽量减少修改频率，且每次修改都应该让抽象更稳定，而不是更脆弱。
+
+实际的案例：
+假设我们有这样的一个抽象技能基类
+public abstract class SkillBase
+{
+public abstract string SkillName { get; }
+public abstract float Cooldown { get; }
+public abstract int ManaCost { get; }
+
+public void TryExecute(Player player)
+{
+if (!CanExecute(player)) return;
+OnExecute(player);
+ApplyCooldown();
+}
+
+protected abstract bool CanExecute(Player player);
+protected abstract void OnExecute(Player player);
+private void ApplyCooldown() {}
+}某天，有一个这样的需求:
+"施法技能需要 2 秒读条。读条期间角色被打断（受击/移动），技能取消、不进冷却、返还蓝；读条完成才真正释放。"
+
+我们在这个基类上去实现这个功能就会很难受，因为OnExecute的触发既调用，而读条技能是需要跨n帧的状态，TryExecute 内部执行完后立刻进入冷却，而在现有的骨架上实现就会很困难
+
+这里抽象失效的根因是同步假设被打破
+public void TryExecute(Player player)
+{
+if (!CanExecute(player)) return;
+if (this is ChannelingSkill ch) // ← RTTI 特判，基类开始烂
+{
+player.StartCoroutine(ch.Channel(player));
+return;
+}
+OnExecute(player);
+ApplyCooldown();
+}一般只能去特判一下，代码自然而然的开始腐烂
+这就是在特判导致基类变得更加脆弱
+但当这个需求产生的时候我们就要意识到，我们之前概括的基类是有问题的，不够准确，就需要重新概括【这里算是违反OCP吗？我认为并没有，因为我们之前的概括就无法处理当前的情况，所以我们需要重新梳理概括基类的骨架】
+
+我们需要去嚼一嚼OCP的定义，对扩展开放，对修改关闭
+这里我认为是更加抽象的概念，也就是我们不应该去让像上面那样破坏基类的抽象性，让其更脆弱，而应该在当前需求的思路下去“扩展”代码，即使是对基类完全的重构，只要保证其在当前需求下的抽象性即可
+由此，我们可以认为，重构基类是发生在抽象演化的层面，OCP约束的生效时机是抽象稳定后的功能扩展层面，两者不在同一个时间尺度上
+
+所以我们就可以重新抽象基类
+public abstract class SkillBase
+{
+public void TryExecute(Player player)
+{
+if (!CanExecute(player)) return;
+BeginCast(player); // 进入施法过程，由具体技能决定怎么走
+}
+
+protected abstract bool CanExecute(Player player);
+
+protected abstract void BeginCast(Player player);
+
+// 过程的统一收尾Hook，子类按需调用
+protected void OnCastCompleted(Player player) { ApplyCooldown(); /* 扣蓝等 */ }
+protected void OnCastCancelled(Player player) { /* 返还蓝、不进冷却 */ }
+}这样后面再去拓展天然的就会方便很多
+类比一下
+OCP 就像建筑的承重墙。
+这个承重墙不能被凿洞 乱涂乱画 等等（对修改封闭）
+但如果发现当初的设计根本不合理，承重墙位置画错了——那就得重新规划结构（重构基类）
+拆完重建之后，新的承重墙依然不能随便动（对修改封闭的约束依然存在）
+违反 OCP 的是：承重墙没问题，但为了堆一个新房间，在承重墙上乱凿洞
+不违反 OCP 的是：发现承重墙位置本身就错了，重新规划更合理的结构
+所以OCP 中"对修改封闭"，封闭的不是代码文件，封闭的是有效抽象被随意破坏这件事。
+真正违反 OCP 的行为是：抽象明明还准确，却因为一个特殊情况就往里塞特判，让抽象逐渐失去意义。
+
+那又绕回开头，当我们写出重构前的代码，ai大概率就自然的会直接给一个写到TryExecute里面（is ChanneLingSkill）的特判，虽然这样也可以实现需求，但正如我们上面说的那样，这本身就是一个code smell，它处理的时候，我们目前的代码以及我们让ai生成后的代码，将来都会作为ai读入的上下文让它去生成后续的方案，重新思考规划评估代码方案的判断能力，目前我认为只能来自程序员本身，且随着ai发展，这种代码判断力会愈发的重要
+本文仅是个人理解，目前还是小菜鸡一个，如果有错误的地方恳请大家指正
+链接: https://km.woa.com/articles/show/664041?jumpfrom=kmmcp

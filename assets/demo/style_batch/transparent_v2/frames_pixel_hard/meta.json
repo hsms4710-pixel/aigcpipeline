@@ -1,0 +1,119 @@
+{
+  "style": "pixel_hard",
+  "hero": "hero_pixel_final.png",
+  "generated_at": "2026-08-17T04:05:55",
+  "frames": {
+    "idle_1": {
+      "ok": true,
+      "sec": 70.2,
+      "size": 797866,
+      "action": "idle",
+      "desc": "idle pose standing, gentle breathing in, arms relaxed at sides, calm face"
+    },
+    "idle_2": {
+      "ok": true,
+      "sec": 106.9,
+      "size": 876428,
+      "action": "idle",
+      "desc": "idle pose standing, breathing neutral, arms relaxed, subtle sway"
+    },
+    "idle_3": {
+      "ok": true,
+      "sec": 63.5,
+      "size": 798662,
+      "action": "idle",
+      "desc": "idle pose standing, gentle breathing out, arms relaxed, calm face"
+    },
+    "attack_1": {
+      "ok": true,
+      "sec": 85.5,
+      "size": 848735,
+      "action": "attack",
+      "desc": "attack frame 1/4: drawing the bow, arrow nocked, arms pulling back, body steady"
+    },
+    "attack_2": {
+      "ok": true,
+      "sec": 59.3,
+      "size": 827999,
+      "action": "attack",
+      "desc": "attack frame 2/4: fully drawn, aiming, focused, slight lean forward"
+    },
+    "attack_3": {
+      "ok": true,
+      "sec": 34.8,
+      "size": 886828,
+      "action": "attack",
+      "desc": "attack frame 3/4: arrow released, bow snapping forward, follow-through"
+    },
+    "attack_4": {
+      "ok": true,
+      "sec": 69.3,
+      "size": 761921,
+      "action": "attack",
+      "desc": "attack frame 4/4: recovery, bow returning to rest, body settling"
+    },
+    "hurt_1": {
+      "ok": true,
+      "sec": 129.5,
+      "size": 888231,
+      "action": "hurt",
+      "desc": "hurt frame 1/3: hit impact, leaning back, arms flinching, surprised face"
+    },
+    "hurt_2": {
+      "ok": true,
+      "sec": 54.7,
+      "size": 706126,
+      "action": "hurt",
+      "desc": "hurt frame 2/3: recoiling backward, off balance, guard up"
+    },
+    "hurt_3": {
+      "ok": true,
+      "sec": 86.2,
+      "size": 787991,
+      "action": "hurt",
+      "desc": "hurt frame 3/3: recovering stance, returning to standing"
+    },
+    "walk_1": {
+      "ok": true,
+      "sec": 55.7,
+      "size": 641506,
+      "action": "walk",
+      "desc": "walk cycle frame 1/6 CONTACT: front foot planted on ground, rear foot lifting, slight forward lean"
+    },
+    "walk_2": {
+      "ok": true,
+      "sec": 63.4,
+      "size": 695051,
+      "action": "walk",
+      "desc": "walk cycle frame 2/6 DOWN: body lowest point, legs passing each other, arms mid-swing"
+    },
+    "walk_3": {
+      "ok": true,
+      "sec": 63.2,
+      "size": 677927,
+      "action": "walk",
+      "desc": "walk cycle frame 3/6 RECOIL: rear leg pushing off, front leg beginning to swing forward"
+    },
+    "walk_4": {
+      "ok": true,
+      "sec": 59.2,
+      "size": 650509,
+      "action": "walk",
+      "desc": "walk cycle frame 4/6 PASSING: legs crossing, body at highest point, arms swinging"
+    },
+    "walk_5": {
+      "ok": true,
+      "sec": 60.3,
+      "size": 705945,
+      "action": "walk",
+      "desc": "walk cycle frame 5/6 UP: front foot lifting, rear leg straightening, arms at swing extreme"
+    },
+    "walk_6": {
+      "ok": true,
+      "sec": 68.1,
+      "size": 748556,
+      "action": "walk",
+      "desc": "walk cycle frame 6/6 LAND: front foot coming down to contact, body balanced"
+    }
+  }
+}

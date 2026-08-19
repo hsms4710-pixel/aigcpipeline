@@ -1,0 +1,356 @@
+标题: 基于 TextGrad 的 Agent 调优思路
+作者: qiruihou, 共同作者: hongbinchen
+创建时间: 2026-08-11 17:24:45, 更新时间: 2026-08-12 20:38:21
+标签: PROMPT | agent | Harness | agent调优
+阅读: 1094, 点赞: 55, 收藏: 81, 评论: 15
+KM推荐: 是
+KM头条: 是
+热度: 1118
+K吧: 无
+AI摘要: **文章摘要**
+
+本文详细介绍了腾讯内部如何借鉴斯坦福团队提出的 **TextGrad** 框架，来解决大模型应用中 **Agent 调优** 的痛点。文章的核心观点是：调优不应再依赖“凭感觉试错”，而应建立一套可重复、可追溯、有方向的工程化闭环。作者通过将 TextGrad 的“文本梯度”思想与 RAG（检索增强生成）场景结合，成功将分付规则解释助手的 0 分率从 25.7% 降至 3.8%，并大幅缩短了单轮迭代时间。
+
+**文章重点总结**
+
+1.  **背景与痛点：为什么需要系统化调优？**
+    *   在复杂的 Agent 链路（意图识别、RAG、LLM生成）中，**Prompt 和知识库 (KB)** 是最常改但也最容易改错的变量。
+    *   传统“跑题→翻 badcase→凭经验改”的方式存在四大问题：**不可复现**、**效果震荡**（A题好了B题坏）、**归因不清**（不知该改Prompt还是KB）、**迭代慢**。
+
+2.  **核心方法论：TextGrad 框架解析**
+    *   **核心思想**：将神经网络中的“反向传播”概念迁移到文本领域。梯度不再是数字，而是一段**自然语言反馈**。
+    *   **工作流程**（与PyTorch高度同构）：
+        1.  **变量**：将 Prompt 和 KB 视为可优化的文本变量。
+        2.  **前向**：Agent 跑一遍流程，得到回答。
+        3.  **损失**：用 Judge 模型对回答打分并给出理由。
+        4.  **反向**：用 Backward 模型根据分数和理由，生成一段自然语言反馈（即“文本梯度”），指出问题所在。
+        5.  **更新**：用 Optimizer 模型结合“梯度”和历史修改记录（Momentum），改写 Prompt 或 KB。
+        6.  **验收**：在验证集上检查，变好则保留，变差则回滚。
+    *   **关键设计**：**Backward 只产反馈，Optimizer 只产新版本**，两条链路分开，确保每次改动都可追溯。
+
+3.  **腾讯内部的工程化改进**
+    *   **必须收集中间态**：不能只看最终答案，必须采集 `refined_query`（改写后的查询）和 `knowledge_content`（实际召回的知识片段），才能准确归因“错在检索还是错在生成”。
+    *   **双变量归因决策树**：一个 badcase 来了，必须通过决策树判断是改 Prompt（方法论、口吻）还是改 KB（业务事实），避免改错地方。
+    *   **四道人工闸门**：在关键环节设置人工审核，确保 AI 的修改方向正确、内容不越线，保障线上安全。
+    *   **Mini-batch 与 Momentum**：每轮只处理一小批（3-8题）同主题的 badcase，并强制参考前几轮的修改记录，防止效果震荡。
+
+4.  **实战效果：分付规则解释助手**
+    *   **三阶段演进**：从纯手工（0分率25.7%，耗时1-2小时/轮）→ 引入TextGrad（流程固化）→ 构建调优Skill（0分率降至**3.8%**，耗时约**20分钟/轮**）。
+    *   **最终成果**：261题测试集，0分题从67道降至10道，平均分从1.45提升至1.86，验证了该方法的有效性。
+
+**评价**
+
+本文是一篇**非常优秀的工程实践分享**。它没有停留在理论层面，而是清晰展示了如何将一个前沿的学术框架（TextGrad）落地到复杂的业务场景中，并针对性地解决了实际工程问题（如归因、震荡、安全）。文章逻辑清晰，案例详实，数据有力，对于正在从事大模型应用开发和 Agent 调优的团队具有极高的参考价值。
+正文: 大模型时代，Prompt 就是新型的代码：模型怎么答、什么格式、什么口吻，多半靠 Prompt 和知识库撑着。但怎么改、改哪里，往往只能靠经验试错——手工改 Prompt、翻 badcase、再跑一遍评测，A 题好了 B 题又坏了，很挠头。针对这类问题，我们参考 Stanford 团队在 Nature 上发表的 TextGrad 工作 [1]，用「文本梯度」给 Prompt/KB 的修改提供了一条有方向的路。
+
+图片引用: https://km.woa.com/asset/000100022607007fbc0418dde448dc01?height=896&width=1200
+
+一、背景与动机
+
+1.1 Agent 调优在解决什么问题
+LLM 应用早就不是「单模型问答」了，而是一整条链路：意图识别、Query 改写、RAG 检索、LLM 生成，中间还可能插入工具调用（查账单、检索知识库）、代码节点（拼 Prompt、校验输出格式）等。这是典型的 Agentflow 场景。在这条链路上，Prompt 和知识库（KB） 是最常动、也最容易改错的两类文本变量。
+我们之前踩过的坑很集中：
+
+经验化：改动靠业务感觉，很难统一成一套方法
+
+效果震荡：这轮 A 题好了，下轮 B 题又坏了，像刮彩票
+
+黑盒化：不知道模型为什么这样答、错在哪里
+
+调优的目标不是把 Prompt 堆长，而是改得准、改得稳，输出真正符合业务要求。所以需要一条能反复跑的闭环：可评测 → 可归因 → 有方向地改 → 验证 → 回滚。这是我们自己摸索出来的方向；后来在司内也找到一个 Prompt 调优工具（PromptEngine）把这个方法工程化了一版（https://aiengine.woa.com/#/）
+
+1.2 为什么要做系统化调优
+客服、规则答疑这类 Agent，至少得同时做到三件事：
+
+引用正确的业务规则（来自知识库，不能瞎编）
+
+结合用户上下文（入参、历史状态）做个性化解释
+
+控制口吻和篇幅，别答非所问
+
+任意一环出错就是 badcase。没有系统化调优，团队很难稳定回答三个问题：现在效果怎么样？错在哪里？改了有没有变好？
+引入 TextGrad 之前，我们的做法和其他项目差不多：跑题 → 翻 badcase → 凭经验改 → 把改动的 case 当 few-shot 示例 → 再跑下一轮。反复下来，又有四类工程问题：
+
+不可复现：换人接手不知道当初为什么这么改
+
+会震荡：这轮把话术写进 Prompt，下轮看到新 badcase 又删掉
+
+归因不清：该改 Prompt 还是改 KB 常靠猜
+
+迭代慢：翻 badcase、改文件、发布、回归，一轮很耗时间
+
+神经网络早年也经历过类似的「手工调参」阶段，后来反向传播和自动微分（PyTorch [3] 那套）才把优化流程标准化。TextGrad [1] 做的事情，可以理解为把这套思路迁到 LLM 复合系统上：梯度不再是数字，而是一段自然语言反馈。
+
+二、TextGrad 整体框架
+TextGrad 是斯坦福团队在 Nature 2025 正式发表的通用文本自动优化框架 [1]，预印本见 arXiv:2406.07496 [2]；全称 Automatic "Differentiation" via Text。核心创新是把神经网络数值反向传播的逻辑迁移到大模型文本流水线，用 LLM 输出的自然语言意见作为「文本梯度」，实现整条 Agentflow 链路全组件自动迭代优化。
+
+2.1 一轮优化在干什么
+TextGrad 的核心，是把 PyTorch 那套优化流程搬到 Agent 上。完整的一轮 iter 可以概括成下面几步：
+
+数据划分：题库切 train val test。train 找 badcase、定改动方向；val 验收本轮改动是否整体变好；test 留到最后做最终检验。
+
+变量与输入：Prompt（以及 RAG 场景下的 KB）是可优化变量 w；题目 + 用户上下文是输入 x。
+
+前向 Forward：Agentflow 跑一遍，得到回答 y。
+
+损失 Loss：调用评价模型 Judge，对 y 打分，并写清楚错在哪里。
+
+反向 Backward：调用反馈模型，根据分数和 reason 产出一段自然语言反馈——这就是文本梯度 grad。注意：Judge 只负责打分，梯度由 Backward 单独生成。
+
+更新 Update：调用优化模型 Optimizer，结合 grad 以及前 N 轮的修改记录（momentum），改写 Prompt/KB 文本——这一步才是参数更新，改的是文本变量，不是模型权重。
+
+验收 Gate：在 val 上回归，变好才保留（ACCEPT），变差就回滚（ROLLBACK）。
+
+每轮通常只从 train 里抽一小批 badcase（mini-batch），而不是全量一起改——这和 PyTorch 里 batch 训练是一个思路。
+
+2.2 与 PyTorch 的镜像对照
+TextGrad 最聪明的设计是 API 与 PyTorch 同构：
+
+PyTorchTextGrad
+变量tensor（数值）tg.Variable（文本）
+前向y=model(x)response=LLM(prompt,x)
+损失L=MSE(y,gt)evaluation=LLMjudge(response,gt)
+反向L.backward()evaluation.backward()
+梯度∂L/∂w（数值向量）∂L/∂prompt（自然语言反馈）
+优化器SGD / AdamTGD（Textual Gradient Descent）
+更新w←w−η⋅∂L/∂wpromptnew=TGD.step(prompt,∂L/∂prompt)
+
+代码几乎一字不差：
+
+# PyTorch # TextGrad
+optimizer = torch.optim.SGD(params) optimizer = tg.TGD(params)
+loss = criterion(model(x), y) loss = loss_fn(model(x), y)
+loss.backward() loss.backward()
+optimizer.step() optimizer.step()
+
+2.3 TextGrad 公式解析
+论文先用一个最小「双 LLM」系统说明文本梯度怎么算。加号代表字符串拼接：
+
+(1)Prediction=LLM(Prompt+Question)
+
+(2)Evaluation=LLM(Evaluation Instruction+Prediction)
+对 Prompt 求「文本梯度」，就是链式法则在 LLM 边上的实例化。记 ∇LLM 为梯度算子——输出不是数字，而是一段自然语言：
+
+(4)∂Evaluation∂Prediction=∇LLM(Prediction,Evaluation)
+
+(5)∂Evaluation∂Prompt=∇LLM(Prompt,Prediction,∂Evaluation∂Prediction)
+在 Agent 调优里，梯度的本质就是一段自然语言：「你这个 Prompt 在 X 情况下表现不好，因为 Y，可以从 Z 角度改进。」
+最后用 TGD 完成变量更新：
+
+(8)Promptnew=TGD.step(Prompt,∂Evaluation∂Prompt)
+Backward 只产反馈，Optimizer 只产新版本——两条链路分开，每条改动才可追溯。
+
+2.4 论文验证与启示
+TextGrad 不是某个任务的 trick，而是一套通用 autograd 框架。论文在多个领域验证了同一套 API：
+
+任务基线TextGrad 后说明
+GPQA（PhD 级科学问答）GPT-4o 51%55%零样本 SOTA
+LeetCode-Hard 代码题26% 通过率36%相对 +38%
+GSM8k 数学推理GPT-3.5 72.9%81.1%Prompt 优化典型场景
+分子设计—58 个药靶全部改善优化 SMILES 字符串
+放疗剂量规划临床基线5 轮内匹配/超越优化外层超参数
+
+GSM8k 上优化后的 Prompt 不是更花哨的咒语，而是显式列出「Restate → Break down → Verify」等认知步骤。RAG Agent 同理：不应把测试集答案枚举进 Prompt，而应把「怎么引用 KB、怎么防幻觉、怎么处理入参」等方法论写进去。
+
+2.5 六步工程闭环
+把 TextGrad 抽象，落成一条可重复执行的工程流水线：
+
+步骤环节做什么TextGrad 对应
+①Agent 编排配置 Agentflow；Prompt 与 KB 为可优化变量Variable
+②评测 Forward评测 Harness 对测试集并发跑题Forward Pass
+③采集中间态收集 answer、knowledge_content、refined_query计算图中间节点
+④评分 LossJudge 打分 + 输出 reasonLoss / Evaluation
+⑤归因 & 优化Backward 写 gradient；Optimizer 读 Momentum 写 patchBackward + TGD.step
+⑥发布 & 回归上传新版 Prompt/KB，val 验收后进入下一轮optimizer.step()
+
+Agentflow 是多节点计算图。步骤 ③ 采集的 refined_query、knowledge_content 对应图上的中间节点——没有它们，Backward 无法区分「错在检索还是错在生成」。很多项目只收集 answer 和 score，归因只能靠猜，极易把业务事实写进 Prompt。
+
+三、针对 TextGrad 的改进
+TextGrad 论文提供的是通用 autograd 框架，落到 RAG Agent 场景，我们在其基础上做了以下工程化改进。
+
+3.1 封闭域与数据划分
+在分付规则解释助手这类封闭域的场景下，用户的问题可以看做一个有限集，优化目标应该更接近于把这个有限集尽量过拟合，而不是传统 ML 意义上的泛化到新分布。
+所以我们仍然保留 train val test 划分，但策略上有两点差异：
+
+train：抽 mini-batch 找 badcase，定方向
+
+val：验收本轮改动是否整体变好（加权净收益 > 0 且无 2→0 大回退才 ACCEPT）
+
+test：全程冻结，最后报告再用
+
+这与「过拟合一个训练集」并不矛盾——封闭域里题库本身就是业务边界，关键是 val gate 防止震荡和回退，而不是盲目追求泛化到题库外。
+
+3.2 必须收集中间态
+Agentflow 是由多个节点组成的系统。如果不返回各节点的输出，就无法正确归因——尤其在有 RAG 的情况下。
+评测 output 须固定包含 answer、knowledge_content、refined_query，它们是归因决策树的唯一直接证据。只看 Judge 的 reason、不看 RAG 实际召回，极易错归因。
+
+只收集 answer同时收集 knowledge_content + refined_query
+只能看到「答错了」能看到「为什么错」
+归因全靠猜能区分 kb_retrieval kb_content prompt_method
+容易把业务事实写进 Prompt有证据链，改动可追溯
+
+3.3 双变量归因：Prompt vs KB
+TextGrad 的 Variable 通常是单一类型（一个 prompt、一段代码）。RAG Agent 有两种异构的可优化变量：
+
+变量管什么载体
+Prompt怎么答：方法论、引用要求、结构、口吻、禁忌Agent 配置文件 / system prompt
+KB答什么：业务规则、字段、流程、阈值知识库文档
+
+一个 badcase 来了，到底该改哪一个？ 论文里 TGD.step 一次只更新一个变量；RAG Agent 要先通过归因树选定改 Prompt 还是改 KB，再执行改写。每个 badcase 必须走一遍决策树：
+
+case 错了（score < 2）
+│ 必看 refined_query + knowledge_content（RAG 实际召回片段）
+│
+├─ ① 没召回到关键 KB 片段？ → kb_retrieval → 改 KB（补 chunk/同义词） ~40%
+├─ ② 召回了但 KB 里没这知识？ → kb_content → 改 KB（新增业务事实） ~30%
+├─ ③ KB 正确但答案没用上？ → prompt_method → 改 Prompt（加引用要求） ~15%
+├─ ④ 事实对但口吻/结构违规？ → prompt_style → 改 Prompt（加风格约束） ~10%
+└─ ⑤ 评分理由模糊？ → d_suspect → 疑似误判，不动 ~5%
+
+3.4 四道人工闸门
+分付规则场景下，AI 并不完全了解业务细节（什么时候算什么钱，人自己都容易搞混），因此不能全自动发布。我们在步骤 ⑤→⑥ 之间设了 4 道人工闸门：
+
+闸门位置审什么
+⏸ 1Backward 完成后归因方向对不对？D 类标注有没有误判？
+⏸ 2Optimizer 完成后patch 有没有越线？Prompt 里有没有塞业务数值？
+⏸ 3上传前上传命令和 --comment 备注是否准确？
+⏸ 4发布后 val 回归加权净收益 > 0 且无 2→0 回退？ACCEPT 还是 ROLLBACK？
+
+3.5 调优 Skill 设计
+最终交付和沉淀的产物是一个 Skill：fenfu-rule-evaluator-textgrad/
+
+fenfu-rule-evaluator-textgrad/
+├── SKILL.md AI 入口（触发词 + 行为约束）
+├── prompts/ 三角色 prompt（Orchestrator / Backward / Optimizer）
+├── workflows/ SOP 分册（归因 / 优化 / 验收 / 回滚）
+├── constraints/ 硬红线 + 人工闸门解释
+├── templates/ 产物模板（diagnosis / plan / validation）
+├── scripts/ 评测 / textgrad / upload
+├── assets/ 基线资产（只读：题库 / prompt / kb / 评分标准）
+├── config/ 凭证 + dataset_split + frozen_judge_set
+└── runtime/ 迭代产物（_momentum.md + iter_NN/）
+
+角色prompt 文件输入输出禁止
+Orchestratorprompts/orchestrator.mdsplit + momentum + batch 规则编排指令、净收益报告替用户做决策
+Backward Engineprompts/backward_engine.mdanswer + reason + knowledge_content01_diagnosis.md（gradient）写新 prompt/kb 文本
+Optimizerprompts/optimizer.mdgradient + momentum + 当前 prompt/kb02_plan.md（patch）跳过 gradient 直接改
+
+四、分付规则解释助手的调优
+
+4.1 业务背景与 Agent 架构
+分付规则解释助手通过用户问题和账单信息入参，回答规则类问题——比如「这个月要还多少钱」「能否提现到银行卡」等，涉及知识库业务规则和账单入参的个性化回答。
+Agent 部署在 Adams 平台，第一版编排流程为：
+
+用户问题 → 安全检查 → 参数提取 → 意图识别 → Query 改写 → KB 召回 → LLM 生成 → 输出答案
+
+简化后的核心链路（对应 TextGrad 六步闭环中的步骤 ①③）：
+
+用户问题 → 意图识别（code 节点，不可改）
+→ Query 改写（refined_query） ← 步骤③采集
+→ 知识库 RAG 召回（knowledge_content） ← 步骤③采集
+→ LLM 生成答案（system_prompt 约束）
+→ 输出 answer ← 步骤③采集
+
+完整的项目闭环如下：
+
+图片引用: https://km.woa.com/asset/00010002260700101ab63311884d5501?height=1198&width=1992
+
+4.2 评测 Harness 与 261 题基线
+没有可靠评测，整套 TextGrad 循环跑不起来。评测体系以 261 题基线 为核心，由真实业务场景和 AI 扩充组成。评测 Harness 在本地 CodeBuddy 内以 Skill 形式完成整套流程（run_evaluation.py + Adams API + Venus Gemini [11]）。
+261 题从人工客服真实问题提炼，每题标注主题大类和测试维度，是 batch 选题和归因聚类的基础：
+
+主题大类典型问题题量占比（约）主要挑战
+利息计算类「利息怎么算」「利率太高」~25%结合入参计算、防口算
+还款规则类「还了为什么还有欠款」「提前还清」~20%字段映射、流程说明
+罚息类「逾期罚息怎么收」~8%KB 内容完整性
+额度调整类「临时额度到期」「提额」~10%KB 缺失 + 意图识别
+误用认知类「分付是不是固定期数」~8%纠正用户误解
+查询路径类「怎么查历史还款」~10%模型能力边界
+否认纠纷类「我没借过怎么要还」~5%口吻 + 事实
+其他征信、关闭、协议等~14%混合
+
+4.3 三阶段演进
+
+阶段一：手工 Prompt Engineering
+做法：跑 261 题 → 人工翻 0 分 case → 凭经验改 → 再跑。需要反复下载/上传 DSL 文件，版本控制混乱。
+耗时：一轮大概 1~2 小时（纯修改时间）
+0 分率：最好情况 25.3%，反复震荡
+
+阶段二：TextGrad（仅靠 CodeBuddy 进行优化）
+做法：跑评测 → 归因 → 改文件 → Adams Skill 自动上传发布 → 回溯。每轮 iter_NN 版本化管理。
+进步：五步闭环固化，每轮产物可追溯
+瓶颈：每轮跑全量 261 题，归因格式不统一，无 Prompt/KB 强制决策树
+
+阶段三：构建 TextGrad 调优 Skill
+把整个调优过程以 Skill 的形式沉淀下来，整合 Adams 自动上传发布、修改、监控等能力，优化为 fenfu-rule-evaluator-textgrad。
+相对于阶段二的优化：
+
+Momentum：Optimizer 写方案前强制读 _momentum.md 最近 3 条修改记录
+
+修改约束：Prompt 承载方法论，KB 主要解决业务事实（硬红线）
+
+过拟合路线：用户提的问题可以看做有限集，目的就是过拟合这个训练集——这一点和传统建模不一样
+
+Mini-batch：每轮只处理一个主题大类的 3~8 小题，等价于 SGD 小批量
+
+耗时：约 20 分钟（主要消耗在人工审核部分）
+0 分率：3.8%
+真实迭代数据：
+
+版本日期0 分1 分2 分平均分0 分率
+早期最差04-1767111831.4525.7%
+更换Deepseek模型04-1831102201.7211.9%
+iter_01 后04-2124212161.749.2%
+iter_02 后04-2121192211.778.0%
+iter_03 后04-2418112321.816.9%
+最终稳态05-0810152361.863.8%
+
+4.4 一轮迭代怎么跑
+
+iter_NN
+├─ Step 0 加载 split + momentum
+├─ Step 1 选 batch（按主题大类分桶，3~8 题）
+├─ Step 2 在 Adams 跑这几题 → 回填答案
+├─ Step 3 Backward: 写 01_diagnosis.md ⏸ 检查点 1：审归因
+├─ Step 4 Optimizer: 写 02_plan.md ⏸ 检查点 2：审改动
+├─ Step 5 上传 KB / yml（必带 --comment） ⏸ 检查点 3：授权上传
+├─ Step 6 新版跑 val 50 题 → 回填评分
+├─ Step 7 Validation Gate → 03_validation.md ⏸ 检查点 4：ACCEPT/ROLLBACK
+└─ Step 8 追加 momentum → 下一轮 或 回滚
+
+五、总结与反思
+LLM 本质是概率系统。跑 100 次都对，不代表第 101 次不会错。调优的目标不是「保证永远不错」，而是把出错概率压到业务可接受的范围，并且清楚：错了怎么发现、怎么回滚。评测、验收、人工闸门，都是在概率世界里搭一层近似确定性的护栏——不消除随机性，但让风险可见、可控。
+大模型应用正在从「调一个模型」变成「搭一套系统」。Prompt、知识库、检索、编排，都是系统里可变的部件；调优的本质不是把某段话术写漂亮，而是建立可重复改进的反馈回路。这和深度学习把「手工调参」变成「训练流程」，是同一类范式迁移：方向定了，改进就不再靠个人手感，而靠流程和证据。
+TextGrad [1] 给这套回路提供了统一语法：Prompt/KB 当变量，Forward → Loss → Backward → TGD 更新，再用 val gate 和 momentum 稳住迭代。落到 RAG 规则答疑，论文框架本身还不够——还要补上中间态采集（否则无法归因）、Prompt vs KB 决策树（否则改错地方）、四道人工闸门（否则线上不可控）。借的是 TextGrad 的优化纪律，补的是业务场景里的判断与约束。
+分付项目验证了这条路：261 题 0 分率从 ~25% 降到 ~3.8%，单轮从手工 1~2 小时压到约 20 分钟。数字是结果，更 lasting 的变化是工作方式——从「凭感觉改 Prompt」变成「每轮有证据链和产物可查」：为什么这么改、改了什么、验没验过，换人接手也能续上。
+Agent 调优的难点，从来不只是让模型更聪明，而是在概率系统上，用工程方法换可预期、可追责、可持续迭代。TextGrad 给的是优化语法；能不能上线、敢不敢发布，还要靠评测、归因和人的最终拍板。
+
+参考文献
+
+核心方法
+[1] Yuksekgonul M., Bianchi F., Boen J., Liu S., Lu P., Huang Z., Guestrin C., Zou J. Optimizing generative AI by backpropagating language model feedback. Nature, 639, 609–616, 2025.
+DOI: https://doi.org/10.1038/s41586-025-08661-4
+[2] Yuksekgonul M., Bianchi F., et al. TextGrad: Automatic "Differentiation" via Text（预印本）. arXiv:2406.07496, 2024.
+https://arxiv.org/abs/2406.07496 · 代码：https://github.com/zou-group/textgrad
+[3] Paszke A., Gross S., Massa F., et al. PyTorch: An Imperative Style, High-Performance Deep Learning Library. NeurIPS, 2019.
+
+Prompt 优化与 Agent 系统
+[4] Khattab O., Singhvi A., Maheshwari P., et al. DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines. ICLR, 2024.
+[5] Pryzant B., Padhi I., Liao Q., et al. Automatic Prompt Optimization with "Gradient Descent" and Beam Search（ProTeGi）. EMNLP, 2023.
+[6] Yang S., Nachum O., Du Y., et al. Large Language Models as Optimizers（OPRO）. ICLR, 2024.
+[7] Yao S., Zhao J., Yu D., et al. ReAct: Synergizing Reasoning and Acting in Language Models. ICLR, 2023.
+[8] Wang L., Ma C., Feng X., et al. A Survey on Large Language Model based Autonomous Agents. Frontiers of Computer Science, 18(6), 2024.
+
+RAG 与评测
+[9] Lewis P., Perez E., Piktus A., et al. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. NeurIPS, 2020.
+[10] Chen J., Lin R., Liu Y., et al. Benchmarking Large Language Models in Retrieval-Augmented Generation（RGB）. AAAI, 2024.
+[11] Zheng L., Chiang W.-L., Sheng Y., et al. Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena. NeurIPS D&B Track, 2023.
+[12] Wei J., Wang X., Schuurmans D., et al. Chain-of-Thought Prompting Elicits Reasoning in Large Language Models. NeurIPS, 2022.
+
+TextGrad 论文实验基准
+[13] Rein D., Liang J., et al. GPQA: A Graduate-Level Google-Proof Q&A Benchmark. arXiv:2311.12022, 2023.
+[14] Cobbe K., Kosaraju V., Bavarian M., et al. Training Verifiers to Solve Math Word Problems（GSM8k）. arXiv:2110.14168, 2021.
+
+工程与工具
+[15] 司内 Prompt 修改工具：PromptEngine https://aiengine.woa.com/#/
+链接: https://km.woa.com/articles/show/667430?jumpfrom=kmmcp

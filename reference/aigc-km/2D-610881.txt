@@ -1,0 +1,284 @@
+标题: 我用AI做游戏（二）打造2D角色生成工作流
+作者: johnxwzhang
+创建时间: 2024-08-12 00:16:06, 更新时间: 2024-08-12 19:58:25
+导语: 通过腾讯元宝和ComfyUI搭建了一套工作流，可以通过一句简单描述，10秒快速生成角色2D动画素材。
+标签: comfyUI | 文生图 | 弹幕游戏 | 创意美术 | AIGC
+阅读: 1649, 点赞: 60, 收藏: 148, 评论: 5
+热度: 12
+K吧: #52761 弹幕游戏 https://km.woa.com/group/52761?jumpfrom=kmmcp
+文集: #9313 游戏策划相关 https://km.woa.com/knowledge/9313?jumpfrom=kmmcp, #10330 AI×美术设计实战手册 https://km.woa.com/knowledge/10330?jumpfrom=kmmcp, #10760 一人成军：AI如何让想法落地，只差一句话的距离 https://km.woa.com/knowledge/10760?jumpfrom=kmmcp
+AI摘要: **文章摘要**  
+本文系统介绍了基于AI工具构建2D角色生成工作流的完整探索过程，旨在通过整合腾讯元宝、ComfyUI等技术工具实现快速生成游戏角色动画素材的目标。文章不仅展示了实际生成效果，还深入剖析了技术方案的迭代优化路径，并探讨了该工作流在游戏开发中的多样化应用场景。
+
+**文章重点总结**  
+1. **背景与目标**  
+   - 探索AI工具在游戏开发全流程中的应用潜力，验证从角色设计到动作素材生成的自动化能力。
+   - 通过实践构建支持快速迭代的游戏开发原型，突破传统美术素材生产瓶颈。
+
+2. **技术方案选型与优化**  
+   - **失败路径**：图生图方案受限于画面精度低、ControlNet控制失效等问题被放弃
+   - **成功路径**：采用文生图+多技术融合方案：
+     - 使用Lora插件固定像素画风
+     - 通过ControlNet插件稳定动作姿态
+     - 借助LayerDiffuse生成透明底素材
+     - 搭建ComfyUI自动化工作流
+   - **核心创新点**：
+     - 结合Mixamo动画库制作标准动作框架
+     - 开发元宝智能体规范提示词生成格式
+     - 通过OpenPose校准提升动作连续性
+
+3. **实用场景延伸**  
+   - 中小型游戏开发中的快速原型制作
+   - 角色动作系统拓展（攻击/死亡等全状态动画）
+   - 玩家自定义角色创建模块优化
+   - 直播互动游戏中的实时素材生成
+
+4. **关键资源与工具**  
+   - 腾讯元宝「像素风角色提示词生成器」智能体
+   - 包含完整节点的ComfyUI工作流文件
+   - Stable Diffusion插件生态技术栈（ControlNet/Lora等）
+
+**评价**  
+本文完整记录了从需求分析到技术落地的全流程实践，既有具体的技术实现细节（如OpenPose校准方法），又有工具链的整合思考。文章通过大量可视化案例（如Unity动作对比视频）直观展示成果，提供的智能体配置模板和工作流文件具有直接复用价值。对AI技术改变游戏开发范式的趋势判断具有启发性，适合技术美术、独立开发者及相关兴趣群体参考。
+正文: 背景与目的
+
+尝试尽可能使用各类AI工具的能力，做一款游戏。一方面为了完成自己设想的一款游戏玩法，另外也希望通过实践来丈量一下AI究竟可以对现有的游戏策划、设计、开发影响到什么程度。
+
+效果展示
+
+经过几次技术方案的选型和调整，通过腾讯元宝和ComfyUI搭建了一套工作流，可以通过一句简单描述，10秒快速生成角色2D动画素材。
+
+举例：
+
+当需提供描述生成“一个年轻的女弓箭手”
+
+图片引用: https://km.woa.com/asset/000100022408006b036943a04e4ec102?height=846&width=1104
+
+将腾讯元宝智能体的回答，复制到ComfyUI工作流的正向提示词中，执行可获得1张多个动作的透明底图片
+
+图片引用: https://km.woa.com/asset/00010002240800ea9900505b2240e702?height=730&width=1863
+
+图片引用: https://km.woa.com/asset/00010002240800394eb459f9b54f9502?height=512&width=2048
+
+将画面保存至Unity，可以直接生成角色跑动画面：
+图片引用: https://km.woa.com/asset/0001000224080024b5a9d2bea04ef402?height=338&width=600
+
+经过测试用相同的方式可以生成不同角色：
+
+“一个老年男魔法师”；
+
+“一个幼儿园小朋友”；
+
+“一个养老院里的老太太”.....
+
+图片引用: https://km.woa.com/asset/000100022408001fd5b7df0fd34d1802?height=338&width=600
+
+用途及场景延伸
+
+【用途】该效果可以快速生成一些角色动作信息，在独立游戏/小游戏开发中方便快速生成素材；有动作效果素材，可以投入到游戏局内使用。不限于概念和立绘场景。
+
+【延伸1】不限于跑步动作，可以扩展生成攻击、死亡、受击动作。获得全套的动作素材。
+
+【延伸2】配合其它画风的立绘和头像，生成与角色有关的全部美术风格。
+
+【延伸3】在一些中小型游戏中，替换掉传统选角色/捏人的环境，通过描述来生成角色效果。
+
+【延伸4】将功能应用到玩家创建角色的环节，实现玩家的千人千面。
+
+当前个人想法是通过尽可能通过AI的能力，制作一个微信小游戏+直播弹幕游戏+链游+自走棋的游戏玩法。这个主题下的其它文章也会逐步放出。如果有兴趣交流/参与的同学，可以与我联系。
+
+共享资源
+
+提示词生成器可以在腾讯元宝中搜索
+
+“像素风角色提示词生成器”
+
+或复制链接【快来认领你的AI搭子【像素风角色提示词生成器】 https://yuanbao.tencent.com/bot/app/agent/gpu4tWRHAufO 复制本条信息，打开【腾讯元宝】App查看精彩内容！】
+
+搭建的ComfyUI工作流可以从微盘下载：
+
+ComfyUI Role Pose Workflow.json
+
+如果是需要拿去玩耍，看到这里就足够了。
+
+工作流的探索过程及思路分享
+
+相比拿走上面的工具，我认为自己摸索的过程更有意思些，如果你想继续调优这个方法，我把整个探索过程和踩过的坑也一并记录在下面，可以帮助你少走一些弯路。（幸好之前做失败的效果我也截了图和视频）
+
+一、图生图重绘方案失败
+
+最初的目的是为了能够快速的制作游戏角色以及动作。我希望能够使用AI的图生图能力，帮我将一些角色的精灵图根据提示词进行重绘。
+
+1）在Pinterest上找到了一些角色的精灵图（Sprite Atlas），考虑到如果是很精细的画风，在512*512的生成尺寸下，重绘的效果可能不会太好，所以选择了像素风作为目标风格。
+
+图片引用: https://km.woa.com/asset/00010002240800203b24b803634b1702?height=256&width=256
+
+2）尝试使用了StableDiffusion和公司内部的ai.draw，对画面进行了重绘，效果不是很理想。可控性太差了。
+
+图片引用: https://km.woa.com/asset/000100022408002d48d332fed7402e02?height=1408&width=2420
+
+3）接下来尝试使用了Stable Diffusion的ControlNet插件，来稳固动作，结果发现由于角色画面过多，以及受到原图影响，基本没有起效（尝试了下图12个人物动作的ControlNet，没什么效果）。考虑到重绘图片的灵活性差，多多少少会带有原图的影子，提高重绘幅度又会让画面出现千奇百怪的风格，不是一个长远的路线。至此放弃调试图生图方式，开始尝试文生图效果。
+
+图片引用: https://km.woa.com/asset/0001000224080029eda6dd21cc453902?height=1024&width=1024
+
+二、文生图初见成效
+
+采用文生图的技术路线后，决定用Lora+ControlNet来固定画风和动作姿势。在C站上面挑选一番之后，选择了2D Pixel Toolkit (2D像素工具包)， https://civitai.com/models/165876?modelVersionId=186677
+
+图片引用: https://km.woa.com/asset/0001000224080025537e4ccfd84b3a02?height=911&width=1920
+因为看它的简介和示例内容，比像素人人 https://civitai.com/models/44960/mpixel 更适合显示多个动作的精灵图的绘制方式。
+
+使用了DreamShaper https://civitai.com/models/4384/dreamshaper 作为模型
+
+图片引用: https://km.woa.com/asset/00010002240800b57412457b274f4502?height=911&width=1920
+
+另外在搜集资料的时候有意外之喜，原本我考虑在生成图片之后，要尽可能生成纯色背景，后续再多一步用rembg进行抠图(想想这里就会比较复杂，抠图结果会有些不稳定)。结果在B站up主Nenly同学的视频里学习到了LayerDiffuse的这个插件。强烈建议对这个功能和感兴趣的同学去看下这个视频 https://www.bilibili.com/video/BV1Xq421F7Ny/?spm_id_from=333.999.0.0
+
+于是重装了ForgeUI的SD，开始尝试直接生成透明底的人物角色精灵图。这里为了方便，我直接拿了2D Pixel Toolkit的图片来生成Openpose的图片。试了一下，肢体不太正确，不过也大致上有个样子了。
+
+图片引用: https://km.woa.com/asset/000100022408000d5cc61c0488445e02?height=911&width=1405
+
+到这一步，生成的图片是透明底，边界清晰，多个动作图片人物特征基本统一，除了动作细节不太准确，可以说文生图的这套生产链路在方向上是正确的。接下来就是调优工作。
+
+三、效果调优
+
+效果调优的时间线相互交叉，就不再以时间线描述，总结为生成动作细节的调优，提示词生成方式的调优，和工作流的搭建。
+
+1.生成动作细节调优
+
+由于12个人物的图片生成压力比较大，我决定先实现一个4个动作的跑动画面。在制作ControlNet骨骼的时候，我发现能搜集到的一些图片效果不是很好，所以决定自己制作。于是想到从mixamo上找合适的动作，然后截出想要的画面，再用来做openpose识别
+
+https://www.mixamo.com/#/?page=1&query=run
+
+图片引用: https://km.woa.com/asset/0001000224080034e1db29a0a4475502?height=750&width=1570
+
+跑步一共是21帧，每隔5帧截一个图，为了方面后面裁切，按512x512来截图，把截图分别保存下来。
+
+图片引用: https://km.woa.com/asset/000100022408008f49c4fb6eb043a102?height=127&width=307
+
+在figma上把图片拼接到一起，导出来。
+
+图片引用: https://km.woa.com/asset/0001000224080077fa24799bfd454102?height=286&width=1131
+
+再放到Openpose识别一下，真的解析出来了。
+
+图片引用: https://km.woa.com/asset/00010002240800732ecf61c4b1429002?height=812&width=986
+
+点击生成AI结果，也一下子完成了！
+
+图片引用: https://km.woa.com/asset/0001000224080064f803dfe25a49d602?height=772&width=1547
+
+把图片结果保存放到unity里面做切分，并生成角色动画。
+
+图片引用: https://km.woa.com/asset/0001000224080092f37b0f24844cfe02?height=740&width=1429
+
+虽然成功的出现了Gif图，但问题是第3张的动作有些怪异，发现角色回头了。分析了一下是OpenPose在第三张图片里面少了一些肢体结构，导致生成的时候这里有随机性，头部位置并不固定。
+
+于是开始学习在Openpose Editor中对肢体结构进行修补。
+
+图片引用: https://km.woa.com/asset/00010002240800ecb8779f2216454e02?height=744&width=1358
+
+中间的人物重叠较多，校准他花了比较多的时间，很费神。
+
+1）按住空格移动画面
+
+2）没能识别的肢体，会不可见，点开之后初始位置在左上角
+
+3）全部肢体都具备之后，人物栏的火焰icon会消失
+
+图片引用: https://km.woa.com/asset/00010002240800a759605f960a488802?height=743&width=1440
+
+校准完成的效果
+
+图片引用: https://km.woa.com/asset/00010002240800caa9c08e6d77458602?height=744&width=1454
+
+调整之后，在生成角色时，头部位置更加统一了，成功！
+
+图片引用: https://km.woa.com/asset/00010002240800ce76609702c6438402?height=567&width=888
+
+放到Unity中，动作也更加顺眼一些了。这里放了一个对比视频，左侧是校准之后的动作，右侧是未校准的，仔细看可以发现未优化前的角色，中间有一帧会回头。
+
+图片引用: https://km.woa.com/asset/00010002240800a9967f2fd0054f2002?height=338&width=600
+
+2.提示词生成调优
+
+在成功生成了一个角色的效果之后，为了测试不同角色的生成效果，我需要能够更好的生成提示词的工具。
+
+为了调整提示词生成，建立标准的提示词生成器，我使用混元对原有的提示词进行归类。
+
+图片引用: https://km.woa.com/asset/00010002240800ba6470f706c9473c02?height=1076&width=1778
+
+混元给的分类不是很符合我需要的场景，这里我手动进行了整理：
+
+图片引用: https://km.woa.com/asset/000100022408008c6212e4dd6a41a402?height=730&width=860
+
+其中灰色部分的字是固定的，其它部分的内容可以随机生成。当我把这个指令发给混元之后，我发现他每次成功生成一组提示词之后，下一次再生成提示词的时候，混元的回答又会自动分段，换行。为了解决这个问题，我想到了训练一个智能体。
+
+在腾讯元宝下面创建一个智能体，在智能体的描述中我添加了这样的一段话
+
+你会为我生成游戏角色的提示词，当我用简单的语言描述一个游戏角色的时候，你会根据我的内容，扩展角色外型的一些细节信息。生成的提示词是英文的，总数是50到70个词语。提示词必须包含的分类有：角色职业，角色的主要配色，角色身高描述，角色胖瘦描述，头发颜色，头发长度，头饰或者帽子，皮肤颜色、以及身体的其他特征。每个分类下1~2个词语即可，词语之间不能相互矛盾。生成的提示词不需要空行，用逗号分隔。不要描述角色手中持有任何物品或者道具。另外你的回答开头是固定的内容 ：<lora:pixel sprites:1>, full body, pixel art, highly detailed，在这之后拼接你生成的提示词。
+
+当输入这些内容之后生成的智能体赶快试用了一下，提示词有点少，不过差不多够用了。
+
+测试了几个不同类型的画面
+
+图片引用: https://km.woa.com/asset/0001000224080011014fbf1a734bf402?height=2376&width=1104
+
+提示词：【一个男骑士】
+
+<lora:pixel sprites:1>, full body, pixel art, highly detailed, male knight, silver armor, prince, royal guard, sword, shield, black hair, short, helmet with visor, fair skin, broad shoulders, tall
+
+图片引用: https://km.woa.com/asset/0001000224080063d7ffc582ee497502?height=477&width=882
+
+提示词：【一个男性老魔法师】
+
+<lora:pixel sprites:1>, full body, pixel art, highly detailed, old male mage, ancient wizard, wise old man, short stature, gray beard, balding head, round spectacles, wrinkled skin, frail, stooped posture
+
+图片引用: https://km.woa.com/asset/0001000224080027d9f2a5dbc5480a02?height=518&width=968
+
+提示词：【一个女弓箭手】
+
+<lora:pixel sprites:1>, full body, pixel art, highly detailed, young female archer, agile, petite, blonde hair, long braids, green eyes, fair skin, leather armor, quiver on back.
+
+图片引用: https://km.woa.com/asset/000100022408005c4c5d4bfab047f902?height=446&width=975
+
+晚上跟爸妈视频，也给他们演示了一下，他们说【一个幼儿园小孩】
+
+<lora:pixel sprites:1>, full body, pixel art, highly detailed, kindergarten child, wearing overalls, red shirt underneath, short stature, chubby, curly blonde hair, no hat, fair skin, cute smile, round face, small hands and feet.
+
+图片引用: https://km.woa.com/asset/000100022408001d749cb4b27b40e602?height=377&width=994
+
+还脑洞大开尝试了【一个养老院的老太太】（没办法，因为Control Net的动作框架是一定的，所以老太太的动作也很灵活）
+
+<lora:pixel sprites:1>, full body, pixel art, highly detailed, elderly woman, retirement home resident, wearing a floral dress, white hair in a bun, tall with a slight hunch, thin, wrinkled skin, glasses, walking cane.
+
+图片引用: https://km.woa.com/asset/00010002240800e206ddbd992e43c102?height=389&width=980
+
+看到通过优化提示词的生成方式，可以实现一句话的方式生成角色效果了。那么这部分也完成了。
+
+3.优化工作流
+
+以上的工作流都是在Stable Diffusion ForgeUI中进行的，它实际上也是WebUI的一种。在上面这些调优工作中，我发现假如能够通过一个工作流来自动化这个过程，是一个更牢靠的方式，也更方便运用在实际生产中。于是开始接触ComfyUI，所幸由于之前的各种探索，让我对Stable Diffusion和ControlNet、Lora、Embedding、KSampler、VAE的原理都比较熟悉了，所以很快就搭建出来所需要的工作流。
+
+图片引用: https://km.woa.com/asset/000100022408003d8738145b93457602?height=730&width=1863
+
+这里仅仅是在ControlNet，Lora和Layer Diffuse的排序少少绕了一些弯子，因为市面上的教学很少提到这3个结合在一起的场景，我花了一些时间测试才找到方法。
+
+总结一下，用到的工具和使用目的包含：
+
+● ComfyUI 用来搭建文生图工作流
+
+● Lora 为了生成统一的像素风的结果
+
+● OpenPose&ControlNet 为了稳定角色动作
+
+● Layer Diffuse 为了生成免抠图的透明底图片
+
+● 混元元宝智能体，为了录入提示词生成规范，快速生成角色提示词
+
+最后想说一下自己的体会，曾经一篇自己的文章中，我写到 "...自己并非游戏从业者，能够想到的内容只有这些。自己没有能力更进一步去制作这样的游戏..." 但后面我觉得如果我不去做，那它真的可能就停留在一个想法了。在自己尝试下场动手的时候，我发现我遇到的困难比想象中的多，同时也发现我能做到的比想象中要多。
+
+回到AI这里，预感它应该会慢慢的改变我们习以为常的游戏生产方式，甚至游戏玩法，这个时间应该不会太远。
+
+以上，如果对文章内容有疑问，或者使用中遇到问题的，有优化思路的，想要一起尝试的，欢迎与我交流。
+链接: https://km.woa.com/articles/show/610881?jumpfrom=kmmcp

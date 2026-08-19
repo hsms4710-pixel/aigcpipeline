@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { api, stageName, stageIcon } from '../api.js';
+import ChainRunner from './ChainRunner.jsx';
 
 export default function Dashboard({ onGo }) {
   const [status, setStatus] = useState(null);
@@ -29,8 +30,12 @@ export default function Dashboard({ onGo }) {
             <span key={p} className="sv"><span className={s === 'up' ? 'dotup' : 'dotdown'} /> 服务:{p} {s}</span>
           ))}
           {Object.entries(counts).map(([k, v]) => <span key={k} className={`badge ${k}`}>{k}: {v}</span>)}
+          {status?.total_cost != null && <span className="badge done">💰 ¥{status.total_cost}</span>}
+          {status?.done_count != null && <span className="badge done">✓ {status.done_count}/{status.job_count}</span>}
         </div>
       </div>
+
+      <ChainRunner onGo={onGo} />
 
       <div className="dag">
         {(status?.stages || []).map((s, i) => {

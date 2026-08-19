@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard.jsx';
 import StageTab from './components/StageTab.jsx';
 import Artifacts from './components/Artifacts.jsx';
 import Settings from './components/Settings.jsx';
+import Lessons from './components/Lessons.jsx';
 import { api } from './api.js';
 import './styles.css';
 
@@ -15,6 +16,7 @@ const TABS = [
   { id: 's4_package', label: '📦 打包' },
   { id: 's5_engine', label: '🎮 引擎' },
   { id: 'artifacts', label: '🗂 资产库' },
+  { id: 'lessons', label: '📚 经验库' },
   { id: 'settings', label: '⚙️ 设置' },
 ];
 
@@ -60,6 +62,7 @@ export default function App() {
             <StageTab key={tab} stage={tab} refreshHealth={refreshHealth} />
           )}
           {tab === 'artifacts' && <Artifacts />}
+          {tab === 'lessons' && <Lessons />}
           {tab === 'settings' && <Settings />}
         </div>
       </div>

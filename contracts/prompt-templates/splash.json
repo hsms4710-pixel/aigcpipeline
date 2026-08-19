@@ -1,0 +1,15 @@
+﻿{
+  "_doc": "立绘模板（A4 固化，2026-08-14）。多图分工参考图 + 风格签名 + No-Beautify，见 SKILL_gpt-image-2.md 5.3",
+  "splash": {
+    "style_signature": "Arknights official art style (Wei@W style signature): thin clean elegant lineart, soft painterly cel-shading with gentle gradients, low-saturation muted warm-gray palette (#B8AD9E #6E6558 #F5F0E8), delicate fabric and armor detail rendering, soft diffuse lighting, gentle highlight roll-off, subtle film-like finish, semi-realistic proportions, no heavy outline, no CG plastic skin.",
+    "multi_ref_role": "Image 1 is the art-style anchor: learn ONLY its lineart, coloring, shading, painterly texture and finish quality. Image 2 is an additional same-style detail reference; use it only for style details.",
+    "views": {
+      "portrait": "full body, standing pose, facing viewer",
+      "bust": "head-and-shoulders chest-up portrait closeup, facing viewer, same character design",
+      "side_view": "same character, full body, side view profile facing left, exact same outfit hair colors and design as the front view, consistent design",
+      "back_view": "same character, full body, back view seen from behind, exact same outfit hair colors and design as the front view, consistent design"
+    },
+    "output_constraint": "natural skin texture, visible pores, no text, no watermark. AR 3:4",
+    "no_beautify": "Do NOT copy the reference character's face, pose, or outfit. Match the line weight, coloring/shading technique, level of detail and finish exactly. Style consistency first; do not invent a new style. Do not replace the face with a generalized, beautified, or idealized face."
+  }
+}

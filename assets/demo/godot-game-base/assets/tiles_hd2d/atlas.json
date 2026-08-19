@@ -1,0 +1,8 @@
+{
+  "tile_size": 128,
+  "cols": 8,
+  "rows": 8,
+  "src": "C:\\Users\\26046\\Desktop\\inerview\\research\\角色AIGC与AI-NPC全链路\\assets\\demo\\godot-game-base\\assets\\tiles_hd2d\\_raw\\sideview_src.png",
+  "prompt": "A 2D side-scrolling platformer game terrain tileset, HD-2D art style similar to Octopath Traveler, exactly 8x8 grid of 64 square tiles (128x128 px each) for building platformer levels. Include tile types: grass-topped dirt ground blocks (green grass strip on top edge, brown dirt body), plain dirt blocks, grey stone/brick blocks, wooden platform blocks, background foliage tiles, all drawn in a consistent painterly pixel style, crisp edges, no characters, no enemies, no grid lines, no borders between tiles, no text, no watermark, no UI.",
+  "generated": "2026-08-18 23:46:51"
+}

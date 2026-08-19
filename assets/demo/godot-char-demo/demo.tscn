@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+﻿[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://demo.gd" id="1"]
 
@@ -11,19 +11,28 @@ scale = Vector2(0.6, 0.6)
 
 [node name="Chibi" type="Sprite2D" parent="."]
 position = Vector2(1180, 470)
-scale = Vector2(0.7, 0.7)
+scale = Vector2(1, 1)
 
 [node name="Title" type="Label" parent="."]
 offset_left = 20.0
 offset_top = 14.0
 offset_right = 900.0
 offset_bottom = 46.0
-text = "艾琳 · Godot 角色展示（立绘 + 表情差分 + 小人）"
+text = "艾琳 · Godot 可玩 demo（定稿资产 chibi_v4 + v10）"
 theme_override_font_sizes/font_size = 24
 
 [node name="Hint" type="Label" parent="."]
 offset_left = 20.0
 offset_top = 840.0
 offset_right = 1580.0
-offset_bottom = 900.0
-text = "表情: 1=happy 2=sad 3=angry 4=neutral   小人: Q=正面 W=侧 E=背 A=idle S=walk D=attack F=hurt"
+offset_bottom = 890.0
+text = "WASD/方向键=移动  空格=攻击  H=受伤  1-4=立绘表情"
+
+[node name="Info" type="Label" parent="."]
+offset_left = 1180.0
+offset_top = 14.0
+offset_right = 1580.0
+offset_bottom = 46.0
+text = "位置 / 朝向 / 状态"
+theme_override_font_sizes/font_size = 18
+

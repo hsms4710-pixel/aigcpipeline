@@ -1,0 +1,134 @@
+标题: zimage-ncnn 不止能文生图了，LanPaint 修图和 ControlNet 控图也来了！
+作者: nihuini
+创建时间: 2026-06-26 17:00:19, 更新时间: 2026-06-26 17:00:19
+标签: ncnn | controlnet | zimage | 文生图
+阅读: 60, 点赞: 7, 收藏: 1, 评论: 0
+热度: 15
+K吧: #41352 腾讯云智能 Tencent Cloud AI https://km.woa.com/group/41352?jumpfrom=kmmcp
+AI摘要: **文章摘要**
+
+本文介绍了 zimage-ncnn 工具的最新功能更新。该工具是一个基于纯 C++ 和 ncnn 框架的本地图像生成与编辑程序，无需 CUDA、PyTorch 或 Python 环境即可运行。此次更新在原有的文生图功能基础上，新增了 LanPaint（局部重绘与扩展）和 ControlNet（条件控制生成）两大核心模块，使其从一个简单的文生图演示工具，进化为一个功能更完整的本地图片处理工具。
+
+**文章重点总结**
+
+1.  **核心升级：从“文生图”到“图编辑”**
+    *   之前的 zimage-ncnn 主要功能是根据文字描述（prompt）从零生成图片。
+    *   本次更新加入了 **LanPaint** 和 **ControlNet**，让工具具备了修图和控图的能力。
+
+2.  **LanPaint：图片的局部修改与扩展**
+    *   **Inpaint（局部重绘）**：用户可以指定一张图片和一个蒙版（mask），模型只会重绘蒙版覆盖的区域，实现“哪里不好改哪里”的效果。例如，将图片中的人物手持物品替换为指定的玩偶。
+    *   **Outpaint（向外扩展）**：可以将原图的四周向外扩展，生成新的画面内容，例如将一张超市货架前的照片扩展出更完整的场景。
+    *   **技术细节**：引入了 VAE Encoder，将输入图片编码到潜在空间（latent space）进行处理，并采用了 tiled 机制，防止处理大图时内存溢出。
+
+3.  **ControlNet：按图控制生成结果**
+    *   解决了文生图时“姿势和构图不听话”的问题。用户可以通过提供一张控制图（如姿态骨架、边缘线稿、深度图等）来精确引导生成结果。
+    *   **应用示例**：
+        *   **姿态控制**：提供一张人物姿态骨架图，生成相同姿势的人物照片。
+        *   **边缘控制**：提供一张 Canny 边缘检测图，生成符合该轮廓的彩色图像。
+        *   **颜色控制**：提供一张黑白图，生成符合原图结构的彩色图像。
+        *   **超分辨率**：提供一张低清图，生成高清大图。
+    *   **模型管理**：ControlNet 模型与主模型分开存放（`z-image-control/`），结构更清晰。
+
+4.  **不变的特性与当前限制**
+    *   **零依赖**：依然保持纯 C++ 和 ncnn 架构，无需 Python、PyTorch 或 CUDA，支持 Windows/Linux/macOS，CPU 和 Vulkan 均可运行。
+    *   **当前限制**：ControlNet 的控制图（如 OpenPose、Canny 图）需要用户使用其他工具提前准备好。此外，最终效果受模型版本、控制强度（control scale）和提示词（prompt）影响。
+
+**评价**
+
+文章逻辑清晰，从用户痛点出发，逐步介绍了新功能（LanPaint 和 ControlNet）的用途、使用方法和实际效果。通过具体的命令行示例和对比图描述，让读者能直观理解每个功能的价值。文章语言通俗易懂，对于不熟悉技术细节的读者也很友好，成功展示了该工具从一个“文生图演示”向“完整本地图像编辑工具”的进化，实用性强。
+正文: 图片引用: https://km.woa.com/asset/0001000226060029c606fcad51406801?height=941&width=1672
+
+zimage-ncnn 不止能文生图了，LanPaint 修图和 ControlNet 控图也来了！
+https://github.com/nihui/zimage-ncnn-vulkan
+你是否已经用 zimage-ncnn 跑过 Z-Image 文生图？
+不需要 CUDA，不需要 PyTorch，不需要一堆 Python 环境，下载程序和模型就能跑。之前我们做到了“把 Z-Image 跑起来”。
+这一次，zimage-ncnn 又往前走了一步：
+它不只会文生图了，还支持了 LanPaint 和 ControlNet。
+也就是说，现在它可以：
+
+给图片局部重绘，也就是 inpaint
+
+把图片向外扩展，也就是 outpaint
+
+根据 pose canny depth 之类的控制图来生成图片
+
+还是熟悉的味道：纯 C++，纯 ncnn，Windows Linux macOS 都能编译运行。
+https://github.com/scraed/LanPaint
+LanPaint：图片哪里不好改哪里
+以前文生图只能从零开始生成一张图。
+现在有了 LanPaint，就可以拿一张已有图片继续改。
+比如给一张图，再给一个 mask，只让模型重画 mask 区域：
+
+./zimage-ncnn-vulkan -i input.jpg -k mask.jpg -p 'Holding a Hachiware plushie, the friend of both Chiikawa and Usagi'
+
+图片引用: https://km.woa.com/asset/00010002260600d109c8e07b8546e401?height=521&width=1645
+
+或者做 outpaint，把原图四周扩出去：
+
+./zimage-ncnn-vulkan -i input.jpg -x 64,64,64,64
+
+图片引用: https://km.woa.com/asset/000100022606003d48178fe2d1473101?height=819&width=1651
+
+这部分加入了 VAE Encoder，所以可以把输入图片编码到 latent 空间里继续处理。VAE Encoder / Decoder 都做了 tiled 机制，大图也尽量不一下子吃爆内存和显存。
+https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1
+ControlNet：终于可以按图控制了
+文生图最大的问题之一是：prompt 写得再细，姿势和构图也不一定听话。
+所以这次也加上了 ControlNet。
+例如：
+
+./zimage-ncnn-vulkan -c pose.jpg
+
+pose.jpg 就是控制图。
+
+图片引用: https://km.woa.com/asset/0001000226060044277ddb0ff9450901?height=730&width=1648
+
+它可以是 pose，也可以是 canny、depth 等条件图，取决于你使用的 controlnet 模型。
+
+./zimage-ncnn-vulkan -c canny.jpg
+
+图片引用: https://km.woa.com/asset/00010002260600ba2bedfb22c6455b01?height=732&width=1652
+
+灰度转彩色
+
+./zimage-ncnn-vulkan -p 'A photorealistic square image of a traditional Japanese street in Kyoto at dusk after a light rain.' -c gray.jpg
+
+图片引用: https://km.woa.com/asset/00010002260600badd62436563409a01?height=725&width=1643
+
+低清转高清
+
+./zimage-ncnn-vulkan -p 'Aerial view of Arashiyama in autumn, a river winding through the center, flanked by mountains ablaze with vibrant, multicolored foliage.' -c lowres.jpg -t -s 1024,1024
+
+图片引用: https://km.woa.com/asset/000100022606008acb0f9ea3384c1b01?height=1179&width=1652
+
+ControlNet 模型单独放在：
+z-image-control/
+https://huggingface.co/nihui-szyl/z-image-ncnn/tree/main
+这样主模型和控制模型分开管理，结构也更清楚。
+还没有那些乱七八糟的环境
+这次虽然功能变多了，但运行方式没有变复杂。
+仍然是：
+
+不需要 Python
+
+不需要 PyTorch
+
+不需要 diffusers
+
+不需要 CUDA
+
+只依赖 C++ 和 ncnn
+
+Vulkan 能跑，CPU 也能跑
+
+CPU 路径现在也默认开启 bf16 storage，尽量减少内存压力。
+目前还有什么限制？
+ControlNet 的控制图需要自己准备。
+比如 OpenPose 图、Canny 图、Depth 图，需要先用别的工具生成好，再交给 zimage-ncnn。
+另外，ControlNet 效果和模型版本、control scale、prompt 都有关。lite 模型更省资源，但控制力也会弱一些。
+结语
+最开始的 zimage-ncnn，只是把 Z-Image 从 Python 环境里搬出来。
+现在加上 LanPaint 和 ControlNet 后，它已经不只是一个文生图 demo，而是一个更完整的本地图片生成和编辑工具：
+能生图，能修图，能扩图，也能按结构控图。
+项目地址：
+https://github.com/nihui/zimage-ncnn-vulkan
+链接: https://km.woa.com/articles/show/663960?jumpfrom=kmmcp

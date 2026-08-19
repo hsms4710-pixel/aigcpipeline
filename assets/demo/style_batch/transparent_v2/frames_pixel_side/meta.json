@@ -1,0 +1,21 @@
+{
+  "regen_walk": "2026-08-18T02:56:05",
+  "frames": {
+    "walk_1": {
+      "ok": true,
+      "sec": 73.0
+    },
+    "walk_2": {
+      "ok": true,
+      "sec": 61.9
+    },
+    "walk_3": {
+      "ok": true,
+      "sec": 63.9
+    },
+    "walk_4": {
+      "ok": true,
+      "sec": 67.4
+    }
+  }
+}

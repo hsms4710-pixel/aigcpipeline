@@ -22,10 +22,18 @@ export default function StageTab({ stage, refreshHealth }) {
   }).catch(e => setMsg(e.message)); }, [stage]);
 
   useEffect(() => {
-    if (!schema?.prev?.length) return;
-    api.jobs(schema.prev[0]).then(async (list) => {
-      const done = list.find(j => j.status === 'done');
-      if (done) { const d = await api.job(done.id); setUpstreamArts((d.artifacts || []).filter(a => /\.(psd|stretch|zip|png|json)$/i.test(a.ext))); }
+    if (!schema?.prev?.length) { setUpstreamArts([]); return; }
+    Promise.all((schema.prev || []).map(async (st) => {
+      try {
+        const list = await api.jobs(st);
+        const done = [...list].sort((a, b) => new Date(b.created) - new Date(a.created)).find(j => j.status === 'done');
+        if (!done) return [];
+        const d = await api.job(done.id);
+        return (d.artifacts || []).map(a => ({ ...a, from_stage: st }));
+      } catch (e) { return []; }
+    })).then(all => {
+      const seen = new Set();
+      setUpstreamArts(all.flat().filter(a => seen.has(a.abs) ? false : (seen.add(a.abs), true)));
     }).catch(() => {});
   }, [schema]);
   useEffect(() => {
@@ -90,18 +98,23 @@ export default function StageTab({ stage, refreshHealth }) {
                       <input type={f.type === 'int' || f.type === 'number' ? 'number' : 'text'}
                              value={config[f.key] ?? ''} onChange={e => set(f.key, e.target.value)} placeholder={f.default} />
                       {upstreamArts.length > 0 && (
-                        <select style={{ width: 130, flexShrink: 0 }} value="" onChange={e => { if (e.target.value) { set(f.key, e.target.value); e.target.value = ''; } }}>
-                          <option value="">↑ 上游({upstreamArts.length})</option>
-                          {upstreamArts.map((a, i) => <option key={i} value={a.abs}>{a.path.split('/').pop()}</option>)}
+                        <select style={{ width: 160, flexShrink: 0 }} value="" onChange={e => { if (e.target.value) { set(f.key, e.target.value); e.target.value = ''; } }}>
+                          <option value="">↑ 上游产物({upstreamArts.length})</option>
+                          {upstreamArts.map((a, i) => <option key={i} value={a.abs} title={`${a.from_stage || ''} ${a.path}`}>{`${a.from_stage ? stageName(a.from_stage) + '·' : ''}${a.path.split('/').pop()}`}</option>)}
                         </select>
                       )}
                     </div>
                   )}
                   {f.type === 'file' && (
-                    <>
-                      <input type="text" value={config[f.key] ?? ''} onChange={e => set(f.key, e.target.value)} placeholder="路径或从上游产物选择" />
-                      <div className="file-hint">可填写绝对路径，或参考资产库中的路径</div>
-                    </>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input type="text" value={config[f.key] ?? ''} onChange={e => set(f.key, e.target.value)} placeholder="路径或从上游产物选择" style={{ flex: 1 }} />
+                      {upstreamArts.length > 0 && (
+                        <select style={{ width: 150, flexShrink: 0 }} value="" onChange={e => { if (e.target.value) { set(f.key, e.target.value); e.target.value = ''; } }}>
+                          <option value="">↑ 上游产物</option>
+                          {upstreamArts.map((a, i) => <option key={i} value={a.abs} title={`${a.from_stage || ''} ${a.path}`}>{`${a.from_stage ? stageName(a.from_stage) + '·' : ''}${a.path.split('/').pop()}`}</option>)}
+                        </select>
+                      )}
+                    </div>
                   )}
                   {f.help && <div className="help">{f.help}</div>}
                 </div>

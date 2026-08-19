@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-08-17T02:08:44",
+  "jobs": {
+    "nobow_hd2d": {
+      "ok": true,
+      "sec": 66.0,
+      "size": 792207,
+      "prompt": "Same chibi character as the reference image — same face, same silver-white long hair, same emerald green eyes, same green leather armor with silver trim, same proportions (about 2.5 heads tall), same art style (HD-2D game style (Octopath Traveler aesthetic): pixel-art character with modern 3D lighting, painterly rich gradients, crisp readable silhouette). REMOVE the composite bow and quiver: empty hands, palms slightly open, arms relaxed and slightly away from the body in a neutral A-pose, standing facing viewer, full body visible, clean readable silhouette. Preserve identity, hair, outfit and colors. Isolated character on a FULLY TRANSPARENT background (alpha transparency): NO background scenery, NO floor, NO ground shadow, NO backdrop, NO vignette, NO scene elements, NO watermark, NO text. Only the character visible. AR 1:1"
+    },
+    "nobow_pixel": {
+      "ok": true,
+      "sec": 75.1,
+      "size": 793375,
+      "prompt": "Same chibi character as the reference image — same face, same silver-white long hair, same emerald green eyes, same green leather armor with silver trim, same proportions (about 2.5 heads tall), same art style (pixel-art influenced chibi style, clean crisp outline, limited palette with dithering, sprite-sheet ready). REMOVE the composite bow and quiver: empty hands, palms slightly open, arms relaxed and slightly away from the body in a neutral A-pose, standing facing viewer, full body visible, clean readable silhouette. Preserve identity, hair, outfit and colors. Isolated character on a FULLY TRANSPARENT background (alpha transparency): NO background scenery, NO floor, NO ground shadow, NO backdrop, NO vignette, NO scene elements, NO watermark, NO text. Only the character visible. AR 1:1"
+    }
+  },
+  "summary": {
+    "hero_aligned": [
+      "hero_hd2d_final.png (matte+defringe, pixel-exact)",
+      "hero_pixel_final.png"
+    ],
+    "poses": {
+      "hd2d": [
+        "idle",
+        "walk",
+        "attack",
+        "hurt",
+        "side",
+        "back"
+      ],
+      "pixel": [
+        "idle",
+        "walk",
+        "attack",
+        "hurt",
+        "side",
+        "back"
+      ]
+    },
+    "nobow_apose": [
+      "hero_hd2d_nobow_apose.png",
+      "hero_pixel_nobow_apose.png"
+    ],
+    "godot_demo": "assets/demo/godot-chibi-v2-demo/",
+    "rig_status": "geometric spine split failed on chibi; industrial route = See-Through PSD -> StretchyStudio (pending user decision)"
+  }
+}

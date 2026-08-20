@@ -13,6 +13,7 @@
 | L2 | skill 三级渐进披露接入 A2（skills_library + skill_loader + design_prompt(skill_ctx 复用)） | done | 按类型自动选 references（character/map/pixel 验证） |
 | L3 | S0 门禁闭环：a3_gate 条件路由 + FAIL 带 issues 自动回退 A2 修订重试 | done | 全图离线跑 A1→S5→A6（--dry-run）产物齐全（plan/prompt/manifest v2） |
 | L3.5 | **完整 S0-S5 接线**：拆层(See-through)/绑骨(rig-psd+fix-rig)/动画(stretchy-agent+usage)/打包(package-assets)/引擎(export-godot) 全节点接真实工具 + 各 stage 门禁 + 反馈闭环 | done | 整图编译+路由+命令构造离线验证通过（--dry-run） |
+| L3.6 | **B 关键帧路线**（kb1 gen-frame-cycle→kb2 build-godot-anim-demo）+ **F 3D 路线契约/桩**（f1-f5）+ **实现层 stage_executors 解耦**（workflow 与节点实现不冲突，可被 workbench 复用） | done | 三路线 --dry-run 整图路由/命令构造通过（骨骼/kb1-kb2/3d f1-f5 STUB） |
 | L4 | 子图化：A5 骨骼（拆层→绑骨→Spine 动画）做成子图挂载 | todo | See-Through→StretchyStudio→Spine 子图 |
 | L5 | 可观察性：job 记录/断点续跑/成本核算 + 前端接线 | todo | job.json + 续跑 |
 | L6 | workbench 后端改调 LangGraph 图（前端 10 Tab 不变，S0-S5 映射 A 节点子视图） | todo | 一键全链路走图 |

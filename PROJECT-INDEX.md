@@ -19,7 +19,7 @@
 - ✅ **2026-08-19 Godot MCP 实装**（godot-assistant）+ tools/godot-shot.py 游戏内截图→Vision Gate
 - ✅ **2026-08-19 W2.1 地图打磨**：A2 瓦片集 + 域扭曲草地/有机湖/村庄/成林树丛；全景 gate 6、游戏内 5（未达 7，待办见 spec/agent-workflow.md）
 - ✅ **2026-08-21 GPT-Image2-Skill 按 LangGraph 方式加载**：skills_library/gpt-image（注册表）+ tools/skill_loader.py（discover/select/load/resource 三级渐进披露）+ tools/agent_a2_node.py（A2 LangGraph StateGraph 节点）+ a2-pipeline --agent；不再硬编码方法论（详见 harness/skills/SKILL_gpt-image-2.md §9.4 / spec/agent-workflow.md）
-- ✅ **2026-08-21 【P0】用 LangGraph 重构整个 pipeline**：pipeline/langgraph/（state/nodes/graph/cli，A1+S0-S5+A6 完整链路：生图/拆层/绑骨/动画/打包/引擎全部接线真实工具 + skill 三级渐进披露 + 门禁闭环），离线冒烟通过；权威文档 spec/langgraph-pipeline.md；任务跟踪 tasks/pipeline/tasks.md（L0-L6）
+- ✅ **2026-08-21 【P0】用 LangGraph 重构整个 pipeline**：pipeline/langgraph/ + pipeline/stage_executors.py（A1+三路线：骨骼 S0-S5 / 关键帧 kb1-kb2 / 3D f1-f5 桩，全部接线真实工具 + skill 三级渐进披露 + 门禁闭环 + workflow/实现解耦），离线冒烟通过；权威文档 spec/langgraph-pipeline.md；任务跟踪 tasks/pipeline/tasks.md（L0-L6）
 
 ## 2. 调研清单（spec/ 内，按主题）
 | 文档 | 主题 | 状态 |
@@ -128,6 +128,7 @@ README.md（总述）/ ROADMAP.md（路线）/ 研究计划.md（RQ+评测）/ �
 2. 2D 侧视帧补全（jump/fall/land 专用帧，生图端点恢复后）
 3. 横板 demo 打磨（角色放大、投射物可见度、像素一致性）
 4. 3D 线 POC（plan-3d-route.md）：TRELLIS2/Hunyuan3D 本地或 Tripo API → Blender → Mixamo/UniRig → Godot
+
 
 
 

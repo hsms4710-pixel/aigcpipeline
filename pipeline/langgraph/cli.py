@@ -23,7 +23,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 if REPO not in sys.path:
     sys.path.insert(0, REPO)
 
-from pipeline.langgraph.graph import ALL_STAGES, run_pipeline  # noqa: E402
+from pipeline.langgraph.graph import ROUTE_ORDERS, run_pipeline  # noqa: E402
 
 
 def main() -> int:
@@ -32,6 +32,7 @@ def main() -> int:
     ap.add_argument("--demand", default="", help="自然语言需求（demand 路径）")
     ap.add_argument("--style", default="")
     ap.add_argument("--type", default="", choices=["", "character", "sprite", "tileset", "map", "animation", "scene"])
+    ap.add_argument("--route", default="", choices=["", "skeletal", "keyframe", "3d"], help="路线：骨骼A(默认)/关键帧B/3D F")
     # 人物卡驱动（S0 gen-portrait）
     ap.add_argument("--persona", default="", help="persona.json 路径（有则走 gen-portrait）")
     ap.add_argument("--scene", default="splash", choices=["splash", "chibi", "pixel"])
@@ -47,7 +48,7 @@ def main() -> int:
     ap.add_argument("--size", default="1024x1024")
     ap.add_argument("--transparent", action="store_true")
     ap.add_argument("--out-dir", default=None)
-    ap.add_argument("--stages", default=",".join(ALL_STAGES), help=f"启用阶段，逗号分隔，默认 {','.join(ALL_STAGES)}")
+    ap.add_argument("--stages", default="", help="启用阶段，逗号分隔；缺省按 route 全开")
     ap.add_argument("--skill", default="gpt-image")
     ap.add_argument("--skill-root", action="append", default=[])
     ap.add_argument("--max-tries", type=int, default=3)
@@ -62,6 +63,15 @@ def main() -> int:
     ap.add_argument("--s4-input", default="")
     ap.add_argument("--s5-input", default="")
     ap.add_argument("--godot-exe", default="")
+    # B 关键帧路线
+    ap.add_argument("--kb-hero", default="", help="matte 锚点图（gen-frame-cycle --hero；缺省取 S0 产物）")
+    ap.add_argument("--kb-style", default="pixel", help="hd2d / pixel / ...")
+    ap.add_argument("--kb-only", default="")
+    ap.add_argument("--kb-force", action="store_true")
+    ap.add_argument("--kb-frames", default="")
+    ap.add_argument("--target-h", type=int, default=0)
+    ap.add_argument("--fps", default="")
+    ap.add_argument("--atlas-size", type=int, default=0)
     ap.add_argument("--dry-run", action="store_true", help="只校验契约+构造命令（不执行外部工具）")
     ap.add_argument("--no-vision", action="store_true", help="S0 提示词离线组装（不调视觉 API）")
     ap.add_argument("--skip-generate", action="store_true", help="S0 只到提示词设计")
@@ -86,7 +96,8 @@ def main() -> int:
         "out_dir": a.out_dir,
         "skill_name": a.skill,
         "skills_roots": a.skill_root or None,
-        "stages": [s.strip() for s in a.stages.split(",") if s.strip()],
+        "stages": ([s.strip() for s in a.stages.split(",") if s.strip()]
+                   if a.stages else ROUTE_ORDERS.get(a.route or "skeletal", ROUTE_ORDERS["skeletal"])),
         "s1_src": a.s1_src,
         "s2_psd": a.s2_psd,
         "s2_joints": a.s2_joints,
@@ -96,6 +107,15 @@ def main() -> int:
         "s4_input": a.s4_input,
         "s5_input": a.s5_input,
         "godot_exe": a.godot_exe,
+        "atlas_size": a.atlas_size,
+        "route": a.route,
+        "kb_hero": a.kb_hero,
+        "kb_style": a.kb_style,
+        "kb_only": a.kb_only,
+        "kb_force": a.kb_force,
+        "kb_frames": a.kb_frames,
+        "target_h": a.target_h,
+        "fps": a.fps,
     }
     state = run_pipeline(job, dry_run=a.dry_run, no_vision=a.no_vision,
                          skip_generate=a.skip_generate, gate_strict=a.gate_strict,

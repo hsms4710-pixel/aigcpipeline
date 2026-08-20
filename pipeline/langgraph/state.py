@@ -19,6 +19,7 @@ class PipelineState(TypedDict, total=False):
     style: str
     atype: str             # character/sprite/tileset/map/animation/scene
     name: str
+    route: str             # 路线：skeletal(骨骼A) / keyframe(关键帧B) / 3d(3D F，后续补充)
     refs: list
     baseline: list
     size: str
@@ -52,6 +53,15 @@ class PipelineState(TypedDict, total=False):
     s4_input: str
     s5_input: str
     godot_exe: str
+    atlas_size: int
+    # ---------- B 关键帧路线输入 ----------
+    kb_hero: str           # matte 锚点图（gen-frame-cycle --hero）
+    kb_style: str          # hd2d / pixel / ...
+    kb_only: str           # 只生成部分动作（逗号分隔，可空）
+    kb_force: bool
+    kb_frames: str         # 关键帧目录（kb2 显式输入，可空）
+    target_h: int
+    fps: str
     # ---------- A1 需求规划 ----------
     plan: dict
     # ---------- S0 demand 路径（LangGraph skill 三级渐进披露） ----------

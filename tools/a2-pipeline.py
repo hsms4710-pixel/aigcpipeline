@@ -95,7 +95,7 @@ def main():
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--ref", nargs="*", default=[])
     ap.add_argument("--baseline", nargs="*", default=[])
-    ap.add_argument("--size", default="512x512")
+    ap.add_argument("--size", default="1024x1024", help="GPT-Image2-Skill: 16px倍数,>=655k px(1024x1024)/1024x1536/1536x1024")
     ap.add_argument("--transparent", action="store_true")
     ap.add_argument("--max-tries", type=int, default=3)
     ap.add_argument("--threshold", type=float, default=7.0)

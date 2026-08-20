@@ -109,3 +109,28 @@ exactly. Style consistency first; do not invent a new style.
 - tudingai：5 张参考图 6 组合 + 3 翻车模式：https://tudingai.cn/blog/202604/gpt-image-2-5-reference-images-playbook/
 - aiskillstore gpt-image-2（ChatGPT 订阅走 Codex CLI 生图，多参考合成）：https://github.com/aiskillstore/marketplace/blob/main/skills/agentspace-so/gpt-image-2/SKILL.md
 - freestylefly/awesome-gpt-image-2（500+ 反推案例、工业模板库、style-library skill）：https://github.com/freestylefly/awesome-gpt-image-2
+
+
+## 9. GPT-Image2-Skill 方法论接入（2026-08-21，wuyoscar/GPT-Image2-Skill）
+> vendor：tools/vendor/GPT-Image2-Skill（skills/gpt-image/，含 SKILL.md / craft.md / openai-cookbook.md / gallery-*.md / generate.py）
+> 原则：**不要盲目生成图片**——生成前按本 skill 的方法论组织提示词与参数。
+
+### 9.1 提示词方法论（已注入 tools/prompt_vision.py 系统提示词）
+1. 结构先行：`画布/长宽比/布局 → 背景/场景 → 主体 → 关键细节 → 约束`，并声明用途（sprite sheet/地图/tileset/UI）
+2. 一个主角 + 配角（One hero, supporting cast）
+3. 场景密度 > 形容词：5-12 个具体名词 + 2-4 个材质/光照约束；禁空形容词
+4. 风格锚点具体且有边界（"Pokemon Black and White NDS sprite style"，不是"像素风"）
+5. 材质 / 光照 / 调色板分开控制
+6. 长宽比先行并在 prompt 里重申；引用文字加引号
+7. 编辑类：先写目标变换，再显式保锁（identity/layout/位置不变）；多参考按编号分工（Image 1=…, Image 2=…）
+8. 密集文字/图表/多面板/精灵表用 quality=high
+
+### 9.2 参数语义（已接入 tools/image_backend.py + a2-pipeline.py）
+- size：16px 倍数、总像素 **655k–8.3M**（下限约 1024x1024）；a2-pipeline 默认已由 512→1024x1024；`image_backend._check_size()` 对 <655k 告警
+- quality：low=草稿 / medium=探索 / high=最终（本项目默认 high）
+- 端点：generations（文生图）/ edits（参考图、多参考、mask 局部重绘 opaque=保留/transparent=重绘）
+- gpt-image-2 不接受 input_fidelity
+- 与 §6 铁律的差异：本 skill 说 gpt-image-2 的 background 为 auto/opaque（auto 可能带透明）；本项目实测中转站支持 `background="transparent"` 出透明底（walk sheet 已验证），透明底仍按需 + 必要时后处理抠图
+
+### 9.3 参考画廊（按资产类型先查再写）
+- gallery-pixel-art.md（像素画）｜ gallery-character-design.md（角色设定图）｜ gallery-isometric.md（等距地图/村庄）｜ gallery-gaming.md（游戏）｜ gallery-anime-and-manga.md（动漫）

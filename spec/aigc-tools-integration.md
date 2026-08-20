@@ -12,6 +12,7 @@
 ## 二、GitHub AIGC 开源工具清单（可集成）
 
 ### 已集成（本仓库 tools/vendor/）
+| **GPT-Image2-Skill**（wuyoscar） | 生图方法论 skill | SKILL.md + craft + openai-cookbook + gallery 参考库；**已接入 prompt_vision 系统提示词 + image_backend size 校验 + a2-pipeline 默认 1024** | ✅ 2026-08-21（只 vendor skills/ 文本） |
 | 工具 | 能力 | 集成状态 |
 |---|---|---|
 | **ai-pixel-art-image-generation**（ianlintner，MIT） | generate_sprite/tileset/animation + pixelize + **qa_report（palette/alpha/outline/baseline 硬门禁）** + Tiled TSX/TMJ 导出 + 变体控制 | ✅ 已克隆至 tools/vendor/ai-pixel-art；pixelize+qa 本地 PASS；generate_sprite 经中转站 key 验证 OK（QA 全 PASS）；openai_client.py 已打 TLS 补丁 |

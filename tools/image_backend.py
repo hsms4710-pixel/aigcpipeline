@@ -1,7 +1,13 @@
-﻿"""image_backend.py：生图后端统一抽象（openai 中转站 / gemini Nano Banana / fal 聚合）
+"""image_backend.py：生图后端统一抽象（openai 中转站 / gemini Nano Banana / fal 聚合）
 统一接口 gen_image(prompt, out, ref=None, backend=..., model=...) -> (bytes大小, 用时秒)
+
+生图参数遵循 GPT-Image2-Skill 方法论（wuyoscar/GPT-Image2-Skill，vendor 于 tools/vendor/GPT-Image2-Skill）：
+- size：16px 倍数，总像素 655k–8.3M（官方下限），默认 1024x1024；禁止 <655k（如 512x512）导致的低质量
+- quality：low=草稿 / medium=探索 / high=最终（本项目默认 high）
+- background：透明底（精灵）用 transparent；普通图 opaque
+- format：png
 """
-import os, time, base64
+import os, sys, time, base64
 
 
 def _download(url, out):
@@ -110,8 +116,22 @@ def _make_openai_client():
         http_client=http_client,
     )
 
+def _check_size(size):
+    """按 GPT-Image2-Skill 校验 size（16px 倍数、总像素 655k–8.3M）；过小给提示。"""
+    try:
+        w, h = (int(x) for x in str(size).lower().split("x"))
+        px = w * h
+        if px < 655_000:
+            print(f"[image_backend] 警告: {size}={px}px < GPT-Image2 官方下限 655k px，建议 >=1024x1024（质量会明显下降）", file=sys.stderr)
+        if w % 16 or h % 16:
+            print(f"[image_backend] 警告: {size} 不是 16px 倍数，建议 1024x1024/1024x1536/1536x1024", file=sys.stderr)
+    except Exception:
+        pass
+
+
 def gen_image(prompt, out, ref=None, backend="openai", model="gpt-image-2", size="1024x1024", client=None, seed=None, transparent=False, mask=None, style_ref=None, quality=None):
     """统一生图入口。client 可复用；style_ref=风格参考图（重绘为新角色，同画风）。返回 (bytes大小, 耗时秒)。"""
+    _check_size(size)
     t0 = time.time()
     if backend == "openai":
         if client is None:

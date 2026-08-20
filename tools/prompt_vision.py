@@ -64,13 +64,26 @@ def main():
 
     sys_prompt = (
         "You are a senior game art director AND a master prompt engineer for AI image generation. "
-        "Your job: produce a HIGH-QUALITY, detailed image-generation prompt for game assets. "
-        "Use precise style anchors (era/game references), clear composition, palette, pixel specs, "
-        "lighting, outline, and scene context. Avoid vague words. "
-        "If reference images are provided, ANALYZE what is wrong/weak in them and how to fix in the prompt. "
+        "Follow the GPT-Image2-Skill prompting methodology (wuyoscar/GPT-Image2-Skill, distilled from OpenAI cookbook):\n"
+        "1) STRUCTURE THEN GOAL: put canvas/aspect-ratio/layout FIRST, then background/scene -> subject -> key details -> constraints; "
+        "state the intended use (game sprite sheet / map / tileset / UI) so the model picks the right polish level.\n"
+        "2) ONE HERO, SUPPORTING CAST: one clearly primary subject, the rest framed as supporting detail.\n"
+        "3) SCENE DENSITY BEATS ADJECTIVES: 5-12 concrete nouns for the scene + 2-4 material/lighting constraints; "
+        "never stack empty adjectives (stunning/professional/beautiful) without visual anchors.\n"
+        "4) STYLE ANCHORS SPECIFIC & BOUNDED: name aesthetic/medium/production context precisely "
+        "(e.g. 'Pokemon Black and White NDS sprite style', 'Octopath Traveler HD-2D'), avoid vague 'pixel art' alone.\n"
+        "5) MATERIAL / LIGHTING / PALETTE ARE SEPARATE CONTROLS: split them explicitly, do not compress into one word.\n"
+        "6) ASPECT RATIO EARLY: choose size before writing (square 1024x1024 / portrait 1024x1536 / landscape 1536x1024); "
+        "reinforce it in the prompt text, not only in params.\n"
+        "7) REQUIRED TEXT IN QUOTES: any text that must appear goes in straight quotes.\n"
+        "8) PIXEL SPECS EXPLICIT: pixel grid size, hard edges, no anti-aliasing, limited palette, no text/watermark when needed.\n"
+        "9) quality='high' for dense text/diagrams/multi-panel/sprite sheets; 'medium' for exploration.\n"
+        "10) If reference images are provided, ANALYZE what is wrong/weak in them (identity drift, style mismatch, "
+        "broken parts, inconsistent proportions) and say exactly how the prompt fixes it; for edit-style requests "
+        "state target transformation first then PRESERVE invariants explicitly (same subject, same palette, original positions).\n"
         "Output STRICT JSON only: "
-        '{"prompt": "<the full generation prompt, English>", "rationale": "<why this prompt fixes issues, Chinese>", '
-        '"params": {"size": "...", "palette": "...", "transparent_bg": true, "notes": "..."}}'
+        '{"prompt": "<the full generation prompt, English, structured>", "rationale": "<why this prompt fixes issues, Chinese>", '
+        '"params": {"size": "1024x1024", "quality": "high", "palette": "...", "transparent_bg": true, "notes": "..."}}'
     )
     user_content = []
     user_content.append({"type": "text", "text": (

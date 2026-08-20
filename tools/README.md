@@ -74,7 +74,7 @@
 |---|---|
 | workbench/ | 工作台 FastAPI + React（阶段状态机 + 预览/下载/单步重试） |
 | rig-automation/ | StretchyStudio 自动绑骨 agent（stretchy-agent.cjs） |
-| vendor/ | 第三方 skills/MCP 本地副本（ai-pixel-art、FrameRonin-MCP、spine-animation-ai、character-animation-creator） |
+| vendor/ | 第三方 skills/MCP 本地副本（ai-pixel-art、FrameRonin-MCP、spine-animation-ai、character-animation-creator、**GPT-Image2-Skill**） |
 
 ## 8. 环境要求
 - Python venv：`C:\Users\26046\Desktop\inerview\runtime\.venv`（PIL / openai / dotenv）

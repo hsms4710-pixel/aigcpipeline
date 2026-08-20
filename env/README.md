@@ -1,4 +1,4 @@
-# 运行环境与工具配置说明（env/）
+﻿# 运行环境与工具配置说明（env/）
 
 > 更新：2026-08-19 ｜ 本文件是**环境重建/复现的唯一入口**：隔离环境形态、key 配置、每个工具从哪 clone、怎么装、模型怎么下载、当前阻塞点。
 > 原则：`env/` 不入库（含 key/大体积运行依赖）；公开仓库只保留本说明 + `.env.example` + `config.toml.example`。
@@ -52,7 +52,7 @@ HF_ENDPOINT=https://hf-mirror.com   # 国内下载 HF 模型用镜像
   # 重建
   cd C:\Users\26046\Desktop\inerview
   python -m venv runtime\.venv
-  runtime\.venv\Scripts\pip install pillow openai python-dotenv numpy httpx2
+  runtime\.venv\Scripts\pip install pillow openai python-dotenv numpy httpx2 langgraph  # langgraph: A2 节点 StateGraph + skill 加载
   ```
 - env/runtime/.venv（备用，ML 工具用，含 torch 2.8+cu128）
 
@@ -125,3 +125,4 @@ codex mcp add frame-ronin -- python -m frame_ronin_mcp.server
 ## 9. 安全
 - `env/.env`、`env/config.toml` 含真实 key，已在 .gitignore，**禁止提交**
 - 审计：`git ls-files | grep -iE "config.toml|\.env"` 应为空；脚本中禁止硬编码 key（全部读 env）
+

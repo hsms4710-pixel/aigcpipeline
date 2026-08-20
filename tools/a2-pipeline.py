@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """a2-pipeline.py — A2 资产生成标准入口（一条命令闭环）
 视觉提示词设计师(prompt_vision) → 生图(image_backend) → Vision Gate(vision_gate)
 → FAIL 则带门禁问题修订提示词重试 → 产物 + manifest 归档
@@ -103,8 +103,20 @@ def main():
     ap.add_argument("--frame-size", type=int, default=0)
     ap.add_argument("--gate-extra", default="")
     ap.add_argument("--skip-generate", action="store_true", help="只跑提示词+门禁（调试用）")
+    ap.add_argument("--agent", action="store_true", help="走 LangGraph A2 节点（agent_a2_node.py，skill 按 LangGraph 三级渐进披露加载）")
     a = ap.parse_args()
     load_dotenv()
+    if a.agent:
+        # LangGraph A2 节点：skill 按 LangGraph 方式运行时加载（metadata→SKILL.md→resources）
+        from agent_a2_node import DEFAULT_ROOTS, run_a2
+        job = {
+            "demand": a.demand, "style": a.style, "atype": a.type, "name": a.name,
+            "refs": a.ref, "baseline": a.baseline, "size": a.size, "transparent": a.transparent,
+            "out_dir": a.out_dir, "skill_name": "gpt-image", "skills_roots": DEFAULT_ROOTS,
+        }
+        state = run_a2(job, no_vision=False, skip_generate=a.skip_generate,
+                       max_tries=a.max_tries, threshold=a.threshold)
+        sys.exit(0 if state.get("final_status") == "PASS" else 1)
     out_dir = a.out_dir or os.path.join(REPO, "assets", "demo", "a2", a.name)
     os.makedirs(out_dir, exist_ok=True)
     raw = os.path.join(out_dir, "raw.png")

@@ -1,4 +1,4 @@
-# Agent Workflow 中心规划（spec/agent-workflow.md）
+﻿# Agent Workflow 中心规划（spec/agent-workflow.md）
 
 > 日期：2026-08-19 ｜ 触发：用户「项目中心应该是一个 agent workflow；先装齐插件/MCP/skills，再规划实现路线」
 > 更新：2026-08-19 ｜ 用户「视觉模型验收也是流水线的一部分」→ Vision Gate 正式化为 A3 门禁环节
@@ -51,6 +51,8 @@
 | character-animation-creator | A2 | 文本/参考图→64x64 像素角色 8 向 walk/attack 精灵表 |
 
 ### 2.2 MCP（已注册）
+
+> **Skill 运行时加载（2026-08-21）**：项目主体是 agent 驱动的 pipeline，skill 不静态写死。gpt-image skill 已按 **LangGraph 三级渐进披露**接入：`skills_library/gpt-image/`（注册表）+ `tools/skill_loader.py`（discover/select/load/resource）+ `tools/agent_a2_node.py`（A2 的 LangGraph StateGraph 节点：skill_context→design_prompt→generate→vision_gate→条件重试→archive）。`a2-pipeline.py --agent` 走该节点；详见 harness/skills/SKILL_gpt-image-2.md §9.4。
 | MCP | 归属环节 | 能力 | 状态 |
 |---|---|---|---|
 | **frame-ronin** | A2/A3/A4 | 22 个像素工具：生成（dalle/gemini/siliconflow 后端）、**抠图(matting)/像素化/GIF/精灵表/Godot 工程导出** | ✅ enabled（本地工具无需 key） |

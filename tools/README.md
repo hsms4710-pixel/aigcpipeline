@@ -1,4 +1,4 @@
-# tools/ 工具目录（AI 工作流 harness）
+﻿# tools/ 工具目录（AI 工作流 harness）
 
 > 更新时间：2026-08-19 ｜ 本文件是 tools/ 的索引：按功能归类，区分【核心】与【迭代/一次性】。
 > 规则：新增脚本时在本文件追加一行；一次性的迭代脚本保留（历史可追溯），但不再优先维护。
@@ -8,6 +8,8 @@
 | 工具 | 功能 | 备注 |
 |---|---|---|
 | **a2-pipeline.py** | A2 资产生成标准入口：视觉提示词 → 生图 → Vision Gate → 失败带问题修订重试 → manifest | 一条命令闭环，2026-08-19 |
+| **skill_loader.py** | LangGraph 风格 skill 加载器：discover / select / load / resource（三级渐进披露：元数据→SKILL.md→按需资源，多根 last-one-wins，路径安全） | skills_library/ 运行时加载 |
+| **agent_a2_node.py** | A2 资产生成 LangGraph StateGraph 节点：skill_context→design_prompt→generate→vision_gate→(条件重试)→archive | 与 a2-pipeline --agent 等价 |
 | **prompt_vision.py** | 视觉提示词设计师：gpt-5.5 视觉模型根据需求+风格基底+参考图生成/修订生图 prompt | A2 第一步 |
 | **vision_gate.py** | Vision Gate 正式门禁：类型化验收模板 + 多维评分 + threshold + manifest 写入 | A3 |
 | **vision_review.py** | 视觉验收基础调用（早期版本，vision_gate 的前身） | 基础 |

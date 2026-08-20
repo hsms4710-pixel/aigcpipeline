@@ -1,4 +1,4 @@
-# AIGC 开源工具集成清单 + 2D 地图类型调研（spec/aigc-tools-integration.md）
+﻿# AIGC 开源工具集成清单 + 2D 地图类型调研（spec/aigc-tools-integration.md）
 
 > 日期：2026-08-19 ｜ 触发：用户「找 GitHub 上很多 AIGC 开源工具并集成；holopix.cn/model 风格参考；2D 地图很多种（宝可梦式/八方旅人式）请参考」
 > 结论：已实际集成 **ai-pixel-art**（无缝瓦片/精灵/动画 + 像素化 + QA 门禁，经中转站 gpt-image-2 验证 OK）；整理可集成工具清单与集成方案；地图路线 = 宝可梦式网格俯视（H2 升级）→ 八方旅人式 2.5D（H3）。
@@ -12,7 +12,7 @@
 ## 二、GitHub AIGC 开源工具清单（可集成）
 
 ### 已集成（本仓库 tools/vendor/）
-| **GPT-Image2-Skill**（wuyoscar） | 生图方法论 skill | SKILL.md + craft + openai-cookbook + gallery 参考库；**已接入 prompt_vision 系统提示词 + image_backend size 校验 + a2-pipeline 默认 1024** | ✅ 2026-08-21（只 vendor skills/ 文本） |
+| **GPT-Image2-Skill**（wuyoscar） | 生图方法论 skill | SKILL.md + craft + openai-cookbook + gallery 参考库；**已按 LangGraph 三级渐进披露运行时加载**（skills_library/gpt-image + tools/skill_loader.py + agent_a2_node.py；image_backend size 校验 + a2-pipeline 默认 1024 保留） | ✅ 2026-08-21（只 vendor skills/ 文本） |
 | 工具 | 能力 | 集成状态 |
 |---|---|---|
 | **ai-pixel-art-image-generation**（ianlintner，MIT） | generate_sprite/tileset/animation + pixelize + **qa_report（palette/alpha/outline/baseline 硬门禁）** + Tiled TSX/TMJ 导出 + 变体控制 | ✅ 已克隆至 tools/vendor/ai-pixel-art；pixelize+qa 本地 PASS；generate_sprite 经中转站 key 验证 OK（QA 全 PASS）；openai_client.py 已打 TLS 补丁 |
@@ -101,3 +101,4 @@
 ### 待装（live 编辑器控制）
 - **godot-ai**（hi-godot，原 JackyChenGit）：120 ops/43 工具，需 Godot 编辑器插件 + uv + 编辑器常开 → 交互式编辑器操控时再装
 - **godot-ai 结论**：已装 skill/MCP（agent-sprite-forge / FrameRonin / ai-pixel-art / godot-assistant）+ 视觉提示词设计师（prompt_vision.py）；godot-ai 留作 live 编辑器会话的可选项。所有 MCP 集成方式走 openclaw mcp-portor 思路（用户已有 codex mcp 用法）。
+

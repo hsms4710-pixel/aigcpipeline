@@ -115,7 +115,7 @@ exactly. Style consistency first; do not invent a new style.
 > vendor：tools/vendor/GPT-Image2-Skill（skills/gpt-image/，含 SKILL.md / craft.md / openai-cookbook.md / gallery-*.md / generate.py）
 > 原则：**不要盲目生成图片**——生成前按本 skill 的方法论组织提示词与参数。
 
-### 9.1 提示词方法论（已注入 tools/prompt_vision.py 系统提示词）
+### 9.1 提示词方法论（2026-08-21 起不再硬编码：改由 LangGraph 三级渐进披露从 skills_library/gpt-image 运行时加载，见 §9.4）
 1. 结构先行：`画布/长宽比/布局 → 背景/场景 → 主体 → 关键细节 → 约束`，并声明用途（sprite sheet/地图/tileset/UI）
 2. 一个主角 + 配角（One hero, supporting cast）
 3. 场景密度 > 形容词：5-12 个具体名词 + 2-4 个材质/光照约束；禁空形容词
@@ -134,3 +134,23 @@ exactly. Style consistency first; do not invent a new style.
 
 ### 9.3 参考画廊（按资产类型先查再写）
 - gallery-pixel-art.md（像素画）｜ gallery-character-design.md（角色设定图）｜ gallery-isometric.md（等距地图/村庄）｜ gallery-gaming.md（游戏）｜ gallery-anime-and-manga.md（动漫）
+
+### 9.4 LangGraph skill 加载方式接入（2026-08-21，agent 驱动 pipeline 的运行时加载）
+> 项目主体是 agent 驱动的 AIGC pipeline，skill 不静态写死，而是按 **LangGraph / Deep Agents
+> 三级渐进披露**在运行时加载（docs.langchain.com/oss/python/deepagents/skills）：
+> **Level 1 元数据（name+description 注入 system prompt）→ Level 2 命中后读完整 SKILL.md → Level 3 按需读 references/scripts/assets**。
+
+- **注册表**：`skills_library/gpt-image/`（SKILL.md + references/ + scripts/，vendor 自 tools/vendor/GPT-Image2-Skill，同步命令见 skills_library/README.md）
+- **加载器**：`tools/skill_loader.py`
+  - `discover_skills()`：Level 1，扫描 SKILL.md frontmatter → 元数据块（SkillsMiddleware 行为）
+  - `select_skill_for_task(task)`：按 description 关键词匹配激活哪个 skill
+  - `load_skill(name)`：Level 2，完整 SKILL.md 正文
+  - `load_skill_resource(name, rel)`：Level 3，路径安全（realpath 校验，防越界）
+  - `build_skill_context()`：一键三级上下文（按资产类型自动选 gallery.md 路由索引 + 1 类别 gallery + craft.md，遵循 SKILL.md 的 reference loading policy：最小切片、绝不默认全量加载）
+- **A2 节点（LangGraph）**：`tools/agent_a2_node.py` 把 A2 流程做成 `StateGraph`：
+  `skill_context（加载 skill 三级内容）→ design_prompt（视觉模型用 skill 上下文生成提示词）→ generate → vision_gate（A3 门禁）→ 条件重试（PASS→archive / FAIL 未达上限→带 issues 修订重试）`
+  - `python tools/agent_a2_node.py --demand ... --type character --name xxx`（完整跑）
+  - `python tools/agent_a2_node.py --demand ... --dry-run`（离线验证图 + skill 三级加载，不调 API）
+- **传统入口兼容**：`tools/a2-pipeline.py` 增加 `--agent` 走 LangGraph 节点；不传 `--agent` 时 `prompt_vision.py` 同样经 `skill_loader` 组装三级上下文（不再内置方法论摘要）
+- **依赖**：`langgraph`（已装 runtime/.venv；env/README.md §3 已更新）
+- **CLI 冒烟**：`python tools/skill_loader.py --list` / `--load gpt-image` / `--resource gpt-image references/craft.md` / `--context gpt-image --task "宝可梦像素地图瓦片"`

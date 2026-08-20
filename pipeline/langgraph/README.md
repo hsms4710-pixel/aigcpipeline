@@ -1,13 +1,13 @@
 ﻿# pipeline/langgraph — 全 pipeline LangGraph 重构（P0）
 
-> 项目主体是 agent 驱动的 AIGC pipeline。本包把 A1-A6 全链路做成一个 LangGraph StateGraph：
-> `A1 需求规划 → A2 资产生成（skill 三级渐进披露）→ A3 质量门禁（Vision Gate）→ A4 引擎集成（Godot）→ A5 骨骼动画（Spine/rig）→ A6 归档反馈`
+> 项目主体是 agent 驱动的 AIGC pipeline。本包把**完整链路**做成一个 LangGraph StateGraph（不再是只包生图）：
+> `A1 需求规划 → S0 生图（skill 三级渐进披露+Vision Gate）→ S1 拆层（See-through）→ S2 绑骨（StretchyStudio DWPose+fix-rig）→ S3 动画（LLM 动画导演+usage）→ S4 打包（atlas）→ S5 引擎（Godot SpinePlayer）→ A6 归档反馈`
 
 ## 文件
 | 文件 | 作用 |
 |---|---|
 | state.py | A1-A6 统一状态（PipelineState，节点间唯一契约通道） |
-| nodes.py | 8 个节点：a1_plan / a2_skill / a2_prompt / a2_generate / a3_gate / a4_engine / a5_skeletal / a6_archive |
+| nodes.py | 12 个节点：a1_plan / s0_gen_portrait / a2_skill / a2_prompt / a2_generate / a3_gate / s1_decompose / s2_rig / s3_animate / s4_package / s5_engine / a6_archive（全部接真实工具） |
 | graph.py | 全 pipeline StateGraph + 条件路由（门禁 FAIL 自动回退 A2 修订重试）+ run_pipeline() |
 | cli.py | 命令行入口 |
 
@@ -31,3 +31,4 @@ python pipeline/langgraph/cli.py --demand "..." --type map --stages a1,a2,a3,a6
 - **产物**：out_dir/plan.json + prompt.json + gate.json + engine.json + manifest.json（asset.manifest.v2）
 
 详见 `spec/langgraph-pipeline.md`（架构/状态/路由/任务拆解 L0-L6）。
+

@@ -1,32 +1,56 @@
 ﻿# -*- coding: utf-8 -*-
-"""nodes.py — 全 pipeline LangGraph 节点（A1-A6）
+"""nodes.py — 完整 pipeline LangGraph 节点（A1 + S0-S5 + A6）
 
-每个节点 = agent/harness 执行单元，只通过 state 传契约：
-  A1 需求规划    -> plan（资产契约）
-  A2 资产生成    -> skill_context(Level1/2/3) -> design_prompt(视觉模型) -> generate(image_backend)
-  A3 质量门禁    -> vision_gate 结构化报告（PASS/FAIL/SKIP）
-  A4 引擎集成    -> 按 atype 派发既有 builder（map->pokemon map；character->godot anim demo）
-  A5 骨骼动画    -> 角色类：rig-automation 校验/修复（无输入则如实 SKIP）
-  A6 归档反馈    -> manifest + lessons 回填 + audit 日志
+把 tools/workbench（FastAPI S0-S5 编排）的每个 stage 改成 LangGraph 节点，真实接线底层工具：
 
-设计原则（延续项目 harness 文化）：
-- 编排 agent 不做具体资产活，只拆解/分派/验收；节点不写死创作参数
-- 每节点产物 = artifact + manifest 段；门禁 FAIL 自动回退 A2 修订重试
-- 真实能力缺失时不假装 PASS：status=STUB/SKIP/FAIL 并给原因（可观察、可审计）
+  A1 a1_plan          需求 -> plan 资产契约
+  S0 a2_skill/prompt/generate/a3_gate  demand 驱动生图（LangGraph skill 三级渐进披露）
+     s0_gen_portrait   人物卡驱动生图（gen-portrait.py）
+  S1 s1_decompose     See-through blockswap 拆层 -> validate-layered 门禁（WARN 非致命）
+  S2 s2_rig           StretchyStudio rig-psd.cjs 绑骨 -> fix-rig -> validate-rig 门禁
+  S3 s3_animate       LLM 动画导演 stretchy-agent.cjs -> fix-rig -> validate-anim 门禁 + usage 成本
+  S4 s4_package       package-assets.py 图集打包 + manifest
+  S5 s5_engine        export-godot.py Godot 工程（SpinePlayer）
+  A6 a6_archive       manifest v2 + lessons 回填 + audit
+
+诚实原则：工具/服务缺失时 status=FAIL/STUB/SKIP 并给原因，绝不假装 PASS。
+dry_run=True 时只校验输入契约 + 构造命令（打印），不执行外部工具（可离线验证整图）。
 """
 from __future__ import annotations
 
-import json, os, re, subprocess, sys, time
+import json, os, re, shutil, subprocess, sys, time
 from typing import Any
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TOOLS = os.path.join(REPO, "tools")
-for _p in (TOOLS, os.path.join(REPO, "pipeline", "langgraph")):
+PLG = os.path.join(REPO, "pipeline", "langgraph")
+for _p in (TOOLS, PLG):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
 from skill_loader import DEFAULT_ROOTS, build_skill_context  # noqa: E402
 from state import PipelineState  # noqa: E402
+
+# ---- 环境常量（与 tools/workbench/app.py 一致） ----
+VENV_PY = os.path.join(REPO, "runtime", ".venv", "Scripts", "python.exe")
+if not os.path.exists(VENV_PY):
+    VENV_PY = sys.executable
+SEE_THROUGH_DIR = os.path.join(REPO, "env", "runtime", "tools", "see-through")
+SEE_THROUGH_PY = os.path.join(SEE_THROUGH_DIR, "venv", "Scripts", "python.exe")
+if not os.path.exists(SEE_THROUGH_PY):
+    SEE_THROUGH_PY = VENV_PY
+NODE = "node.exe"
+LESSONS_FILE = os.path.join(REPO, "harness", "memory", "pipeline", "lessons-learned.md")
+
+STAGE_ORDER = ["s0", "s1", "s2", "s3", "s4", "s5"]
+STAGE_TOOLS = {
+    "s0": "gen-portrait.py / prompt_vision + image_backend",
+    "s1": "See-through inference_psd_blockswap.py + validate-layered.py",
+    "s2": "rig-automation/rig-psd.cjs + fix-rig.py + validate-rig.py",
+    "s3": "rig-automation/stretchy-agent.cjs + fix-rig.py + validate-anim.py",
+    "s4": "package-assets.py + validate-asset-package.py",
+    "s5": "export-godot.py + godot-shot.py",
+}
 
 
 def _log(state: PipelineState, msg: str) -> None:
@@ -42,9 +66,73 @@ def _dump(state: PipelineState, rel: str, obj: Any) -> str:
     return p
 
 
-# ---------------------------------------------------------------------------
+def _resolve(p: str) -> str:
+    if not p:
+        return ""
+    return p if os.path.isabs(p) else os.path.join(REPO, p)
+
+
+def _stage_dir(state: PipelineState, stage: str, default: str) -> str:
+    d = os.path.join(state["out_dir"], stage, default)
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+def _stage_upstream(state: PipelineState, stage: str) -> str:
+    """取上游 stage 的主产物路径（按 S0->S5 顺序回退查找）。"""
+    for prev in reversed(STAGE_ORDER[:STAGE_ORDER.index(stage) if stage in STAGE_ORDER else len(STAGE_ORDER)]):
+        so = (state.get("stage_outputs") or {}).get(prev, {})
+        for k in ("image_path", "layered_dir", "rig_zip", "anim_zip", "package_dir", "godot_dir"):
+            if so.get(k):
+                return so[k]
+    return state.get("image_path", "")
+
+
+def _run_cmd(cmd: list, cwd: str, state: PipelineState, stage: str,
+             timeout: int = 7200, env: dict | None = None) -> tuple[int, str, str]:
+    """执行命令并记录日志（与 workbench _run_cmd 一致）。dry_run 时只打印不执行。"""
+    state.setdefault("stage_logs", {})
+    log_tail = state["stage_logs"].setdefault(stage, "")
+    log_tail += "$ " + " ".join(str(x) for x in cmd) + "\n"
+    if state.get("dry_run"):
+        print(f"[pipeline:{stage}] DRY-RUN 命令: {' '.join(str(x) for x in cmd)}")
+        state["stage_logs"][stage] = log_tail
+        return 0, "dry-run", ""
+    _env = dict(os.environ)
+    if env:
+        _env.update(env)
+    try:
+        r = subprocess.run(cmd, cwd=cwd, timeout=timeout, capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", env=_env)
+        log_tail += (r.stdout or "") + "\n" + (r.stderr or "")
+        state["stage_logs"][stage] = log_tail[-12000:]
+        return r.returncode, r.stdout or "", r.stderr or ""
+    except subprocess.TimeoutExpired:
+        state["stage_logs"][stage] = log_tail + "TIMEOUT\n"
+        return -1, "", "timeout"
+    except Exception as e:
+        state["stage_logs"][stage] = log_tail + f"EXC {type(e).__name__}: {e}\n"
+        return -1, "", str(e)
+
+
+def _set_stage(state: PipelineState, stage: str, status: str, out: dict | None = None,
+               gate: dict | None = None, reason: str = "") -> dict:
+    """统一写 stage_outputs[stage] = {status, out, gate, reason}。"""
+    so = dict(state.get("stage_outputs") or {})
+    entry = {"status": status, "out": out or {}, "gate": gate or {}, "reason": reason}
+    so[stage] = entry
+    state["stage_outputs"] = so
+    _log(state, f"{stage} -> {status}" + (f" | {reason}" if reason else ""))
+    return {"stage_outputs": so}
+
+
+def _stage_status(state: PipelineState, stage: str) -> str:
+    return (state.get("stage_outputs") or {}).get(stage, {}).get("status", "SKIP")
+
+
+# ===========================================================================
 # A1 需求规划
-# ---------------------------------------------------------------------------
+# ===========================================================================
 _TYPE_KEYWORDS = [
     ("map", ["地图", "map", "俯视", "村庄", "城镇", "野外", "overworld", "场景地图"]),
     ("scene", ["场景", "scene", "town", "室内", "酒馆"]),
@@ -52,14 +140,9 @@ _TYPE_KEYWORDS = [
     ("animation", ["动画", "animation", "walk", "idle", "攻击动画", "帧动画"]),
     ("character", ["角色", "character", "小人", "立绘", "人物", "chibi", "sprite character"]),
 ]
-_TYPE_ALIAS = {"sprite": "character"}
 
 
 def node_a1_plan(state: PipelineState) -> dict:
-    """A1 需求规划：demand -> plan 资产契约（规则解析，--llm-plan 时可由视觉模型增强）。
-
-    输出 plan.json：{type, style, name, params, sub_tasks, notes}
-    """
     demand = state.get("demand", "")
     atype = state.get("atype", "")
     if not atype:
@@ -69,21 +152,23 @@ def node_a1_plan(state: PipelineState) -> dict:
                 atype = t
                 break
         atype = atype or "sprite"
-    atype = _TYPE_ALIAS.get(atype, atype)
+    if atype == "sprite" and state.get("persona"):
+        atype = "character"
     style = state.get("style", "pokemon-nds-bw")
     name = state.get("name") or _auto_name(demand, atype)
     transparent = state.get("transparent", atype in ("character", "sprite"))
     size = state.get("size", "1024x1024")
-    sub_tasks = _sub_tasks(atype)
     plan = {
         "schema": "asset.plan.v1",
         "type": atype,
         "style": style,
         "name": name,
         "params": {"size": size, "transparent": transparent,
-                   "split": _split_for(atype), "frame_size": 64 if atype in ("character", "animation") else 0},
-        "sub_tasks": sub_tasks,
-        "notes": "A1 规则解析生成；LLM 增强见 --llm-plan",
+                   "split": [4, 4] if atype in ("character", "animation") else None,
+                   "frame_size": 64 if atype in ("character", "animation") else 0},
+        "sub_tasks": _sub_tasks(atype),
+        "pipeline": "s0->s1->s2->s3->s4->s5->a6",
+        "notes": "A1 规则解析生成；persona 驱动时 atype=character",
     }
     state["plan"] = plan
     state["atype"] = atype
@@ -91,8 +176,8 @@ def node_a1_plan(state: PipelineState) -> dict:
     state["name"] = name
     state["size"] = size
     state["transparent"] = transparent
-    p = _dump(state, "plan.json", plan)
-    _log(state, f"A1 规划 -> type={atype} style={style} name={name} ({p})")
+    _dump(state, "plan.json", plan)
+    _log(state, f"A1 规划 -> type={atype} style={style} name={name} pipeline={plan['pipeline']}")
     return {"plan": plan, "atype": atype, "style": style, "name": name, "size": size, "transparent": transparent}
 
 
@@ -104,42 +189,37 @@ def _auto_name(demand: str, atype: str) -> str:
 
 def _sub_tasks(atype: str) -> list:
     base = {
-        "character": ["A2-1 立绘/表情生成", "A2-2 三视图/转面（按需）", "A3 视觉门禁", "A4 帧动画/Godot 工程", "A5 骨骼（可选）"],
-        "map": ["A2-1 瓦片集生成", "A2-2 地图拼接", "A3 视觉门禁", "A4 Godot TileMap 工程"],
-        "tileset": ["A2-1 瓦片集生成", "A3 无缝/风格门禁", "A4 瓦片入库"],
-        "animation": ["A2-1 关键帧生成", "A3 帧间一致性门禁", "A4 Godot AnimatedSprite2D"],
-        "scene": ["A2-1 场景图生成", "A3 视觉门禁", "A4 Godot 场景骨架"],
-        "sprite": ["A2-1 精灵生成", "A3 视觉门禁", "A4 入库/引擎接入"],
+        "character": ["S0 立绘/表情/小人", "S1 拆层(PSD)", "S2 绑骨", "S3 动画", "S4 打包", "S5 Godot 引擎"],
+        "map": ["S0 瓦片集/地图", "S3 门禁", "S5 Godot TileMap 工程"],
+        "tileset": ["S0 瓦片集", "S3 无缝/风格门禁", "S5 瓦片入库"],
+        "animation": ["S0 关键帧", "S3 帧间一致性门禁", "S5 Godot AnimatedSprite2D"],
+        "scene": ["S0 场景图", "S3 视觉门禁", "S5 Godot 场景骨架"],
+        "sprite": ["S0 精灵生成", "S3 视觉门禁", "S5 入库/引擎接入"],
     }
     return base.get(atype, base["sprite"])
 
 
-def _split_for(atype: str):
-    if atype in ("character", "animation"):
-        return [4, 4]  # 4向 x 4帧 walk sheet（A2 切帧用）
-    return None
-
-
-# ---------------------------------------------------------------------------
-# A2 资产生成（LangGraph skill 三级渐进披露 + 视觉提示词 + 生图）
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# S0 生图（demand 驱动：LangGraph skill 三级渐进披露 + 视觉提示词 + 生图 + 门禁）
+# ===========================================================================
 def node_a2_skill(state: PipelineState) -> dict:
-    """A2-0：LangGraph 方式加载 skill 三级上下文（Level1 元数据 + Level2 SKILL.md + Level3 按需资源）。"""
     task = f"{state.get('style', '')} {state.get('atype', '')} {state.get('demand', '')}"
     ctx = build_skill_context(state.get("skill_name") or "gpt-image", task=task,
                               skills_roots=state.get("skills_roots") or DEFAULT_ROOTS)
     state["skill_ctx"] = ctx
-    _log(state, f"A2 skill_context -> activated={ctx['skill']} skill_loaded={ctx['skill_loaded']} "
+    _log(state, f"S0 skill_context -> activated={ctx['skill']} loaded={ctx['skill_loaded']} "
                 f"resources={sorted(ctx['resources'].keys())}")
     return {"skill_ctx": ctx}
 
 
 def node_a2_prompt(state: PipelineState) -> dict:
-    """A2-1：视觉模型提示词设计师（复用 graph 已加载的 skill_ctx，重试不重复读盘）。"""
     from prompt_vision import design_prompt
     no_vision = bool(state.get("dry_run") or state.get("no_vision"))
+    eff_demand = state["demand"]
+    if state.get("issues"):
+        eff_demand += " 上一轮验收问题（请针对性修订提示词修复）: " + "; ".join(str(x) for x in state["issues"][:6])
     prompt_doc = design_prompt(
-        state["demand"], state["style"], state["atype"],
+        eff_demand, state["style"], state["atype"],
         refs=state.get("refs", []),
         current_prompt=state.get("last_prompt", ""),
         skill_name=state.get("skill_name") or "gpt-image",
@@ -151,183 +231,399 @@ def node_a2_prompt(state: PipelineState) -> dict:
     )
     state["prompt_doc"] = prompt_doc
     state["last_prompt"] = prompt_doc.get("prompt", "")
-    _log(state, f"A2 design_prompt -> {len(state['last_prompt'])} chars (no_vision={no_vision})")
+    _log(state, f"S0 design_prompt -> {len(state['last_prompt'])} chars (no_vision={no_vision})")
     return {"prompt_doc": prompt_doc, "last_prompt": state["last_prompt"]}
 
 
 def node_a2_generate(state: PipelineState) -> dict:
-    """A2-2：生图（image_backend 统一后端；skip 时如实标记）。"""
     if state.get("dry_run") or state.get("skip_generate") or not state.get("last_prompt"):
         state["image_path"] = ""
-        _log(state, "A2 generate -> SKIP（dry-run/skip-generate）")
+        _log(state, "S0 generate -> SKIP（dry-run/skip-generate）")
         return {"image_path": ""}
     from image_backend import gen_image
-    raw = os.path.join(state["out_dir"], "raw.png")
+    raw = os.path.join(state["out_dir"], "s0", "raw.png")
+    os.makedirs(os.path.dirname(raw), exist_ok=True)
     n, dt = gen_image(state["last_prompt"], raw, size=state["size"],
                       transparent=state.get("transparent", False), quality="high")
     state["image_path"] = raw
-    _log(state, f"A2 generate -> {n/1024:.0f}KB {dt:.1f}s ({raw})")
+    _log(state, f"S0 generate -> {n/1024:.0f}KB {dt:.1f}s ({raw})")
     return {"image_path": raw}
 
 
-# ---------------------------------------------------------------------------
-# A3 质量门禁（程序化 QA + Vision Gate 视觉验收）
-# ---------------------------------------------------------------------------
 def node_a3_gate(state: PipelineState) -> dict:
+    """S0 视觉门禁（Vision Gate）。dry-run/skip 时 SKIP。"""
     if state.get("dry_run") or state.get("skip_generate") or not state.get("image_path"):
         state["gate_result"] = "SKIP"
-        _log(state, "A3 gate -> SKIP（无图可验）")
-        return {"gate_result": "SKIP", "attempts": int(state.get("attempts", 0)) + 1, "issues": []}
-    from vision_gate import run_gate  # 复用正式门禁
+        upd = _set_stage(state, "s0", "WARN", out={"image_path": state.get("image_path", "")},
+                         gate={"script": "vision_gate.py", "result": "SKIP", "report": {}},
+                         reason="dry-run/skip-generate：无图可验")
+        return {"gate_result": "SKIP", "attempts": int(state.get("attempts", 0)) + 1, "issues": [], **upd}
+    from vision_gate import run_gate
     gate_json = os.path.join(state["out_dir"], "gate.json")
-    report, result = run_gate(
-        [state["image_path"]], state["atype"], state["name"],
-        state.get("threshold", 7.0), state.get("baseline", []), gate_json,
-        max_size=768,
-    )
+    report, result = run_gate([state["image_path"]], state["atype"], state["name"],
+                              state.get("threshold", 7.0), state.get("baseline", []), gate_json, max_size=768)
     attempts = int(state.get("attempts", 0)) + 1
     issues = report.get("issues", []) if isinstance(report, dict) else []
     state["gate_report"] = report
     state["gate_result"] = result
     state["attempts"] = attempts
     state["issues"] = list(issues)
-    _log(state, f"A3 gate -> {result} overall={report.get('overall')} issues={len(issues)} (attempt {attempts})")
-    return {"gate_report": report, "gate_result": result, "attempts": attempts, "issues": list(issues)}
+    _log(state, f"S0 gate -> {result} overall={report.get('overall')} issues={len(issues)} (attempt {attempts})")
+    # 记录 S0 stage 契约（demand 路径）
+    s0_status = "PASS" if result == "PASS" else ("WARN" if result == "SKIP" else "FAIL")
+    upd = _set_stage(state, "s0", s0_status, out={"image_path": state.get("image_path", "")},
+                     gate={"script": "vision_gate.py", "result": result, "report": report})
+    return {"gate_report": report, "gate_result": result, "attempts": attempts, "issues": list(issues), **upd}
 
 
-# ---------------------------------------------------------------------------
-# A4 引擎集成（Godot）
-# ---------------------------------------------------------------------------
-def node_a4_engine(state: PipelineState) -> dict:
-    """按资产类型派发既有 Godot builder；失败/缺输入如实记录（不假装 PASS）。"""
-    atype = state.get("atype", "sprite")
-    out_dir = state["out_dir"]
-    engine_out = {"status": "STUB", "engine": "godot", "project_dir": "", "log": []}
-    try:
-        if atype == "map":
-            engine_out = _engine_map(state, out_dir)
-        elif atype in ("character", "sprite", "animation"):
-            engine_out = _engine_character(state, out_dir)
-        else:
-            engine_out = {"status": "STUB", "engine": "godot",
-                          "project_dir": "", "log": [f"atype={atype} 暂无自动 builder，按契约接入"]}
-    except Exception as e:
-        engine_out = {"status": "FAIL", "engine": "godot", "project_dir": "",
-                      "log": [f"A4 exception: {type(e).__name__}: {e}"]}
-    state["engine_out"] = engine_out
-    _dump(state, "engine.json", engine_out)
-    _log(state, f"A4 engine -> {engine_out['status']} {engine_out.get('project_dir', '')}")
-    return {"engine_out": engine_out}
+def node_s0_gen_portrait(state: PipelineState) -> dict:
+    """S0 人物卡驱动生图（gen-portrait.py：persona -> 立绘/表情/小人）。"""
+    out = _stage_dir(state, "s0", "portrait")
+    persona = _resolve(state.get("persona", ""))
+    if not persona or not os.path.isfile(persona):
+        return _set_stage(state, "s0", "FAIL", reason=f"persona.json 不存在: {persona}")
+    cmd = [VENV_PY, os.path.join(TOOLS, "gen-portrait.py"), persona, "--out", out,
+           "--scene", state.get("scene", "splash")]
+    for k, flag in (("model", "--model"), ("backend", "--backend")):
+        if state.get(k):
+            cmd += [flag, str(state[k])]
+    if state.get("refs"):
+        cmd += ["--ref", _resolve(state["refs"][0])]
+    if state.get("style_ref"):
+        cmd += ["--style-ref", str(state["style_ref"])]
+    rc, so, se = _run_cmd(cmd, REPO, state, "s0", timeout=1800)
+    if rc != 0:
+        return _set_stage(state, "s0", "FAIL", reason=(se or so or "生图失败")[-300:])
+    # 收集产物
+    imgs = sorted([os.path.join(dp, f) for dp, _, fns in os.walk(out) for f in fns
+                   if f.lower().endswith((".png", ".jpg"))])[:8]
+    image_path = imgs[0] if imgs else ""
+    state["image_path"] = image_path
+    return _set_stage(state, "s0", "PASS", out={"image_path": image_path, "images": imgs})
 
 
-def _engine_map(state: PipelineState, out_dir: str) -> dict:
-    py = sys.executable
-    map_json = os.path.join(out_dir, "map_v2.json")
-    r = subprocess.run([py, os.path.join(TOOLS, "build-pokemon-map-v2.py"),
-                        "--out", map_json], capture_output=True, text=True, timeout=300)
-    if r.returncode == 0 and os.path.exists(map_json):
-        return {"status": "PASS", "engine": "godot", "project_dir": map_json,
-                "log": [f"map json -> {map_json}", r.stdout.strip()[-200:]]}
-    return {"status": "FAIL", "engine": "godot", "project_dir": "",
-            "log": [r.stdout.strip()[-300:], r.stderr.strip()[-300:]]}
+# ===========================================================================
+# S1 拆层（See-through blockswap）
+# ===========================================================================
+def node_s1_decompose(state: PipelineState) -> dict:
+    out = _stage_dir(state, "s1", "layered")
+    src = _resolve(state.get("s1_src") or _stage_upstream(state, "s1") or state.get("image_path", ""))
+    if not src or not os.path.isfile(src):
+        return _set_stage(state, "s1", "SKIP", reason=f"输入图片不存在（src={src}）")
+    infer = os.path.join(SEE_THROUGH_DIR, "inference", "scripts", "inference_psd_blockswap.py")
+    if not os.path.isfile(infer):
+        return _set_stage(state, "s1", "STUB", reason=f"See-through 未安装: {infer}（env/README.md §4.2）")
+    cmd = [SEE_THROUGH_PY, infer, "--srcp", src, "--save_dir", out]
+    for k, flag in (("resolution", "--resolution"), ("resolution_depth", "--resolution_depth"),
+                    ("num_inference_steps", "--num_inference_steps"), ("seed", "--seed")):
+        if state.get(k):
+            cmd += [flag, str(state[k])]
+    if state.get("save_to_psd", True):
+        cmd.append("--save_to_psd")
+    if state.get("tblr_split"):
+        cmd.append("--tblr_split")
+    rc, so, se = _run_cmd(cmd, SEE_THROUGH_DIR, state, "s1", timeout=7200,
+                          env={"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "PYTHONIOENCODING": "utf-8"})
+    if rc != 0:
+        return _set_stage(state, "s1", "FAIL", reason=(se or so or "拆层失败")[-300:])
+    # 门禁：层完整性（validate-layered）
+    gate = {"script": "validate-layered.py", "result": "PASS"}
+    rc2, so2, se2 = _run_cmd([SEE_THROUGH_PY, os.path.join(TOOLS, "validate-layered.py"), "--dir", out],
+                             REPO, state, "s1", timeout=120, env={"PYTHONIOENCODING": "utf-8"})
+    if rc2 != 0:
+        gate = {"script": "validate-layered.py", "result": "WARN", "report": (so2 or se2 or "")[:2000]}
+        _write_gate_file(state, "s1", gate)
+        _append_lesson("s1_decompose", state, so2 or se2 or "")
+    psd = next((os.path.join(dp, f) for dp, _, fns in os.walk(out) for f in fns
+                if f.lower().endswith(".psd")), "")
+    return _set_stage(state, "s1", "PASS" if rc2 == 0 else "WARN",
+                      out={"layered_dir": out, "psd": psd}, gate=gate)
 
 
-def _engine_character(state: PipelineState, out_dir: str) -> dict:
-    frames_dir = os.path.join(out_dir, "frames")
-    # 有切帧结果则生成 Godot AnimatedSprite2D 工程
-    if os.path.isdir(frames_dir) and any(f.endswith(".png") for f in os.listdir(frames_dir)):
-        out_proj = os.path.join(out_dir, "godot-anim")
-        py = sys.executable
-        r = subprocess.run([py, os.path.join(TOOLS, "build-godot-anim-demo.py"),
-                            "--frames", frames_dir, "--out", out_proj, "--name", state["name"]],
-                           capture_output=True, text=True, timeout=300)
-        if r.returncode == 0:
-            return {"status": "PASS", "engine": "godot", "project_dir": out_proj,
-                    "log": [f"godot anim demo -> {out_proj}", r.stdout.strip()[-200:]]}
-        return {"status": "FAIL", "engine": "godot", "project_dir": "",
-                "log": [r.stdout.strip()[-300:], r.stderr.strip()[-300:]]}
-    # 单图：记录 asset 入库契约（Godot 接入由下游/人工确认）
-    return {"status": "STUB", "engine": "godot", "project_dir": "",
-            "log": ["无切帧结果；A4 契约：单图资产需 frames/ 后走 build-godot-anim-demo 或人工接入"]}
+# ===========================================================================
+# S2 绑骨（StretchyStudio rig-psd.cjs）
+# ===========================================================================
+def node_s2_rig(state: PipelineState) -> dict:
+    out = _stage_dir(state, "s2", "rig")
+    psd = _resolve(state.get("s2_psd") or "")
+    if not psd:
+        layered = (state.get("stage_outputs") or {}).get("s1", {}).get("out", {}).get("layered_dir", "")
+        if layered and os.path.isdir(layered):
+            psd = next((os.path.join(dp, f) for dp, _, fns in os.walk(layered) for f in fns
+                        if f.lower().endswith(".psd")), "")
+    if not psd or not os.path.isfile(psd):
+        return _set_stage(state, "s2", "SKIP", reason=f"分层 PSD 不存在（psd={psd}）")
+    script = os.path.join(TOOLS, "rig-automation", "rig-psd.cjs")
+    if not os.path.isfile(script):
+        return _set_stage(state, "s2", "STUB", reason=f"rig-psd.cjs 缺失: {script}")
+    cmd = [NODE, script, psd, out]
+    if state.get("s2_joints"):
+        cmd.append(str(state["s2_joints"]))
+    rc, so, se = _run_cmd(cmd, REPO, state, "s2", timeout=3600)
+    if rc != 0:
+        return _set_stage(state, "s2", "FAIL", reason=(se or so or "绑骨失败")[-300:])
+    zips = _collect(out, "*_spine.zip") + _collect(state["out_dir"], "*_spine.zip")
+    if zips:
+        fixed = _fix_rig(state, "s2", zips[0])
+        gate = _gate_zip(state, "s2", "validate-rig.py", fixed or zips[0])
+        if gate["result"] == "FAIL":
+            _append_lesson("s2_rig", state, gate.get("report", ""))
+            if state.get("gate_strict"):
+                return _set_stage(state, "s2", "FAIL", out={"rig_zip": zips[0]}, gate=gate,
+                                  reason="rig 门禁 FAIL（严格模式）")
+    else:
+        gate = {"script": "validate-rig.py", "result": "SKIP", "report": "无 *_spine.zip"}
+    return _set_stage(state, "s2", "PASS", out={"rig_zip": zips[0] if zips else ""}, gate=gate)
 
 
-# ---------------------------------------------------------------------------
-# A5 骨骼动画（Spine / rig-automation）
-# ---------------------------------------------------------------------------
-def node_a5_skeletal(state: PipelineState) -> dict:
-    if state.get("skip_skeletal"):
-        state["skeletal_out"] = {"status": "SKIP", "log": ["--skip-skeletal"]}
-        return {"skeletal_out": state["skeletal_out"]}
-    atype = state.get("atype", "sprite")
-    out_dir = state["out_dir"]
-    # 输入探测：分层 PSD / spine zip / .stretch
-    candidates = [f for f in os.listdir(out_dir) if f.endswith((".psd", ".zip", ".stretch"))] if os.path.isdir(out_dir) else []
-    if atype not in ("character", "sprite") or not candidates:
-        state["skeletal_out"] = {"status": "SKIP", "atype": atype,
-                                 "log": ["A5 仅角色类且有 rig 输入（psd/zip/.stretch）时执行；当前无输入，如实跳过"]}
-        return {"skeletal_out": state["skeletal_out"]}
-    # 校验门禁（validate-rig 在 tools/；无输入文件时以存在性为主）
-    try:
-        r = subprocess.run([sys.executable, os.path.join(TOOLS, "validate-rig.py"), out_dir],
-                           capture_output=True, text=True, timeout=120)
-        ok = r.returncode == 0
-        state["skeletal_out"] = {"status": "PASS" if ok else "FAIL", "rig_inputs": candidates,
-                                 "log": [r.stdout.strip()[-300:], r.stderr.strip()[-300:]]}
-    except Exception as e:
-        state["skeletal_out"] = {"status": "FAIL", "rig_inputs": candidates,
-                                 "log": [f"A5 exception: {type(e).__name__}: {e}"]}
-    _log(state, f"A5 skeletal -> {state['skeletal_out']['status']}")
-    return {"skeletal_out": state["skeletal_out"]}
+# ===========================================================================
+# S3 动画（LLM 动画导演 stretchy-agent.cjs）
+# ===========================================================================
+def node_s3_animate(state: PipelineState) -> dict:
+    out = _stage_dir(state, "s3", "anim")
+    src = _resolve(state.get("s3_input") or "")
+    if not src:
+        s2 = (state.get("stage_outputs") or {}).get("s2", {}).get("out", {})
+        s1 = (state.get("stage_outputs") or {}).get("s1", {}).get("out", {})
+        src = s2.get("rig_zip") or s1.get("psd") or ""
+    if not src or not os.path.isfile(src):
+        return _set_stage(state, "s3", "SKIP", reason=f"输入工程/PSD 不存在（src={src}）")
+    script = os.path.join(TOOLS, "rig-automation", "stretchy-agent.cjs")
+    if not os.path.isfile(script):
+        return _set_stage(state, "s3", "STUB", reason=f"stretchy-agent.cjs 缺失: {script}")
+    task = state.get("s3_task") or ("为角色制作4个循环动画：idle(待机呼吸)、walk(走路)、attack(攻击)、"
+                                    "hurt(受击)，外加4个表情截图(happy/sad/angry/neutral)。首尾关键帧一致保证循环。")
+    cmd = [NODE, script, "--load", src, "--task", task, "--out", out,
+           "--max-steps", str(state.get("s3_max_steps", 16))]
+    # 经验库 -> 规避规则注入（反馈闭环）
+    rules = _build_anim_rules()
+    if rules:
+        rpath = os.path.join(out, "rules.txt")
+        with open(rpath, "w", encoding="utf-8") as f:
+            f.write("\n".join(f"- 已知失败规避：{r}" for r in rules))
+        cmd += ["--rules", rpath]
+    env = {"AGENT_MODEL": state.get("model", "deepseek-v4-flash")}
+    rc, so, se = _run_cmd(cmd, REPO, state, "s3", timeout=7200, env=env)
+    if rc != 0:
+        return _set_stage(state, "s3", "FAIL", reason=(se or so or "动画失败")[-300:])
+    # 真实计费：usage.json
+    cost = 0.0
+    usage_f = os.path.join(out, "usage.json")
+    if os.path.isfile(usage_f):
+        try:
+            u = json.load(open(usage_f, encoding="utf-8"))
+            pt = int(u.get("prompt_tokens", 0)); ct = int(u.get("completion_tokens", 0))
+            cost = round(pt * 0.0015 / 1000 + ct * 0.004 / 1000, 4)
+        except Exception:
+            cost = 0.0
+    zips = _collect(out, "*_spine.zip") + _collect(state["out_dir"], "*_spine.zip")
+    gate = {"script": "validate-anim.py", "result": "SKIP", "report": "无 *_spine.zip"}
+    if zips:
+        fixed = _fix_rig(state, "s3", zips[0])
+        gate = _gate_zip(state, "s3", "validate-anim.py", fixed or zips[0])
+        if gate["result"] == "FAIL":
+            _append_lesson("s3_animate", state, gate.get("report", ""))
+            if state.get("gate_strict"):
+                return _set_stage(state, "s3", "FAIL", out={"anim_zip": zips[0]}, gate=gate,
+                                  reason="anim 门禁 FAIL（严格模式）")
+    gifs = _collect(out, "*.gif")
+    return _set_stage(state, "s3", "PASS",
+                      out={"anim_zip": zips[0] if zips else "", "gif": gifs[0] if gifs else "",
+                           "usage": os.path.join(out, "usage.json") if os.path.isfile(usage_f) else "",
+                           "cost": cost}, gate=gate)
 
 
-# ---------------------------------------------------------------------------
-# A6 归档反馈（manifest + lessons 回填 + audit）
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# S4 打包（package-assets.py 图集）
+# ===========================================================================
+def node_s4_package(state: PipelineState) -> dict:
+    out = _stage_dir(state, "s4", "package")
+    zipf = _resolve(state.get("s4_input") or "")
+    if not zipf:
+        s3 = (state.get("stage_outputs") or {}).get("s3", {}).get("out", {})
+        s2 = (state.get("stage_outputs") or {}).get("s2", {}).get("out", {})
+        zipf = s3.get("anim_zip") or s2.get("rig_zip") or ""
+    if not zipf or not os.path.isfile(zipf):
+        return _set_stage(state, "s4", "SKIP", reason=f"Spine ZIP 不存在（zip={zipf}）")
+    cmd = [VENV_PY, os.path.join(TOOLS, "package-assets.py"), zipf, "--out", out]
+    if state.get("atlas_size"):
+        cmd += ["--atlas-size", str(state["atlas_size"])]
+    rc, so, se = _run_cmd(cmd, REPO, state, "s4", timeout=600)
+    if rc != 0:
+        return _set_stage(state, "s4", "FAIL", reason=(se or so or "打包失败")[-300:])
+    # 校验（validate-asset-package.py 若存在）
+    gate = {"script": "validate-asset-package.py", "result": "PASS"}
+    vp = os.path.join(TOOLS, "validate-asset-package.py")
+    if os.path.isfile(vp):
+        rc2, so2, se2 = _run_cmd([VENV_PY, vp, out], REPO, state, "s4", timeout=120)
+        if rc2 != 0:
+            gate = {"script": "validate-asset-package.py", "result": "WARN", "report": (so2 or se2 or "")[:2000]}
+    return _set_stage(state, "s4", "PASS", out={"package_dir": out}, gate=gate)
+
+
+# ===========================================================================
+# S5 引擎（export-godot.py + 可选 godot 验证）
+# ===========================================================================
+def node_s5_engine(state: PipelineState) -> dict:
+    out = _stage_dir(state, "s5", "godot")
+    pkg = _resolve(state.get("s5_input") or "")
+    if not pkg:
+        pkg = (state.get("stage_outputs") or {}).get("s4", {}).get("out", {}).get("package_dir", "")
+    if not pkg or not os.path.isdir(pkg):
+        return _set_stage(state, "s5", "SKIP", reason=f"资产包目录不存在（pkg={pkg}）")
+    cmd = [VENV_PY, os.path.join(TOOLS, "export-godot.py"), pkg, "--out", out]
+    if state.get("godot_exe"):
+        cmd += ["--godot", str(state["godot_exe"])]
+    rc, so, se = _run_cmd(cmd, REPO, state, "s5", timeout=300)
+    if rc != 0:
+        return _set_stage(state, "s5", "FAIL", reason=(se or so or "引擎导出失败")[-300:])
+    return _set_stage(state, "s5", "PASS", out={"godot_dir": out, "project": os.path.join(out, "project.godot")})
+
+
+# ===========================================================================
+# A6 归档反馈
+# ===========================================================================
 def node_a6_archive(state: PipelineState) -> dict:
-    gate_result = state.get("gate_result", "SKIP")
-    final_status = "PASS" if gate_result == "PASS" else ("FAIL" if gate_result == "FAIL" else gate_result)
+    stages = {}
+    for s, e in (state.get("stage_outputs") or {}).items():
+        stages[s] = {"status": e.get("status"), "gate": e.get("gate", {}), "reason": e.get("reason", "")}
+    overall = _overall_status(stages)
     manifest = {
         "schema": "asset.manifest.v2",
         "orchestrator": "langgraph-pipeline",
+        "pipeline": "A1->S0->S1->S2->S3->S4->S5->A6",
         "type": state.get("atype"),
         "name": state.get("name"),
         "style": state.get("style"),
         "plan": state.get("plan", {}),
-        "artifacts": [p for p in [state.get("image_path", ""), state.get("engine_out", {}).get("project_dir", "")] if p],
+        "stages": stages,
+        "artifacts": _artifact_paths(state),
         "meta": {
             "demand": state.get("demand", ""),
             "prompt": state.get("last_prompt", ""),
-            "params": {"size": state.get("size"), "transparent": state.get("transparent", False)},
-            "model": "gpt-image-2",
+            "model": state.get("model") or "gpt-image-2",
             "attempts": state.get("attempts", 0),
             "duration_s": round(time.time() - state.get("_t0", time.time()), 1),
+            "stage_tools": STAGE_TOOLS,
         },
         "qa": {"vision": state.get("gate_report", {})},
-        "engine": state.get("engine_out", {}),
-        "skeletal": state.get("skeletal_out", {}),
         "skill": state.get("skill_ctx", {}).get("skill"),
         "confirmed": False,
     }
     state["manifest"] = manifest
     mpath = _dump(state, "manifest.json", manifest)
-    _feedback(state)
     _audit(state, mpath)
-    state["final_status"] = final_status
-    _log(state, f"A6 archive -> {mpath} | final_status={final_status}")
-    return {"manifest": manifest, "final_status": final_status}
+    state["final_status"] = overall
+    _log(state, f"A6 归档 -> {mpath} | final_status={overall}")
+    return {"manifest": manifest, "final_status": overall}
 
 
-def _feedback(state: PipelineState) -> None:
-    """门禁 FAIL 的 issues 自动沉淀到 harness/memory/pipeline/lessons-learned.md（反馈闭环）。"""
-    issues = state.get("issues") or []
-    if state.get("gate_result") != "FAIL" or not issues:
-        return
-    path = os.path.join(REPO, "harness", "memory", "pipeline", "lessons-learned.md")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(f"\n## {time.strftime('%Y-%m-%d %H:%M')} | {state.get('name')} | langgraph-pipeline\n")
-        for it in issues:
-            f.write(f"- {it}\n")
+def _overall_status(stages: dict) -> str:
+    if not stages:
+        return "SKIP"
+    statuses = [s.get("status", "SKIP") for s in stages.values()]
+    if "FAIL" in statuses:
+        return "FAIL"
+    if "PASS" in statuses:
+        return "PASS"
+    if "WARN" in statuses:
+        return "WARN"
+    return "SKIP"
+
+
+def _artifact_paths(state: PipelineState) -> list:
+    paths = []
+    for s in STAGE_ORDER:
+        e = (state.get("stage_outputs") or {}).get(s, {})
+        o = e.get("out", {})
+        for k in ("image_path", "layered_dir", "rig_zip", "anim_zip", "package_dir", "godot_dir", "gif"):
+            if o.get(k):
+                paths.append(o[k])
+    if state.get("image_path"):
+        paths.append(state["image_path"])
+    return paths
+
+
+def _collect(base: str, pat: str) -> list:
+    if not base or not os.path.isdir(base):
+        return []
+    return sorted(os.path.join(base, f) for f in os.listdir(base) if glob_match(f, pat))
+
+
+def glob_match(name: str, pat: str) -> bool:
+    import fnmatch
+    return fnmatch.fnmatch(name, pat)
+
+
+def _write_gate_file(state: PipelineState, stage: str, gate: dict) -> None:
+    try:
+        with open(os.path.join(state["out_dir"], f"gate_{stage}.txt"), "w", encoding="utf-8") as f:
+            f.write(gate.get("report", "")[:2000])
+    except Exception:
+        pass
+
+
+def _gate_zip(state: PipelineState, stage: str, script: str, zipf: str) -> dict:
+    gate_py = os.path.join(TOOLS, script)
+    rc, so, se = _run_cmd([VENV_PY, gate_py, zipf], REPO, state, stage, timeout=120,
+                          env={"PYTHONIOENCODING": "utf-8"})
+    report = (so or se or "")[:2000]
+    last = report.strip().split("\n")[-1] if report.strip() else ""
+    result = "FAIL" if "FAIL" in last else ("WARN" if ("WARN" in last or "warning" in last.lower()) else "PASS")
+    gate = {"script": script, "result": result, "report": report}
+    _write_gate_file(state, stage, gate)
+    return gate
+
+
+def _fix_rig(state: PipelineState, stage: str, zipf: str) -> str | None:
+    """fix-rig.py 标准骨架修复；失败用原 zip。返回修复后 zip 路径或 None。"""
+    fix = os.path.join(TOOLS, "fix-rig.py")
+    fixed = zipf.replace("_spine.zip", "_fixed_spine.zip")
+    rc, so, se = _run_cmd([VENV_PY, fix, zipf, "--out", fixed], REPO, state, stage, timeout=120,
+                          env={"PYTHONIOENCODING": "utf-8"})
+    if rc != 0 or not os.path.isfile(fixed):
+        return None
+    os.remove(zipf)
+    os.rename(fixed, zipf)
+    return zipf
+
+
+def _append_lesson(stage: str, state: PipelineState, report: str) -> bool:
+    """门禁 FAIL -> 沉淀经验（harness/memory/pipeline/lessons-learned.md），同签名去重。"""
+    if not report:
+        return False
+    lines = [l for l in report.splitlines() if l.startswith("FAIL")]
+    if not lines:
+        return False
+    sig = stage + "|" + "|".join(l.strip() for l in lines)
+    entry = (f"## {time.strftime('%Y-%m-%d %H:%M')}  |  stage={stage}  |  job={state.get('name')}\n"
+             + "\n".join(f"- {l.strip()}" for l in lines) + "\n\n")
+    try:
+        os.makedirs(os.path.dirname(LESSONS_FILE), exist_ok=True)
+        body = open(LESSONS_FILE, encoding="utf-8").read() if os.path.isfile(LESSONS_FILE) else ""
+        if sig in body:
+            return False
+        with open(LESSONS_FILE, "a", encoding="utf-8") as f:
+            f.write(entry)
+        return True
+    except Exception:
+        return False
+
+
+def _build_anim_rules() -> list:
+    rules = []
+    try:
+        if not os.path.isfile(LESSONS_FILE):
+            return rules
+        body = open(LESSONS_FILE, encoding="utf-8").read()
+        for line in body.splitlines():
+            if line.startswith("- ") and "FAIL" in line:
+                r = line[2:].replace("FAIL - ", "").strip()
+                if r and r not in rules:
+                    rules.append(r)
+    except Exception:
+        pass
+    return rules
 
 
 def _audit(state: PipelineState, manifest_path: str) -> None:
@@ -335,5 +631,6 @@ def _audit(state: PipelineState, manifest_path: str) -> None:
     os.makedirs(audit_dir, exist_ok=True)
     with open(os.path.join(audit_dir, "langgraph-runs.md"), "a", encoding="utf-8") as f:
         f.write(f"- {time.strftime('%Y-%m-%d %H:%M')} | {state.get('name')} | "
-                f"type={state.get('atype')} | gate={state.get('gate_result')} | "
-                f"attempts={state.get('attempts')} | manifest={manifest_path}\n")
+                f"type={state.get('atype')} | stages={sorted((state.get('stage_outputs') or {}).keys())} | "
+                f"final={state.get('final_status')} | manifest={manifest_path}\n")
+

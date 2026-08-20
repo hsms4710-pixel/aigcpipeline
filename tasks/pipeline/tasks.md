@@ -11,7 +11,8 @@
 | L0 | 立项：spec/langgraph-pipeline.md + 任务表 + langgraph 依赖（runtime/.venv） | done | 权威文档 + 本表 |
 | L1 | pipeline/langgraph 包：state / nodes / graph / cli（A1-A6 全节点接线既有工具） | done | 离线冒烟：--dry-run 图编译 + skill 三级加载 OK |
 | L2 | skill 三级渐进披露接入 A2（skills_library + skill_loader + design_prompt(skill_ctx 复用)） | done | 按类型自动选 references（character/map/pixel 验证） |
-| L3 | 门禁闭环：a3_gate 条件路由 + FAIL 带 issues 自动回退 A2 修订重试 | done | 全图离线跑 A1→A6（--no-vision --skip-generate）产物齐全（plan/prompt/manifest v2） |
+| L3 | S0 门禁闭环：a3_gate 条件路由 + FAIL 带 issues 自动回退 A2 修订重试 | done | 全图离线跑 A1→S5→A6（--dry-run）产物齐全（plan/prompt/manifest v2） |
+| L3.5 | **完整 S0-S5 接线**：拆层(See-through)/绑骨(rig-psd+fix-rig)/动画(stretchy-agent+usage)/打包(package-assets)/引擎(export-godot) 全节点接真实工具 + 各 stage 门禁 + 反馈闭环 | done | 整图编译+路由+命令构造离线验证通过（--dry-run） |
 | L4 | 子图化：A5 骨骼（拆层→绑骨→Spine 动画）做成子图挂载 | todo | See-Through→StretchyStudio→Spine 子图 |
 | L5 | 可观察性：job 记录/断点续跑/成本核算 + 前端接线 | todo | job.json + 续跑 |
 | L6 | workbench 后端改调 LangGraph 图（前端 10 Tab 不变，S0-S5 映射 A 节点子视图） | todo | 一键全链路走图 |

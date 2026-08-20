@@ -3,8 +3,8 @@
 > **权威文档：`spec/langgraph-pipeline.md`** ｜ 任务跟踪：`tasks/pipeline/tasks.md`（L0-L6）
 > 定位：项目主体是 agent 驱动的 AIGC pipeline，把「脚本 + FastAPI workbench 编排」重构为 **LangGraph StateGraph 全链路**：
 > `A1 需求规划 → A2 资产生成（skill 三级渐进披露加载）→ A3 质量门禁（Vision Gate）→ A4 引擎集成（Godot）→ A5 骨骼动画（Spine/rig）→ A6 归档反馈`
-> 实现：`pipeline/langgraph/`（state/nodes/graph/cli）。门禁 FAIL 自动回退 A2 修订重试；节点只认资产契约；可观察/可审计/可断点续跑。
-> 进度：L0-L3 ✅（A1-A6 全节点接线 + skill 加载 + 门禁闭环，离线冒烟通过）；L4-L6 📋（子图化/可观察性/workbench 接线）
+> 实现：`pipeline/langgraph/`（state/nodes/graph/cli）。**S0 生图→S1 拆层→S2 绑骨→S3 动画→S4 打包→S5 引擎 全部接线真实工具**（gen-portrait / See-through / StretchyStudio / LLM 动画导演 / package-assets / export-godot / validate-*）；门禁 FAIL 自动沉淀经验并回退重试；节点只认资产契约；可观察/可审计/可断点续跑。
+> 进度：L0-L3.5 ✅（A1 + S0-S5 全节点接线真实工具 + skill 三级渐进披露 + 各 stage 门禁闭环，离线冒烟通过）；L4-L6 📋（真实跑通/可观察性/workbench 接线）
 > **gate**：`--dry-run` 图编译 + skill 三级加载 OK；全图离线跑 A1→A6 产物齐全；中转站恢复后真实跑 threshold 7.0
 
 
@@ -115,3 +115,4 @@ spec（范围+借鉴+契约）→ tasks 拆解 → harness/skill 就位 → 开�
 | W2.1 地图打磨 | 全景 gate 6 / 游戏内 5（画风7/可玩7/统一7） | ⏳ 未达 7，待办：过渡瓦片/路标地标/统一描边 |
 | W3 角色/动画全链 | 8向精灵→行动画→Spine（A 路线） | 📋（阻塞：See-Through 模型下载） |
 | W5 评测/反馈闭环 | agent eval 平台接自家 agent | 📋 |
+

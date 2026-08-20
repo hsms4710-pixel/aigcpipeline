@@ -1,4 +1,12 @@
 ﻿# ROADMAP：实现路线（一个 part 一个 part）
+## P0 —— 用 LangGraph 重构整个 pipeline（第一优先，2026-08-21 起）
+> **权威文档：`spec/langgraph-pipeline.md`** ｜ 任务跟踪：`tasks/pipeline/tasks.md`（L0-L6）
+> 定位：项目主体是 agent 驱动的 AIGC pipeline，把「脚本 + FastAPI workbench 编排」重构为 **LangGraph StateGraph 全链路**：
+> `A1 需求规划 → A2 资产生成（skill 三级渐进披露加载）→ A3 质量门禁（Vision Gate）→ A4 引擎集成（Godot）→ A5 骨骼动画（Spine/rig）→ A6 归档反馈`
+> 实现：`pipeline/langgraph/`（state/nodes/graph/cli）。门禁 FAIL 自动回退 A2 修订重试；节点只认资产契约；可观察/可审计/可断点续跑。
+> 进度：L0-L3 ✅（A1-A6 全节点接线 + skill 加载 + 门禁闭环，离线冒烟通过）；L4-L6 📋（子图化/可观察性/workbench 接线）
+> **gate**：`--dry-run` 图编译 + skill 三级加载 OK；全图离线跑 A1→A6 产物齐全；中转站恢复后真实跑 threshold 7.0
+
 
 > 总原则：**顺序推进，做透一个再进下一个**；评测（P5）后置，不在前期实现。
 > 范围边界与分 Part 验证：见 链路总览.md（权威视图）。

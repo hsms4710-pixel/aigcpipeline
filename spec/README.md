@@ -1,4 +1,4 @@
-# spec/ 规范与调研索引
+﻿# spec/ 规范与调研索引
 
 > 更新时间：2026-08-19 ｜ spec/ = 每个环节/主题一份文档；本文件按主题索引。权威文档标 ★。
 
@@ -6,6 +6,7 @@
 | 文档 | 主题 | 状态 |
 |---|---|---|
 | ★ agent-workflow.md | Agent Workflow 中心（A1-A6 + harness + Vision Gate + godot-assistant） | 权威 |
+| ★ langgraph-pipeline.md | **【P0】LangGraph 重构全 pipeline**（A1-A6 StateGraph + 状态 + 路由 + L0-L6） | 权威（2026-08-21） |
 | ★ aigc-tools-integration.md | AIGC 开源工具集成清单 + Godot/AIGC 插件调研 + 2D 地图类型 | 权威 |
 | ★ style-assets.md | 生图风格资产规范（pokemon-nds-bw / hd2d-octopath，画风一致性门禁） | 权威 |
 | pipeline-architecture.md + .svg | 流水线前后端架构（Agent Workflow 视图） | 权威 |
@@ -33,3 +34,4 @@
 
 ## Part 目录（早期，spec/p1..p6/）
 p1-character-voice / p2-cutscene / p3-npc-agent / p4-engine-integration / p5-eval / p6-dcc-processing / voice / canvas
+

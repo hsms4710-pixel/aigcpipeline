@@ -1,0 +1,2 @@
+- 2026-08-21 04:01 | full_test | type=character | gate=SKIP | attempts=1 | manifest=C:\Users\26046\AppData\Local\Temp\pl_full_test\manifest.json
+- 2026-08-21 04:02 | map_test | type=map | gate=SKIP | attempts=1 | manifest=C:\Users\26046\AppData\Local\Temp\pl_stages_test\manifest.json

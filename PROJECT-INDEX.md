@@ -19,6 +19,7 @@
 - ✅ **2026-08-19 Godot MCP 实装**（godot-assistant）+ tools/godot-shot.py 游戏内截图→Vision Gate
 - ✅ **2026-08-19 W2.1 地图打磨**：A2 瓦片集 + 域扭曲草地/有机湖/村庄/成林树丛；全景 gate 6、游戏内 5（未达 7，待办见 spec/agent-workflow.md）
 - ✅ **2026-08-21 GPT-Image2-Skill 按 LangGraph 方式加载**：skills_library/gpt-image（注册表）+ tools/skill_loader.py（discover/select/load/resource 三级渐进披露）+ tools/agent_a2_node.py（A2 LangGraph StateGraph 节点）+ a2-pipeline --agent；不再硬编码方法论（详见 harness/skills/SKILL_gpt-image-2.md §9.4 / spec/agent-workflow.md）
+- ✅ **2026-08-21 【P0】用 LangGraph 重构整个 pipeline**：pipeline/langgraph/（state/nodes/graph/cli，A1-A6 全节点接线既有工具 + skill 三级渐进披露 + 门禁 FAIL 自动回退重试），离线冒烟通过；权威文档 spec/langgraph-pipeline.md；任务跟踪 tasks/pipeline/tasks.md（L0-L6）
 
 ## 2. 调研清单（spec/ 内，按主题）
 | 文档 | 主题 | 状态 |
@@ -39,6 +40,7 @@
 | spec/godot-2d-aigc-practice-research.md | **Godot 2D/2.5D AIGC 实践调研**（bilibili/YouTube HD-2D/伪3D） | 2026-08-19 |
 | spec/aigc-tools-integration.md | **AIGC 开源工具集成清单 + 2D 地图类型调研**（godot-assistant 已装 / godot-ai 待装） | 2026-08-19 |
 | spec/agent-workflow.md | **Agent Workflow 中心规划**（A1-A6 + harness + Vision Gate + godot-assistant） | 权威（2026-08-19） |
+| spec/langgraph-pipeline.md | **【P0】LangGraph 重构全 pipeline**（A1-A6 StateGraph + 状态 + 路由 + L0-L6 拆解） | 权威（2026-08-21） |
 | 生图.md / 工作流设计.md / 研究计划.md | 网易 DreamMaker 调研 / 管线衔接 / 研究问题 | 根目录 |
 | ROADMAP.md | 实现路线（Part 0-6） | 权威 |
 
@@ -126,4 +128,5 @@ README.md（总述）/ ROADMAP.md（路线）/ 研究计划.md（RQ+评测）/ �
 2. 2D 侧视帧补全（jump/fall/land 专用帧，生图端点恢复后）
 3. 横板 demo 打磨（角色放大、投射物可见度、像素一致性）
 4. 3D 线 POC（plan-3d-route.md）：TRELLIS2/Hunyuan3D 本地或 Tripo API → Blender → Mixamo/UniRig → Godot
+
 

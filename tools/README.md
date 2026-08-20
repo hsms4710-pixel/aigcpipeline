@@ -10,6 +10,7 @@
 | **a2-pipeline.py** | A2 资产生成标准入口：视觉提示词 → 生图 → Vision Gate → 失败带问题修订重试 → manifest | 一条命令闭环，2026-08-19 |
 | **skill_loader.py** | LangGraph 风格 skill 加载器：discover / select / load / resource（三级渐进披露：元数据→SKILL.md→按需资源，多根 last-one-wins，路径安全） | skills_library/ 运行时加载 |
 | **agent_a2_node.py** | A2 资产生成 LangGraph StateGraph 节点：skill_context→design_prompt→generate→vision_gate→(条件重试)→archive | 与 a2-pipeline --agent 等价 |
+| **pipeline/langgraph/** | 【P0】全 pipeline LangGraph 重构：state/nodes/graph/cli（A1 规划→A2 生成→A3 门禁→A4 引擎→A5 骨骼→A6 归档，门禁 FAIL 自动回退重试） | python pipeline/langgraph/cli.py |
 | **prompt_vision.py** | 视觉提示词设计师：gpt-5.5 视觉模型根据需求+风格基底+参考图生成/修订生图 prompt | A2 第一步 |
 | **vision_gate.py** | Vision Gate 正式门禁：类型化验收模板 + 多维评分 + threshold + manifest 写入 | A3 |
 | **vision_review.py** | 视觉验收基础调用（早期版本，vision_gate 的前身） | 基础 |
@@ -83,3 +84,4 @@
 - 生图 key：`env/.env`（GPT_API_KEY / GPT_BASE_URL，中转站 api.sisct2.xyz）
 - 视觉 key：`vision_gate.py` / `prompt_vision.py` 内 DEFAULT_KEY（gpt-5.5）
 - Godot 4.7.1：`C:\Users\26046\Documents\lovegaming\`；Godot MCP：`npx -y godot-assistant`（已注册 Codex MCP）
+

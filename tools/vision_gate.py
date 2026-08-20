@@ -1,4 +1,4 @@
-"""vision_gate.py — 流水线正式视觉验收门禁（Vision Gate）
+﻿"""vision_gate.py — 流水线正式视觉验收门禁（Vision Gate）
 将视觉模型验收固化为流水线标准环节：按资产类型跑 gpt-5.5 挑刺式验收，
 输出结构化评分报告（JSON），与阈值比较得出 PASS/FAIL，可写入资产 manifest。
 
@@ -107,6 +107,48 @@ def call_vision(imgs, prompt, model, max_size, api, key):
             time.sleep(4 * (attempt + 1))
     raise RuntimeError(f"vision call failed: {last}")
 
+def run_gate(imgs, atype, name, threshold=7.0, baseline=None, ref=None, out=None, manifest=None,
+             model="gpt-5.5", max_size=768, extra="", api=API, key=None):
+    """正式 Vision Gate 可调用 API（LangGraph A3 节点 / CLI 共用）。
+
+    imgs: 待验收图；atype: 资产类型；name: 资产名；threshold: 阈值（默认 7.0）；
+    baseline/ref: 画风基准/锚点图；out: 报告 JSON 路径；manifest: 追加 qa.vision 段的 manifest 路径。
+    返回 (report, gate_result)，gate_result ∈ PASS / FAIL / PARSE_FAIL。
+    """
+    _load_env()
+    key = key or os.environ.get(KEY_ENV) or DEFAULT_KEY
+    prompt = build_prompt(atype, extra, bool(ref), baseline_present=bool(baseline))
+    all_imgs = list(baseline or []) + list(ref or []) + list(imgs)
+    content = call_vision(all_imgs, prompt, model, max_size, api, key)
+    txt = (content or "").strip()
+    if txt.startswith("```"):
+        txt = txt.strip("`")
+        if txt.startswith("json"):
+            txt = txt[4:]
+    try:
+        report = json.loads(txt)
+    except Exception:
+        report = {"raw": content, "overall": None, "verdict": "PARSE_FAIL", "issues": ["响应非 JSON"]}
+    overall = report.get("overall")
+    gate_ok = overall is not None and overall >= threshold
+    report["name"] = name
+    report["type"] = atype
+    report["threshold"] = threshold
+    report["baseline"] = list(baseline or [])
+    report["gate_result"] = "PASS" if gate_ok else ("FAIL" if overall is not None else "PARSE_FAIL")
+    if out:
+        os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(report, f, ensure_ascii=False, indent=2)
+    if manifest and os.path.exists(manifest):
+        with open(manifest, "r", encoding="utf-8") as f:
+            m = json.load(f)
+        m.setdefault("qa", {})["vision"] = report
+        with open(manifest, "w", encoding="utf-8") as f:
+            json.dump(m, f, ensure_ascii=False, indent=2)
+    return report, report["gate_result"]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("imgs", nargs="+")
@@ -123,43 +165,16 @@ def main():
     ap.add_argument("--api", default=API)
     ap.add_argument("--key", default=None)
     a = ap.parse_args()
-    key = a.key or os.environ.get(KEY_ENV) or DEFAULT_KEY
-    prompt = build_prompt(a.type, a.extra, bool(a.ref), baseline_present=bool(a.baseline))
-    all_imgs = list(a.baseline) + list(a.ref) + list(a.imgs)
-    content = call_vision(all_imgs, prompt, a.model, a.max_size, a.api, key)
-    # 解析 JSON（模型可能输出 ```json 包裹）
-    txt = content.strip()
-    if txt.startswith("```"):
-        txt = txt.strip("`")
-        if txt.startswith("json"):
-            txt = txt[4:]
-    try:
-        report = json.loads(txt)
-    except Exception:
-        report = {"raw": content, "overall": None, "verdict": "PARSE_FAIL", "issues": ["响应非 JSON"]}
-    overall = report.get("overall")
-    gate_ok = overall is not None and overall >= a.threshold
-    report["name"] = a.name
-    report["type"] = a.type
-    report["threshold"] = a.threshold
-    report["baseline"] = a.baseline
-    report["gate_result"] = "PASS" if gate_ok else ("FAIL" if overall is not None else "PARSE_FAIL")
-    # 输出
-    print(f"\n[VISION-GATE] {a.name} ({a.type}) overall={overall} threshold={a.threshold} -> {report['gate_result']}")
+    report, result = run_gate(
+        a.imgs, a.type, a.name, threshold=a.threshold, baseline=a.baseline, ref=a.ref,
+        out=a.out, manifest=a.manifest, model=a.model, max_size=a.max_size,
+        extra=a.extra, api=a.api, key=a.key)
+    print(f"\n[VISION-GATE] {a.name} ({a.type}) overall={report.get('overall')} threshold={a.threshold} -> {result}")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if a.out:
-        os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
-        with open(a.out, "w", encoding="utf-8") as f:
-            json.dump(report, f, ensure_ascii=False, indent=2)
         print(f"[VISION-GATE] report -> {a.out}")
     if a.manifest and os.path.exists(a.manifest):
-        with open(a.manifest, "r", encoding="utf-8") as f:
-            m = json.load(f)
-        m.setdefault("qa", {})["vision"] = report
-        with open(a.manifest, "w", encoding="utf-8") as f:
-            json.dump(m, f, ensure_ascii=False, indent=2)
         print(f"[VISION-GATE] manifest updated -> {a.manifest}")
-    sys.exit(0 if gate_ok else 1)
-
+    sys.exit(0 if result == "PASS" else 1)
 if __name__ == "__main__":
     main()

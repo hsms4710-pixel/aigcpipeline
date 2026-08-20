@@ -101,7 +101,7 @@ def compose_system_prompt(ctx, atype="", max_resource_chars=8000):
 
 def design_prompt(demand, style, atype, refs=None, current_prompt="", skill_name="gpt-image",
                   skills_roots=None, max_size=768, max_resource_chars=8000,
-                  key=None, out_json=None, no_vision=False, verbose=True):
+                  key=None, out_json=None, no_vision=False, verbose=True, skill_ctx=None):
     """核心：LangGraph 方式加载 skill 三级内容 -> 调用视觉模型生成/修订生图提示词。
 
     返回 dict：{"prompt","rationale","params","style","type","demand",
@@ -116,8 +116,9 @@ def design_prompt(demand, style, atype, refs=None, current_prompt="", skill_name
     scene_tpl = scenes.get(scene_key, "")
 
     # ---- LangGraph progressive disclosure：按任务组装三级 skill 上下文 ----
+    # 若外部（LangGraph 图）已加载 skill_ctx（如门禁重试时复用），则不再重复读盘
     task = f"{style} {atype} {demand}"
-    ctx = build_skill_context(skill_name, task=task, skills_roots=skills_roots)
+    ctx = skill_ctx if skill_ctx else build_skill_context(skill_name, task=task, skills_roots=skills_roots)
     sys_prompt = compose_system_prompt(ctx, atype, max_resource_chars)
 
     user_content = [{"type": "text", "text": (
@@ -217,3 +218,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
